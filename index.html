@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>糊塗咖啡 Hutu Cafe | 咖啡豆與禮盒訂購</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f3f4f6; font-family: 'PingFang TC', 'Heiti TC', '微軟正黑體', sans-serif; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+<div id="app" class="max-w-md mx-auto bg-white min-h-screen shadow-lg relative pb-28">
+    
+    <header class="bg-[#3e2723] text-white p-6 text-center rounded-b-xl shadow-md">
+        <h1 class="text-3xl font-bold tracking-widest mb-1">糊塗咖啡</h1>
+        <p class="text-sm font-light opacity-80 tracking-widest">HUTU CAFE・自家烘焙</p>
+    </header>
+
+    <div class="m-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-sm flex items-center shadow-sm">
+        <i class="fa-solid fa-bullhorn mr-3 text-amber-600"></i>
+        <div>
+            <p>🏪 7-ELEVEN 賣貨便・取貨付款</p>
+            <p class="font-bold mt-1">🎉 滿 $1,000 即享免運費！(原運費 $38)</p>
+        </div>
+    </div>
+
+    <div class="px-4 py-2">
+        <h2 class="text-lg font-bold border-b-2 border-[#3e2723] pb-2 mb-4 flex items-center">
+            <i class="fa-solid fa-mug-hot mr-2 text-[#795548]"></i> 選擇咖啡豆與禮盒
+        </h2>
+        
+        <div class="space-y-4">
+            <div v-for="(item, index) in products" :key="item.id" class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100 shadow-sm">
+                <div class="flex-1">
+                    <h3 class="font-bold text-gray-800">{{ item.name }}</h3>
+                    <p class="text-xs text-gray-500 mt-1">{{ item.desc }}</p>
+                    <p class="text-[#d84315] font-bold mt-1">$ {{ item.price }}</p>
+                </div>
+                <div class="flex items-center space-x-3 bg-white border border-gray-200 rounded-full px-2 py-1 shadow-sm">
+                    <button @click="decreaseQty(index)" class="w-8 h-8 rounded-full text-gray-500 hover:bg-gray-100 flex justify-center items-center">
+                        <i class="fa-solid fa-minus text-sm"></i>
+                    </button>
+                    <span class="w-4 text-center font-bold">{{ item.qty }}</span>
+                    <button @click="increaseQty(index)" class="w-8 h-8 rounded-full text-[#3e2723] hover:bg-gray-100 flex justify-center items-center">
+                        <i class="fa-solid fa-plus text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-4 py-6 mt-2">
+        <h2 class="text-lg font-bold border-b-2 border-[#3e2723] pb-2 mb-4 flex items-center">
+            <i class="fa-solid fa-store mr-2 text-[#795548]"></i> 取件門市
+        </h2>
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <p class="text-xs text-gray-500 mb-2">※ 實作時此處將串接 7-11 E-Map 電子地圖</p>
+            <input v-model="customer.storeName" type="text" placeholder="請輸入門市名稱 (如: 糊塗門市)" class="w-full p-2 border border-gray-300 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-[#795548]">
+            <input v-model="customer.storeId" type="text" placeholder="請輸入 6 碼門市店號" maxlength="6" class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#795548]">
+        </div>
+    </div>
+
+    <div class="px-4 py-2 mt-2 mb-8">
+        <h2 class="text-lg font-bold border-b-2 border-[#3e2723] pb-2 mb-4 flex items-center">
+            <i class="fa-solid fa-address-card mr-2 text-[#795548]"></i> 收件人資訊
+        </h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">姓名 <span class="text-red-500">*</span></label>
+                <input v-model="customer.name" type="text" placeholder="真實姓名 (取件核對用)" class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#795548]">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">手機號碼 <span class="text-red-500">*</span></label>
+                <input v-model="customer.phone" type="tel" placeholder="09xxxxxxxx" maxlength="10" class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#795548]">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">訂單備註 (選填)</label>
+                <textarea v-model="customer.notes" rows="2" placeholder="如有特殊的烘焙度需求或磨豆請填寫於此" class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#795548]"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-between items-center z-10">
+        <div>
+            <p class="text-xs text-gray-500">共 {{ totalItems }} 件商品 | 運費 ${{ shippingFee }}</p>
+            <p class="text-xl font-bold text-[#d84315]">總計: $ {{ grandTotal }}</p>
+        </div>
+        <button @click="openConfirmModal" :disabled="totalItems === 0" :class="totalItems > 0 ? 'bg-[#3e2723] hover:bg-[#2b1b18]' : 'bg-gray-300 cursor-not-allowed'" class="text-white px-6 py-3 rounded-full font-bold shadow-md transition duration-200">
+            確認訂單
+        </button>
+    </div>
+
+    <transition name="fade">
+        <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-end sm:items-center z-50">
+            <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 h-[80vh] sm:h-auto overflow-y-auto">
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <h3 class="text-xl font-bold text-[#3e2723]">📋 訂單確認</h3>
+                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-700">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
+                </div>
+                
+                <div class="text-sm space-y-2 mb-6 bg-gray-50 p-4 rounded-lg">
+                    <p><strong>收件人：</strong> {{ customer.name || '未填寫' }}</p>
+                    <p><strong>手機：</strong> {{ customer.phone || '未填寫' }}</p>
+                    <p><strong>取件門市：</strong> {{ customer.storeName || '未填寫' }} ({{ customer.storeId }})</p>
+                </div>
+
+                <h4 class="font-bold mb-2">商品明細</h4>
+                <ul class="text-sm space-y-2 mb-4 border-b pb-4">
+                    <li v-for="item in activeCart" :key="item.id" class="flex justify-between">
+                        <span>{{ item.name }} x {{ item.qty }}</span>
+                        <span>${{ item.price * item.qty }}</span>
+                    </li>
+                </ul>
+                <div class="flex justify-between font-bold text-lg mb-6 text-[#d84315]">
+                    <span>應付總額 (含運)</span>
+                    <span>${{ grandTotal }}</span>
+                </div>
+
+                <div class="space-y-3">
+                    <button @click="submitOrder" class="w-full bg-[#d84315] text-white py-3 rounded-lg font-bold shadow hover:bg-[#bf360c] transition flex justify-center items-center">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> 送出訂單至資料庫
+                    </button>
+                    <button @click="copyOrderText" class="w-full bg-white border-2 border-[#3e2723] text-[#3e2723] py-3 rounded-lg font-bold shadow-sm hover:bg-gray-50 transition flex justify-center items-center">
+                        <i class="fa-solid fa-copy mr-2"></i> 複製訂單文字 (回傳LINE/FB)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </transition>
+
+</div>
+
+<script>
+    const { createApp, ref, computed } = Vue;
+
+    createApp({
+        setup() {
+            // 預設商品資料清單 (可自行修改)
+            const products = ref([
+                { id: 'p1', name: '藝伎 Geisha 水洗', desc: '半磅｜花香、柑橘、蜂蜜甜感', price: 800, qty: 0 },
+                { id: 'p2', name: '曼特寧 Mandheling', desc: '半磅｜醇厚、黑巧克力、草本香', price: 450, qty: 0 },
+                { id: 'p3', name: '繁花似錦濾掛禮盒', desc: '24入裝｜節慶特選綜合配方', price: 1200, qty: 0 },
+                { id: 'p4', name: '糊塗經典配方豆', desc: '半磅｜義式濃縮與拿鐵專用', price: 350, qty: 0 }
+            ]);
+
+            const customer = ref({
+                name: '',
+                phone: '',
+                storeName: '',
+                storeId: '',
+                notes: ''
+            });
+
+            const showModal = ref(false);
+
+            const increaseQty = (index) => { products.value[index].qty++; };
+            const decreaseQty = (index) => {
+                if (products.value[index].qty > 0) products.value[index].qty--;
+            };
+
+            // 購物車計算邏輯
+            const activeCart = computed(() => products.value.filter(p => p.qty > 0));
+            const totalItems = computed(() => activeCart.value.reduce((sum, p) => sum + p.qty, 0));
+            const subTotal = computed(() => activeCart.value.reduce((sum, p) => sum + (p.price * p.qty), 0));
+            
+            // 滿1000免運費，否則收38元
+            const shippingFee = computed(() => (subTotal.value >= 1000 || subTotal.value === 0) ? 0 : 38);
+            const grandTotal = computed(() => subTotal.value + shippingFee.value);
+
+            const openConfirmModal = () => {
+                if(totalItems.value === 0) return;
+                showModal.value = true;
+            };
+
+            // 模擬送出訂單
+            const submitOrder = () => {
+                if(!customer.value.name || !customer.value.phone) {
+                    alert('請填寫姓名與手機號碼！');
+                    return;
+                }
+                
+                const orderData = {
+                    customer: customer.value,
+                    items: activeCart.value,
+                    total: grandTotal.value
+                };
+
+                // TODO: 這裡未來要寫入 Supabase / Firebase 的 Fetch API 程式碼
+                console.log('準備寫入資料庫的訂單資料:', orderData);
+                
+                alert('🎉 訂單已成功送出！(此為前端模擬，資料已印在 Console)');
+                showModal.value = false;
+            };
+
+            // 複製訂單文字功能
+            const copyOrderText = () => {
+                let text = `【糊塗咖啡 訂單明細】\n`;
+                text += `姓名：${customer.value.name}\n`;
+                text += `電話：${customer.value.phone}\n`;
+                text += `門市：${customer.value.storeName} (${customer.value.storeId})\n`;
+                text += `----------\n`;
+                activeCart.value.forEach(item => {
+                    text += `${item.name} x${item.qty}\n`;
+                });
+                text += `----------\n`;
+                text += `總金額(含運)：$${grandTotal.value}\n`;
+                if(customer.value.notes) text += `備註：${customer.value.notes}`;
+
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('已複製訂單文字！您可以直接貼上至 LINE 或 FB 粉專給我們。');
+                });
+            };
+
+            return {
+                products, customer, showModal,
+                increaseQty, decreaseQty, activeCart,
+                totalItems, subTotal, shippingFee, grandTotal,
+                openConfirmModal, submitOrder, copyOrderText
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
