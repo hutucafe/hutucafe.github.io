@@ -19,11 +19,19 @@
         .section { background: #fff; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .section-title { font-size: 18px; font-weight: bold; border-bottom: 2px solid #f0f0f0; padding-bottom: 12px; margin-bottom: 20px; display: flex; align-items: center; color: #3e2723; }
         
+        /* 頁籤 (Tabs) 設計 */
+        .tabs-container { display: flex; overflow-x: auto; border-bottom: 2px solid #e0e0e0; margin-bottom: 15px; scrollbar-width: none; }
+        .tabs-container::-webkit-scrollbar { display: none; }
+        .tab-btn { flex: none; padding: 10px 20px; background: none; border: none; font-size: 15px; font-weight: bold; color: #888; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s; margin-bottom: -2px; }
+        .tab-btn:hover { color: #6d4c41; }
+        .tab-btn.active { color: #6d4c41; border-bottom-color: #6d4c41; }
+
         /* 商品列表 */
         .product-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px dashed #e0e0e0; }
         .product-item:last-child { border-bottom: none; }
         .product-info h3 { font-size: 16px; margin-bottom: 5px; color: #333; }
-        .product-info p { font-size: 15px; color: #d84315; font-weight: bold; }
+        .product-info p.desc { font-size: 13px; color: #888; margin-bottom: 4px; font-weight: normal; }
+        .product-info p.price { font-size: 15px; color: #d84315; font-weight: bold; }
         .quantity-control { display: flex; align-items: center; }
         .quantity-control button { width: 32px; height: 32px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 18px; color: #555; transition: 0.2s; }
         .quantity-control button:active { background: #e0e0e0; }
@@ -50,23 +58,29 @@
         .bottom-bar .total span { color: #d84315; font-size: 22px; font-weight: bold; margin-left: 5px; }
         .bottom-bar button { background: #6d4c41; color: #fff; border: none; padding: 12px 30px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
         .bottom-bar button:hover { background: #4e342e; }
+        .bottom-bar button:disabled { background: #aaa; cursor: not-allowed; }
 
         /* 狀態文字 */
         #store-status { font-size: 13px; margin-top: 5px; display: inline-block; }
+        .loading-text { text-align: center; color: #8d6e63; padding: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>糊塗咖啡 Hutu Coffee</h1>
+        <h1>糊塗咖啡 Hutu Cafe</h1>
         <p>自家烘焙 ‧ 精品咖啡豆訂購單</p>
     </header>
 
     <div class="container">
         <div class="section">
             <div class="section-title">☕ 選擇咖啡豆</div>
+            
+            <div id="tabs-container" class="tabs-container"></div>
+            
             <div id="product-list">
-                </div>
+                <div class="loading-text"><i class="fas fa-spinner fa-spin"></i> 正在從雲端載入最新豆單，請稍候...</div>
+            </div>
         </div>
 
         <div class="section">
@@ -91,11 +105,11 @@
             <div class="section-title">📬 收件人資訊</div>
             <div class="form-group">
                 <label>收件者姓名 <span style="color:red">*</span></label>
-                <input type="text" id="buyer-name" placeholder="請輸入真實姓名">
+                <input type="text" id="buyer-name" placeholder="請輸入真實姓名 (取件核對用)">
             </div>
             <div class="form-group">
                 <label>手機號碼 <span style="color:red">*</span></label>
-                <input type="tel" id="buyer-phone" placeholder="例如: 0912345678">
+                <input type="tel" id="buyer-phone" placeholder="例如: 0912345678" maxlength="10">
             </div>
             <div class="form-group">
                 <label>Email (接收訂單通知)</label>
@@ -103,99 +117,155 @@
             </div>
             <div class="form-group">
                 <label>訂單備註</label>
-                <textarea id="buyer-notes" rows="3" placeholder="有什麼想告訴我們的嗎？ (選填)"></textarea>
+                <textarea id="buyer-notes" rows="3" placeholder="如有特殊的烘焙度需求或磨豆請填寫於此 (選填)"></textarea>
             </div>
         </div>
     </div>
 
     <div class="bottom-bar">
         <div class="total">總計: <span>$0</span></div>
-        <button onclick="submitOrder()">確認訂單</button>
+        <button id="submit-btn" onclick="submitOrder()">確認訂單</button>
     </div>
 
     <script>
-        // --- 1. 商品資料設定 ---
-        const products = [
-            { id: 'p1', name: '糊塗特選義式配方豆 (半磅)', price: 350 },
-            { id: 'p2', name: '衣索比亞 耶加雪菲 水洗 (半磅)', price: 450 },
-            { id: 'p3', name: '哥倫比亞 薇拉 藝妓 蜜處理 (半磅)', price: 650 }
-        ];
+        // --- 1. 全域變數與 GAS 設定 ---
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
+        let allProductsData = {}; // 存放 GAS 抓回來的所有頁籤資料
+        let currentTab = '';
+        let cart = {}; // 格式：{ '自訂ID': { product: {...}, qty: 0 } }
 
-        let cart = { p1: 0, p2: 0, p3: 0 };
+        // --- 2. 讀取 Google Sheets 豆單 ---
+        async function loadProducts() {
+            try {
+                const res = await fetch(GAS_URL);
+                const data = await res.json();
+                allProductsData = data;
 
-        // 渲染商品列表
-        const productListEl = document.getElementById('product-list');
-        products.forEach(p => {
-            productListEl.innerHTML += `
-                <div class="product-item">
-                    <div class="product-info">
-                        <h3>${p.name}</h3>
-                        <p>$${p.price}</p>
+                // 初始化購物車與配置唯一 ID
+                let idCounter = 1;
+                for (let tab in allProductsData) {
+                    allProductsData[tab].forEach(p => {
+                        p.uid = 'prod_' + idCounter++;
+                        cart[p.uid] = { product: p, qty: 0 };
+                    });
+                }
+
+                const tabs = Object.keys(allProductsData);
+                if (tabs.length > 0) {
+                    currentTab = tabs[0];
+                    renderTabs(tabs);
+                    renderProducts(currentTab);
+                } else {
+                    document.getElementById('product-list').innerHTML = '<div class="loading-text">試算表中目前沒有商品資料</div>';
+                }
+            } catch (error) {
+                console.error("載入豆單失敗:", error);
+                document.getElementById('product-list').innerHTML = '<div class="loading-text" style="color:red;">豆單載入失敗，請確認 GAS 網址與權限設定。</div>';
+            }
+        }
+
+        // 渲染頁籤
+        function renderTabs(tabs) {
+            const container = document.getElementById('tabs-container');
+            let html = '';
+            tabs.forEach(tab => {
+                html += `<button class="tab-btn ${tab === currentTab ? 'active' : ''}" onclick="switchTab('${tab}')">${tab}</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // 切換頁籤
+        function switchTab(tabName) {
+            currentTab = tabName;
+            renderTabs(Object.keys(allProductsData)); // 更新 Active 狀態
+            renderProducts(tabName);
+        }
+
+        // 渲染指定頁籤內的商品
+        function renderProducts(tabName) {
+            const products = allProductsData[tabName];
+            const listEl = document.getElementById('product-list');
+            let html = '';
+
+            products.forEach(p => {
+                // 相容 Google Sheets 表頭命名 (名稱/商品名稱, 價格/單價, 描述/備註)
+                const name = p['名稱'] || p['商品名稱'] || p.name || '未命名商品';
+                const price = parseInt(p['價格'] || p['單價'] || p.price || 0);
+                const desc = p['描述'] || p['說明'] || p.desc || '';
+                const qty = cart[p.uid].qty;
+
+                html += `
+                    <div class="product-item">
+                        <div class="product-info">
+                            <h3>${name}</h3>
+                            ${desc ? `<p class="desc">${desc}</p>` : ''}
+                            <p class="price">$${price}</p>
+                        </div>
+                        <div class="quantity-control">
+                            <button onclick="updateQty('${p.uid}', -1)">-</button>
+                            <input type="number" id="qty-${p.uid}" value="${qty}" min="0" readonly>
+                            <button onclick="updateQty('${p.uid}', 1)">+</button>
+                        </div>
                     </div>
-                    <div class="quantity-control">
-                        <button onclick="updateQty('${p.id}', -1)">-</button>
-                        <input type="number" id="qty-${p.id}" value="0" min="0" readonly>
-                        <button onclick="updateQty('${p.id}', 1)">+</button>
-                    </div>
-                </div>
-            `;
-        });
+                `;
+            });
+            listEl.innerHTML = html;
+        }
 
-        function updateQty(id, change) {
-            let newVal = cart[id] + change;
+        // 更新購物車數量
+        function updateQty(uid, change) {
+            let newVal = cart[uid].qty + change;
             if (newVal < 0) newVal = 0;
-            cart[id] = newVal;
-            document.getElementById(`qty-${id}`).value = newVal;
+            cart[uid].qty = newVal;
+            
+            // 只有在當前頁籤看到該商品時才更新 input
+            const inputEl = document.getElementById(`qty-${uid}`);
+            if(inputEl) inputEl.value = newVal;
+            
             calculateTotal();
         }
 
+        // 計算總金額
         function calculateTotal() {
             let total = 0;
-            products.forEach(p => { total += cart[p.id] * p.price; });
+            for (let uid in cart) {
+                const item = cart[uid];
+                const price = parseInt(item.product['價格'] || item.product['單價'] || item.product.price || 0);
+                total += item.qty * price;
+            }
             document.querySelector('.bottom-bar span').textContent = `$${total}`;
         }
 
-        // --- 2. 門市資料 Fetch 與搜尋比對 ---
+        // --- 3. 門市資料 Fetch 與搜尋比對 (維持原樣) ---
         let storesData = [];
         const statusEl = document.getElementById('store-status');
-
-        // 讀取同目錄下的 stores.json
-        fetch('stores.json')
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => {
-                storesData = data;
-                statusEl.textContent = "門市資料載入完成 ✓";
-                statusEl.style.color = "#2e7d32";
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                statusEl.textContent = "無法載入門市資料，請確認 stores.json 檔案是否存在。";
-                statusEl.style.color = "#d32f2f";
-            });
-
         const searchInput = document.getElementById('store-search');
         const suggestionsList = document.getElementById('store-suggestions');
         const storeInfoInput = document.getElementById('store-info');
         const storeIdInput = document.getElementById('selected-store-id');
 
+        fetch('stores.json')
+            .then(res => res.json())
+            .then(data => {
+                storesData = data;
+                statusEl.textContent = "門市資料載入完成 ✓";
+                statusEl.style.color = "#2e7d32";
+            })
+            .catch(err => {
+                statusEl.textContent = "無法載入門市資料 (stores.json)";
+                statusEl.style.color = "#d32f2f";
+            });
+
         searchInput.addEventListener('input', function() {
             const keyword = this.value.trim().toLowerCase();
-            suggestionsList.innerHTML = ''; // 清空先前的建議
+            suggestionsList.innerHTML = '';
+            if (keyword.length === 0) { suggestionsList.style.display = 'none'; return; }
 
-            if (keyword.length === 0) {
-                suggestionsList.style.display = 'none';
-                return;
-            }
-
-            // 比對 店號、名稱 或 地址
             const filteredStores = storesData.filter(store => 
                 store.店號.includes(keyword) || 
                 store.名稱.toLowerCase().includes(keyword) || 
                 store.地址.includes(keyword)
-            ).slice(0, 10); // 只顯示前 10 筆結果避免過長
+            ).slice(0, 10);
 
             if (filteredStores.length > 0) {
                 suggestionsList.style.display = 'block';
@@ -203,8 +273,6 @@
                     const li = document.createElement('li');
                     li.innerHTML = `<span class="store-name">${store.名稱} (店號: ${store.店號})</span>
                                     <span class="store-addr">${store.地址}</span>`;
-                    
-                    // 點擊選項後填入資料
                     li.addEventListener('click', () => {
                         searchInput.value = store.名稱;
                         storeInfoInput.value = `店號：${store.店號} | ${store.名稱} | ${store.地址}`;
@@ -218,38 +286,85 @@
             }
         });
 
-        // 點擊其他地方時關閉搜尋建議
         document.addEventListener('click', function(e) {
-            if (e.target !== searchInput && e.target !== suggestionsList) {
-                suggestionsList.style.display = 'none';
-            }
+            if (e.target !== searchInput && e.target !== suggestionsList) suggestionsList.style.display = 'none';
         });
 
-        // --- 3. 送出訂單驗證 ---
-        function submitOrder() {
-            const total = parseInt(document.querySelector('.bottom-bar span').textContent.replace('$', ''));
+        // --- 4. 送出訂單寫入 Google 表單 ---
+        async function submitOrder() {
+            const totalText = document.querySelector('.bottom-bar span').textContent.replace('$', '');
+            const total = parseInt(totalText);
             const storeId = storeIdInput.value;
+            const storeInfo = storeInfoInput.value;
             const name = document.getElementById('buyer-name').value.trim();
             const phone = document.getElementById('buyer-phone').value.trim();
+            const email = document.getElementById('buyer-email').value.trim();
+            const notes = document.getElementById('buyer-notes').value.trim();
 
-            if (total === 0) {
-                alert("請至少選擇一樣商品！");
-                return;
-            }
+            if (total === 0) return alert("請至少選擇一樣商品！");
             if (!storeId) {
                 alert("請搜尋並選擇您要取貨的 7-11 門市！");
-                document.getElementById('store-search').focus();
+                searchInput.focus();
                 return;
             }
-            if (!name || !phone) {
-                alert("請完整填寫收件人姓名與手機號碼！");
-                return;
+            if (!name || !phone) return alert("請完整填寫收件人姓名與手機號碼！");
+
+            // 整理有購買的商品明細
+            const orderItems = [];
+            for (let uid in cart) {
+                if (cart[uid].qty > 0) {
+                    const p = cart[uid].product;
+                    const pName = p['名稱'] || p['商品名稱'] || p.name || '未命名商品';
+                    const pPrice = parseInt(p['價格'] || p['單價'] || p.price || 0);
+                    orderItems.push({
+                        name: pName,
+                        price: pPrice,
+                        qty: cart[uid].qty,
+                        subtotal: pPrice * cart[uid].qty
+                    });
+                }
             }
 
-            // 這裡可以串接 Formspree、Google Apps Script 或你後端的 API
-            alert(`訂單送出成功！\n\n收件人：${name}\n取件門市：${document.getElementById('store-info').value}\n總計金額：$${total}\n\n感謝您的訂購，糊塗咖啡會盡快為您出貨！☕`);
-            window.location.reload();
+            // 打包要送給 GAS 的 JSON 資料
+            const orderData = {
+                orderId: 'ORD' + Date.now(),
+                name: name,
+                phone: phone,
+                email: email,
+                storeInfo: storeInfo,
+                notes: notes,
+                items: orderItems,
+                totalPrice: total
+            };
+
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.textContent = '訂單處理中...';
+            submitBtn.disabled = true;
+
+            try {
+                // 使用 text/plain 避免 GAS 的 CORS Preflight 問題
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(orderData)
+                });
+                
+                const result = await response.json();
+                alert(`🎉 訂單送出成功！\n\n收件人：${name}\n取件門市：${storeInfo}\n總計金額：$${total}\n\n感謝您的訂購，糊塗咖啡會盡快為您出貨！☕`);
+                window.location.reload(); // 重整頁面清空購物車
+                
+            } catch (error) {
+                console.error('送出訂單發生錯誤:', error);
+                alert("訂單送出失敗，請稍後再試或透過粉絲專頁聯繫我們。");
+                submitBtn.textContent = '確認訂單';
+                submitBtn.disabled = false;
+            }
         }
+
+        // --- 網頁載入後立即執行 ---
+        window.onload = () => {
+            loadProducts();
+        };
     </script>
 </body>
 </html>
