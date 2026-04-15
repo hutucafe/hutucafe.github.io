@@ -7,7 +7,7 @@
     <style>
         /* 基礎樣式重置 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
-        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 110px; }
+        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 160px; } /* 增加底部留白以容納較高的結帳列 */
         
         /* 頁首設計 */
         header { background-color: #fff; padding: 25px 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; border-top: 6px solid #4e342e; }
@@ -25,7 +25,10 @@
         .tab-btn { flex: none; padding: 8px 16px; background: #f5f5f5; border: none; border-radius: 20px; font-size: 14px; color: #777; cursor: pointer; transition: 0.3s; }
         .tab-btn.active { background: #6d4c41; color: #fff; font-weight: bold; }
 
-        /* 專業咖啡豆卡片佈局 (對應 9 項資訊) */
+        /* 行銷活動標語 */
+        .promo-banner { background: #fff3e0; border: 1px solid #ffcc80; color: #e65100; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-align: center; }
+
+        /* 專業咖啡豆卡片佈局 */
         .product-card { border: 1px solid #f0f0f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; position: relative; transition: 0.2s; }
         .product-card:hover { border-color: #d7ccc8; }
         .bean-title { font-size: 17px; font-weight: 800; color: #3e2723; margin-bottom: 8px; display: block; }
@@ -42,9 +45,11 @@
         .price-info .pkg { font-size: 12px; color: #888; }
         .price-info .amt { font-size: 20px; font-weight: bold; color: #d84315; }
         .price-info .stock { font-size: 11px; color: #2e7d32; margin-top: 2px; }
+        .price-info .stock.out-of-stock { color: #d32f2f; font-weight: bold; }
 
         .quantity-control { display: flex; align-items: center; background: #f8f9fa; border-radius: 8px; padding: 4px; border: 1px solid #eee; }
         .quantity-control button { width: 30px; height: 30px; background: #fff; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 18px; color: #5d4037; }
+        .quantity-control button:disabled { background: #f0f0f0; color: #ccc; cursor: not-allowed; }
         .quantity-control input { width: 36px; text-align: center; border: none; background: none; font-size: 15px; font-weight: bold; }
         
         /* 表單樣式 */
@@ -59,13 +64,17 @@
         .suggestions-list li { padding: 12px; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 14px; line-height: 1.4; }
         .suggestions-list li:hover { background: #fdf8f5; }
 
-        /* 底部結帳列 */
-        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 16px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
-        .bottom-bar .total-info { display: flex; flex-direction: column; }
-        .bottom-bar .total-label { font-size: 13px; color: #777; }
-        .bottom-bar .total-amt { font-size: 22px; font-weight: bold; color: #d84315; }
-        .bottom-bar button { background: #3e2723; color: #fff; border: none; padding: 12px 36px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .bottom-bar button:disabled { background: #aaa; }
+        /* 底部結帳列 (進階明細版) */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 12px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: flex-end; z-index: 1000; }
+        .bottom-bar .total-info { flex: 1; margin-right: 15px; }
+        .calc-row { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 3px; }
+        .calc-row.text-red { color: #d84315; }
+        .calc-row.total-row { border-top: 1px solid #eee; margin-top: 5px; padding-top: 5px; align-items: center; }
+        .total-label { font-size: 15px; font-weight: bold; color: #333; }
+        .total-amt { font-size: 24px; font-weight: bold; color: #d84315; }
+        
+        .bottom-bar button { background: #3e2723; color: #fff; border: none; padding: 14px 28px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; height: 50px; }
+        .bottom-bar button:disabled { background: #aaa; cursor: not-allowed; }
         
         #store-status { font-size: 12px; margin-top: 6px; display: block; color: #888; }
         .loading-text { text-align: center; color: #8d6e63; padding: 20px; }
@@ -81,6 +90,7 @@
     <div class="container">
         <div class="section">
             <div class="section-title">☕ 精選豆單</div>
+            <div class="promo-banner">🎉 全站商品 9 折優待！結帳滿 $1,000 再享免運費 🎉</div>
             <div id="tabs-container" class="tabs-container"></div>
             <div id="product-list">
                 <p class="loading-text">正在載入最新豆單...</p>
@@ -125,18 +135,24 @@
 
     <div class="bottom-bar">
         <div class="total-info">
-            <span class="total-label">訂單總額</span>
-            <span class="total-amt">$0</span>
+            <div class="calc-row"><span class="label">商品小計</span><span id="display-original">$0</span></div>
+            <div class="calc-row text-red"><span class="label">全站 9 折</span><span id="display-discount">-$0</span></div>
+            <div class="calc-row"><span class="label">運費 (滿千免運)</span><span id="display-shipping">$0</span></div>
+            <div class="calc-row total-row">
+                <span class="total-label">結帳總額</span>
+                <span class="total-amt">$0</span>
+            </div>
         </div>
         <button id="submit-btn" onclick="submitOrder()">確認送出</button>
     </div>
 
     <script>
-        // --- 1. GAS 參數設定 ---
+        // --- 1. 全域變數設定 ---
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
         let allProductsData = {};
         let currentTab = '';
         let cart = {};
+        let currentFinalTotal = 0; // 紀錄算完折扣與運費後的最終金額
 
         // --- 2. 豆單讀取與渲染 ---
         async function loadProducts() {
@@ -183,7 +199,7 @@
             const products = allProductsData[tabName] || [];
             
             listEl.innerHTML = products.map(p => {
-                // 完美對應 9 個專業欄位
+                // 讀取試算表欄位
                 const name = p['熟豆品項'] || '未命名品項';
                 const origin = p['產區'] || '-';
                 const process = p['處理法'] || '-';
@@ -192,7 +208,22 @@
                 const flavor = p['風味'] || '職人精選推薦';
                 const pkg = p['包裝'] || '未標示';
                 const price = parseInt(p['售價'] || 0);
-                const stock = p['庫存'] || '現貨供應';
+                
+                // 庫存判斷邏輯
+                const rawStock = p['庫存'];
+                const parsedStock = parseInt(rawStock);
+                const isOutOfStock = parsedStock === 0;
+                
+                // 畫面呈現：如果是 0 就顯示紅字無庫存，否則顯示原始數字或文字
+                let stockDisplay = `庫存：${rawStock || '現貨'}`;
+                let stockClass = 'stock';
+                if (isOutOfStock) {
+                    stockDisplay = '無庫存';
+                    stockClass = 'stock out-of-stock';
+                }
+                
+                // 如果無庫存，鎖定 + 按鈕
+                const disableAddBtn = isOutOfStock ? 'disabled' : '';
                 
                 return `
                     <div class="product-card">
@@ -211,12 +242,12 @@
                             <div class="price-info">
                                 <span class="pkg">規格：${pkg}</span>
                                 <span class="amt">$${price}</span>
-                                <span class="stock">庫存：${stock}</span>
+                                <span class="${stockClass}">${stockDisplay}</span>
                             </div>
                             <div class="quantity-control">
                                 <button onclick="updateQty('${p.uid}', -1)">-</button>
                                 <input type="number" id="qty-${p.uid}" value="${cart[p.uid].qty}" readonly>
-                                <button onclick="updateQty('${p.uid}', 1)">+</button>
+                                <button onclick="updateQty('${p.uid}', 1)" ${disableAddBtn}>+</button>
                             </div>
                         </div>
                     </div>
@@ -224,24 +255,63 @@
             }).join('');
         }
 
+        // --- 3. 數量更新與防呆限制 ---
         function updateQty(uid, change) {
+            const p = cart[uid].product;
+            
+            // 取得庫存上限 (如果不是數字，預設為無限大 9999)
+            const parsedStock = parseInt(p['庫存']);
+            const maxStock = isNaN(parsedStock) ? 9999 : parsedStock;
+            
             let newVal = cart[uid].qty + change;
             if (newVal < 0) newVal = 0;
+            
+            // 庫存數量防呆檢核
+            if (newVal > maxStock) {
+                alert(`抱歉，【${p['熟豆品項']}】目前庫存僅剩 ${maxStock} 包`);
+                newVal = maxStock;
+            }
+            
             cart[uid].qty = newVal;
             const input = document.getElementById(`qty-${uid}`);
             if (input) input.value = newVal;
+            
             calculateTotal();
         }
 
+        // --- 4. 折扣與運費計算核心 ---
         function calculateTotal() {
-            let total = 0;
+            let originalTotal = 0;
+            let totalItems = 0; // 紀錄有沒有買東西
+            
+            // 1. 計算原始商品總價
             for (let uid in cart) {
-                total += cart[uid].qty * parseInt(cart[uid].product['售價'] || 0);
+                originalTotal += cart[uid].qty * parseInt(cart[uid].product['售價'] || 0);
+                totalItems += cart[uid].qty;
             }
-            document.querySelector('.total-amt').textContent = `$${total}`;
+            
+            // 2. 計算 9 折折扣 (四捨五入)
+            let discountedTotal = Math.round(originalTotal * 0.9);
+            let discountAmt = originalTotal - discountedTotal;
+            
+            // 3. 計算運費 (有買東西才算運費)
+            let shipping = 0;
+            if (totalItems > 0) {
+                // 折扣後滿 1000 免運，否則 38 元
+                shipping = (discountedTotal >= 1000) ? 0 : 38;
+            }
+            
+            // 4. 計算最終結帳總額
+            currentFinalTotal = discountedTotal + shipping;
+            
+            // 5. 更新 UI 畫面
+            document.getElementById('display-original').textContent = `$${originalTotal}`;
+            document.getElementById('display-discount').textContent = `-$${discountAmt}`;
+            document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
+            document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
         }
 
-        // --- 3. 門市搜尋邏輯 ---
+        // --- 5. 門市搜尋邏輯 ---
         let storesData = [];
         fetch('stores.json')
             .then(res => res.json())
@@ -274,7 +344,6 @@
                     li.innerHTML = `<strong>${s.名稱}</strong> (${s.店號})<br><small style="color:#888;">${s.地址}</small>`;
                     li.onclick = () => {
                         sInput.value = s.名稱;
-                        // 重要：格式需包含 | 符號，以便送出時正確解析
                         document.getElementById('store-info').value = `店號：${s.店號} | ${s.名稱} | ${s.地址}`;
                         document.getElementById('selected-store-id').value = s.店號;
                         sList.style.display = 'none';
@@ -290,17 +359,17 @@
             if (e.target !== sInput) sList.style.display = 'none';
         });
 
-        // --- 4. 送出訂單至 GAS (含庫存扣除) ---
+        // --- 6. 送出訂單至 GAS ---
         async function submitOrder() {
-            const totalAmt = parseInt(document.querySelector('.total-amt').textContent.replace('$', ''));
+            if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
+            
             const storeId = document.getElementById('selected-store-id').value;
             const storeInfo = document.getElementById('store-info').value;
             const name = document.getElementById('buyer-name').value.trim();
             const phone = document.getElementById('buyer-phone').value.trim();
             const email = document.getElementById('buyer-email').value.trim();
-            const notes = document.getElementById('buyer-notes').value.trim();
+            let notes = document.getElementById('buyer-notes').value.trim();
 
-            if (totalAmt === 0) return alert("請至少選擇一樣商品！");
             if (!storeId) {
                 alert("請搜尋並選擇您要取貨的 7-11 門市！");
                 sInput.focus();
@@ -322,6 +391,10 @@
                     storeAddr = parts[2];
                 }
             }
+
+            // 將折扣與運費資訊附加到備註中，方便後台查帳
+            const discountInfo = `【系統計算】小計: ${document.getElementById('display-original').textContent}, 折扣: ${document.getElementById('display-discount').textContent}, 運費: ${document.getElementById('display-shipping').textContent}`;
+            notes = notes ? `${notes}\n${discountInfo}` : discountInfo;
 
             // 整理購買明細
             const orderItems = [];
@@ -345,9 +418,9 @@
                 storeName: storeName,
                 storeId: storeId,
                 storeAddress: storeAddr,
-                notes: notes,
+                notes: notes,  // 送出的備註會包含折扣計算明細
                 items: orderItems,
-                totalPrice: totalAmt
+                totalPrice: currentFinalTotal // 傳送最後的應付總額
             };
 
             try {
@@ -357,16 +430,14 @@
                     body: JSON.stringify(payload)
                 });
                 
-                // 解析 GAS 回傳的結果
                 const result = await response.json();
                 
                 if (result.result === 'success') {
                     alert(`🎉 訂單送出成功！\n\n感謝您的訂購，糊塗咖啡會盡快為您安排出貨！☕`);
                     window.location.reload();
                 } else {
-                    // 如果 GAS 發生錯誤，會把錯誤訊息印出來
                     console.error("後端錯誤:", result.error);
-                    alert("資料庫寫入失敗！錯誤訊息：\n" + result.error + "\n\n(請檢查試算表ID、頁籤名稱是否正確，或是否發布了新版本)");
+                    alert("資料庫寫入失敗！錯誤訊息：\n" + result.error);
                     btn.disabled = false;
                     btn.textContent = "確認送出";
                 }
