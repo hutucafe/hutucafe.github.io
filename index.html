@@ -11,10 +11,17 @@
         
        /* 頁首設計 */
         header { background-color: #fff; padding: 25px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; border-top: 6px solid #4e342e; }
-        .header-inner { max-width: 600px; margin: 0 auto; position: relative; text-align: center; }
+        .header-inner { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            position: relative; 
+            text-align: center; 
+            /* 關鍵：增加右邊距，將文字中心點向左推，產生視覺平衡 */
+            padding-right: 60px; 
+        }
         .header-inner h1 { font-size: 24px; color: #3e2723; margin-bottom: 4px; letter-spacing: 2px; }
         .header-inner p { color: #8d6e63; font-size: 13px; }
-        .header-logo { position: absolute; top: -10px; right: 0px; width: 75px; height: auto; mix-blend-mode: multiply; }
+        .header-logo { position: absolute; top: -10px; right: 0px; width: 80px; height: auto; mix-blend-mode: multiply; }
 
         /* 容器與區塊 */
         .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
@@ -87,7 +94,7 @@
     <header>
         <div class="header-inner">
             <img src="logo.jpg" alt="糊塗咖啡 Logo" class="header-logo">
-            <h1>糊塗咖啡 Hutu Cafe</h1>
+            <h1>糊塗咖啡 HUTU CAFE</h1>
             <p>精品生豆精選 ‧ 職人自家烘焙</p>
         </div>
     </header>
