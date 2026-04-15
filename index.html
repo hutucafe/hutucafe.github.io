@@ -5,36 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>糊塗咖啡 Hutu Cafe | 專業訂購系統</title>
     <style>
-        /* 基礎樣式 */
+        /* 基礎樣式重置 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
-        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
+        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 110px; }
         
+        /* 頁首設計 */
         header { background-color: #fff; padding: 25px 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; border-top: 6px solid #4e342e; }
         header h1 { font-size: 24px; color: #3e2723; margin-bottom: 4px; letter-spacing: 2px; }
         header p { color: #8d6e63; font-size: 13px; }
 
+        /* 容器與區塊 */
         .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
         .section { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         .section-title { font-size: 18px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 20px; color: #3e2723; }
         
-        /* 頁籤設計 */
-        .tabs-container { display: flex; overflow-x: auto; border-bottom: 1px solid #eee; margin-bottom: 15px; gap: 10px; padding-bottom: 5px; }
+        /* 頁籤 (Tabs) 設計 */
+        .tabs-container { display: flex; overflow-x: auto; border-bottom: 1px solid #eee; margin-bottom: 15px; gap: 10px; padding-bottom: 5px; scrollbar-width: none; }
+        .tabs-container::-webkit-scrollbar { display: none; }
         .tab-btn { flex: none; padding: 8px 16px; background: #f5f5f5; border: none; border-radius: 20px; font-size: 14px; color: #777; cursor: pointer; transition: 0.3s; }
         .tab-btn.active { background: #6d4c41; color: #fff; font-weight: bold; }
 
-        /* 進階商品卡片 */
+        /* 專業咖啡豆卡片佈局 (對應 9 項資訊) */
         .product-card { border: 1px solid #f0f0f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; position: relative; transition: 0.2s; }
         .product-card:hover { border-color: #d7ccc8; }
-        
         .bean-title { font-size: 17px; font-weight: 800; color: #3e2723; margin-bottom: 8px; display: block; }
         
-        /* 標籤雲 (產區, 處理法, 品種, 烘焙度) */
         .tag-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-        .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #efebe9; color: #5d4037; }
+        .tag { font-size: 11px; padding: 3px 8px; border-radius: 6px; background: #efebe9; color: #5d4037; }
         .tag-roast { background: #fff3e0; color: #e65100; font-weight: bold; }
 
-        /* 風味區塊 */
-        .flavor-box { background: #fafafa; padding: 10px; border-radius: 8px; font-size: 13px; color: #666; margin-bottom: 12px; border-left: 3px solid #d7ccc8; }
+        .flavor-box { background: #fafafa; padding: 10px; border-radius: 8px; font-size: 13px; color: #666; margin-bottom: 12px; border-left: 3px solid #d7ccc8; line-height: 1.4; }
         .flavor-box span { display: block; font-size: 11px; color: #9e9e9e; margin-bottom: 2px; }
 
         .card-footer { display: flex; justify-content: space-between; align-items: flex-end; }
@@ -47,18 +47,28 @@
         .quantity-control button { width: 30px; height: 30px; background: #fff; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 18px; color: #5d4037; }
         .quantity-control input { width: 36px; text-align: center; border: none; background: none; font-size: 15px; font-weight: bold; }
         
-        /* 搜尋建議與其他表單維持原樣 */
-        .form-group { margin-bottom: 15px; }
+        /* 表單樣式 */
+        .form-group { margin-bottom: 15px; position: relative; }
         .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: bold; color: #555; }
-        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #fcfcfc; }
-        .suggestions-list { position: absolute; background: #fff; border: 1px solid #ddd; width: 100%; max-height: 200px; overflow-y: auto; z-index: 100; list-style: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; }
-        .suggestions-list li { padding: 12px; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #fcfcfc; transition: 0.3s; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #8d6e63; background: #fff; }
+        .form-group input[readonly] { background: #f0f0f0; color: #888; cursor: not-allowed; }
+        
+        /* 搜尋建議清單 */
+        .suggestions-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; max-height: 200px; overflow-y: auto; z-index: 100; list-style: none; border-radius: 0 0 8px 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; margin-top: -4px; }
+        .suggestions-list li { padding: 12px; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 14px; line-height: 1.4; }
+        .suggestions-list li:hover { background: #fdf8f5; }
 
-        /* 底部欄 */
+        /* 底部結帳列 */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 16px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
-        .bottom-bar .total-label { font-size: 14px; color: #777; }
-        .bottom-bar .total-amt { display: block; font-size: 22px; font-weight: bold; color: #d84315; }
-        .bottom-bar button { background: #3e2723; color: #fff; border: none; padding: 12px 36px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .bottom-bar .total-info { display: flex; flex-direction: column; }
+        .bottom-bar .total-label { font-size: 13px; color: #777; }
+        .bottom-bar .total-amt { font-size: 22px; font-weight: bold; color: #d84315; }
+        .bottom-bar button { background: #3e2723; color: #fff; border: none; padding: 12px 36px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .bottom-bar button:disabled { background: #aaa; }
+        
+        #store-status { font-size: 12px; margin-top: 6px; display: block; color: #888; }
+        .loading-text { text-align: center; color: #8d6e63; padding: 20px; }
     </style>
 </head>
 <body>
@@ -73,19 +83,21 @@
             <div class="section-title">☕ 精選豆單</div>
             <div id="tabs-container" class="tabs-container"></div>
             <div id="product-list">
-                <p style="text-align:center; color:#999; padding:20px;">資料讀取中...</p>
+                <p class="loading-text">正在載入最新豆單...</p>
             </div>
         </div>
 
         <div class="section">
             <div class="section-title">🏪 7-ELEVEN 取貨門市</div>
-            <div class="form-group" style="position:relative;">
-                <label>搜尋門市 (名稱/店號/地址)</label>
+            <div class="form-group">
+                <label>搜尋門市 (名稱/店號/地址) <span style="color:red">*</span></label>
                 <input type="text" id="store-search" placeholder="例如: 集寶" autocomplete="off">
+                <span id="store-status">載入門市資料中...</span>
                 <ul id="store-suggestions" class="suggestions-list"></ul>
             </div>
             <div class="form-group">
-                <input type="text" id="store-info" readonly placeholder="尚未選擇門市" style="background:#f0f0f0;">
+                <label>已選門市資訊</label>
+                <input type="text" id="store-info" readonly placeholder="請先從上方搜尋並選擇門市">
                 <input type="hidden" id="selected-store-id">
             </div>
         </div>
@@ -93,34 +105,40 @@
         <div class="section">
             <div class="section-title">📬 收件資訊</div>
             <div class="form-group">
-                <label>姓名</label>
-                <input type="text" id="buyer-name" placeholder="請輸入真實姓名">
+                <label>姓名 <span style="color:red">*</span></label>
+                <input type="text" id="buyer-name" placeholder="請輸入真實姓名 (取件核對用)">
             </div>
             <div class="form-group">
-                <label>手機</label>
-                <input type="tel" id="buyer-phone" placeholder="09xxxxxxxx" maxlength="10">
+                <label>手機 <span style="color:red">*</span></label>
+                <input type="tel" id="buyer-phone" placeholder="例如: 0912345678" maxlength="10">
             </div>
             <div class="form-group">
-                <label>備註</label>
-                <textarea id="buyer-notes" rows="2" placeholder="磨豆需求或其他說明"></textarea>
+                <label>Email (接收訂單通知)</label>
+                <input type="email" id="buyer-email" placeholder="example@email.com">
+            </div>
+            <div class="form-group">
+                <label>訂單備註</label>
+                <textarea id="buyer-notes" rows="2" placeholder="如有磨豆需求或其他說明請填寫於此"></textarea>
             </div>
         </div>
     </div>
 
     <div class="bottom-bar">
         <div class="total-info">
-            <span class="total-label">訂單總計</span>
+            <span class="total-label">訂單總額</span>
             <span class="total-amt">$0</span>
         </div>
         <button id="submit-btn" onclick="submitOrder()">確認送出</button>
     </div>
 
     <script>
+        // --- 1. GAS 參數設定 ---
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
         let allProductsData = {};
         let currentTab = '';
         let cart = {};
 
+        // --- 2. 豆單讀取與渲染 ---
         async function loadProducts() {
             try {
                 const res = await fetch(GAS_URL);
@@ -142,7 +160,8 @@
                     renderProducts(currentTab);
                 }
             } catch (e) {
-                document.getElementById('product-list').innerHTML = "讀取失敗，請檢查網路。";
+                console.error(e);
+                document.getElementById('product-list').innerHTML = '<p style="text-align:center; color:red; padding:20px;">豆單載入失敗，請檢查網路或 GAS 權限。</p>';
             }
         }
 
@@ -161,18 +180,18 @@
 
         function renderProducts(tabName) {
             const listEl = document.getElementById('product-list');
-            const products = allProductsData[tabName];
+            const products = allProductsData[tabName] || [];
             
             listEl.innerHTML = products.map(p => {
-                // 精確對應您的 9 個欄位
-                const name = p['熟豆品項'] || '未知品項';
+                // 完美對應 9 個專業欄位
+                const name = p['熟豆品項'] || '未命名品項';
                 const origin = p['產區'] || '-';
                 const process = p['處理法'] || '-';
                 const variety = p['品種'] || '-';
                 const roast = p['烘焙度'] || '-';
-                const flavor = p['風味'] || '職人精選風味';
-                const pkg = p['包裝'] || '半磅';
-                const price = p['售價'] || 0;
+                const flavor = p['風味'] || '職人精選推薦';
+                const pkg = p['包裝'] || '未標示';
+                const price = parseInt(p['售價'] || 0);
                 const stock = p['庫存'] || '現貨供應';
                 
                 return `
@@ -217,15 +236,25 @@
         function calculateTotal() {
             let total = 0;
             for (let uid in cart) {
-                total += cart[uid].qty * (cart[uid].product['售價'] || 0);
+                total += cart[uid].qty * parseInt(cart[uid].product['售價'] || 0);
             }
             document.querySelector('.total-amt').textContent = `$${total}`;
         }
 
-        // --- 門市搜尋邏輯 (與先前一致) ---
+        // --- 3. 門市搜尋邏輯 ---
         let storesData = [];
-        fetch('stores.json').then(r => r.json()).then(d => { storesData = d; });
-        
+        fetch('stores.json')
+            .then(res => res.json())
+            .then(data => {
+                storesData = data;
+                const status = document.getElementById('store-status');
+                status.textContent = "門市資料載入完成 ✓";
+                status.style.color = "#2e7d32";
+            })
+            .catch(e => {
+                document.getElementById('store-status').textContent = "無法載入 stores.json 檔案";
+            });
+
         const sInput = document.getElementById('store-search');
         const sList = document.getElementById('store-suggestions');
 
@@ -233,52 +262,61 @@
             const kw = this.value.trim().toLowerCase();
             sList.innerHTML = '';
             if (!kw) { sList.style.display = 'none'; return; }
-            const filtered = storesData.filter(s => s.店號.includes(kw) || s.名稱.includes(kw) || s.地址.includes(kw)).slice(0, 8);
+
+            const filtered = storesData.filter(s => 
+                s.店號.includes(kw) || s.名稱.toLowerCase().includes(kw) || s.地址.includes(kw)
+            ).slice(0, 8);
+
             if (filtered.length > 0) {
                 sList.style.display = 'block';
                 filtered.forEach(s => {
                     const li = document.createElement('li');
-                    li.innerHTML = `<strong>${s.名稱}</strong> (${s.店號})<br><small>${s.地址}</small>`;
+                    li.innerHTML = `<strong>${s.名稱}</strong> (${s.店號})<br><small style="color:#888;">${s.地址}</small>`;
                     li.onclick = () => {
                         sInput.value = s.名稱;
-                        document.getElementById('store-info').value = `${s.名稱} (${s.店號}) - ${s.地址}`;
+                        // 重要：格式需包含 | 符號，以便送出時正確解析
+                        document.getElementById('store-info').value = `店號：${s.店號} | ${s.名稱} | ${s.地址}`;
                         document.getElementById('selected-store-id').value = s.店號;
                         sList.style.display = 'none';
                     };
                     sList.appendChild(li);
                 });
+            } else {
+                sList.style.display = 'none';
             }
         });
 
-        // --- 4. 送出訂單 ---
+        document.addEventListener('click', (e) => {
+            if (e.target !== sInput) sList.style.display = 'none';
+        });
+
+        // --- 4. 送出訂單至 GAS (含庫存扣除) ---
         async function submitOrder() {
-            const totalText = document.querySelector('.total-amt').textContent.replace('$', '');
-            const total = parseInt(totalText);
+            const totalAmt = parseInt(document.querySelector('.total-amt').textContent.replace('$', ''));
             const storeId = document.getElementById('selected-store-id').value;
-            const storeInputVal = document.getElementById('store-info').value; 
+            const storeInfo = document.getElementById('store-info').value;
             const name = document.getElementById('buyer-name').value.trim();
             const phone = document.getElementById('buyer-phone').value.trim();
             const email = document.getElementById('buyer-email').value.trim();
             const notes = document.getElementById('buyer-notes').value.trim();
 
-            if (total === 0) return alert("請至少選擇一樣商品！");
+            if (totalAmt === 0) return alert("請至少選擇一樣商品！");
             if (!storeId) {
                 alert("請搜尋並選擇您要取貨的 7-11 門市！");
-                document.getElementById('store-search').focus();
+                sInput.focus();
                 return;
             }
-            if (!name || !phone) return alert("請完整填寫收件人姓名與手機號碼！");
+            if (!name || !phone) return alert("請填寫完整的姓名與手機號碼！");
 
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
-            btn.textContent = "訂單處理中...";
+            btn.textContent = "處理中...";
 
-            // 解析前端的 store-info 字串，拆解出名稱與地址
-            // 格式假設為: 店號：123456 | 門市名稱 | 門市地址
-            let storeName = "未知門市";
-            let storeAddr = "未知地址";
-            if (storeInputVal.includes('|')) {
-                const parts = storeInputVal.split('|').map(s => s.trim());
+            // 解析門市資訊
+            let storeName = "未知";
+            let storeAddr = "未知";
+            if (storeInfo.includes('|')) {
+                const parts = storeInfo.split('|').map(s => s.trim());
                 if (parts.length >= 3) {
                     storeName = parts[1];
                     storeAddr = parts[2];
@@ -290,13 +328,12 @@
             for (let uid in cart) {
                 if (cart[uid].qty > 0) {
                     const p = cart[uid].product;
-                    const price = parseInt(p['售價'] || 0);
                     orderItems.push({
                         name: p['熟豆品項'],
                         pkg: p['包裝'],
-                        price: price,
+                        price: parseInt(p['售價'] || 0),
                         qty: cart[uid].qty,
-                        subtotal: price * cart[uid].qty
+                        subtotal: parseInt(p['售價'] || 0) * cart[uid].qty
                     });
                 }
             }
@@ -305,26 +342,25 @@
                 name: name,
                 phone: phone,
                 email: email,
-                storeName: storeName,      // 獨立欄位：門市名稱
-                storeId: storeId,          // 獨立欄位：門市店號
-                storeAddress: storeAddr,   // 獨立欄位：門市地址
+                storeName: storeName,
+                storeId: storeId,
+                storeAddress: storeAddr,
                 notes: notes,
                 items: orderItems,
-                totalPrice: total
+                totalPrice: totalAmt
             };
 
             try {
-                // 送出資料至 Google Apps Script
                 await fetch(GAS_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload)
                 });
-                alert(`🎉 訂單送出成功！\n\n收件人：${name}\n取貨門市：${storeName}\n總金額：$${total}\n\n感謝您的訂購，糊塗咖啡會盡快為您安排烘焙與出貨！☕`);
-                window.location.reload(); // 重整頁面
+                alert(`🎉 訂單送出成功！\n\n感謝您的訂購，糊塗咖啡會盡快為您安排出貨！☕`);
+                window.location.reload();
             } catch (e) {
-                console.error("送出失敗", e);
-                alert("訂單送出失敗，請稍後再試或聯繫我們。");
+                console.error("送出失敗:", e);
+                alert("訂單送出失敗，請再試一次或聯繫我們。");
                 btn.disabled = false;
                 btn.textContent = "確認送出";
             }
