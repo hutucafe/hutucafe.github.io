@@ -351,16 +351,28 @@
             };
 
             try {
-                await fetch(GAS_URL, {
+                const response = await fetch(GAS_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload)
                 });
-                alert(`🎉 訂單送出成功！\n\n感謝您的訂購，糊塗咖啡會盡快為您安排出貨！☕`);
-                window.location.reload();
+                
+                // 解析 GAS 回傳的結果
+                const result = await response.json();
+                
+                if (result.result === 'success') {
+                    alert(`🎉 訂單送出成功！\n\n感謝您的訂購，糊塗咖啡會盡快為您安排出貨！☕`);
+                    window.location.reload();
+                } else {
+                    // 如果 GAS 發生錯誤，會把錯誤訊息印出來
+                    console.error("後端錯誤:", result.error);
+                    alert("資料庫寫入失敗！錯誤訊息：\n" + result.error + "\n\n(請檢查試算表ID、頁籤名稱是否正確，或是否發布了新版本)");
+                    btn.disabled = false;
+                    btn.textContent = "確認送出";
+                }
             } catch (e) {
-                console.error("送出失敗:", e);
-                alert("訂單送出失敗，請再試一次或聯繫我們。");
+                console.error("連線錯誤:", e);
+                alert("網路連線失敗，請稍後再試。");
                 btn.disabled = false;
                 btn.textContent = "確認送出";
             }
