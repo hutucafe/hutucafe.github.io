@@ -9,32 +9,38 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 160px; }
         
-        /* 頁首設計 (加入底圖與毛玻璃特效) */
+        /* 頁首設計 (增加高度、漸層遮罩、內容置底) */
         header { 
             position: relative;
-            background-image: url('bg.jpg'); /* ⚠️ 請替換為您的圖片檔名 */
+            background-image: url('bg.jpg'); /* ⚠️ 若您的底圖檔名不同，請在此修改 */
             background-size: cover; 
             background-position: center; 
-            padding: 45px 20px; 
+            /* 1. 調整高度與對齊方式 */
+            min-height: 380px; /* 增加區塊高度，讓圖片能完整呈現 */
+            display: flex;
+            align-items: flex-end; /* 將內部內容推到最下方 */
+            justify-content: center;
+            padding: 20px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
             margin-bottom: 25px; 
             border-top: 6px solid #4e342e; 
         }
 
-        /* 加上深色半透明遮罩，確保文字清楚可見 */
+        /* 2. 漸層遮罩：上方透明（不擋圖片），下方漸暗（凸顯白字） */
         header::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.45); /* 45% 的黑色遮罩 */
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 10%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.8) 100%);
         }
         
         .header-inner { 
+            width: 100%;
             max-width: 600px; 
-            margin: 0 auto; 
             position: relative; 
             text-align: center; 
-            z-index: 1; /* 讓文字與按鈕浮在遮罩上方 */
+            z-index: 1; /* 讓文字浮在遮罩上方 */
+            padding-bottom: 10px; /* 距離最底端留一點呼吸空間 */
         }
 
         .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
@@ -388,166 +394,4 @@
             
             document.getElementById('display-original').textContent = `$${originalTotal}`;
             document.getElementById('display-discount').textContent = `-$${discountAmt}`;
-            document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
-            document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
-        }
-
-        // --- 5. 門市搜尋邏輯 ---
-        let storesData = [];
-        fetch('stores.json')
-            .then(res => res.json())
-            .then(data => {
-                storesData = data;
-                const status = document.getElementById('store-status');
-                status.textContent = "門市資料載入完成 ✓";
-                status.style.color = "#2e7d32";
-            })
-            .catch(e => {
-                document.getElementById('store-status').textContent = "無法載入 stores.json 檔案";
-            });
-
-        const sInput = document.getElementById('store-search');
-        const sList = document.getElementById('store-suggestions');
-
-        sInput.addEventListener('input', function() {
-            const kw = this.value.trim().toLowerCase();
-            sList.innerHTML = '';
-            if (!kw) { sList.style.display = 'none'; return; }
-
-            const filtered = storesData.filter(s => 
-                s.店號.includes(kw) || s.名稱.toLowerCase().includes(kw) || s.地址.includes(kw)
-            ).slice(0, 8);
-
-            if (filtered.length > 0) {
-                sList.style.display = 'block';
-                filtered.forEach(s => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<strong>${s.名稱}</strong> (${s.店號})<br><small style="color:#888;">${s.地址}</small>`;
-                    li.onclick = () => {
-                        sInput.value = s.名稱;
-                        document.getElementById('store-info').value = `店號：${s.店號} | ${s.名稱} | ${s.地址}`;
-                        document.getElementById('selected-store-id').value = s.店號;
-                        sList.style.display = 'none';
-                    };
-                    sList.appendChild(li);
-                });
-            } else {
-                sList.style.display = 'none';
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (e.target !== sInput) sList.style.display = 'none';
-        });
-
-        // --- 6. 送出訂單至 GAS (含 Email 觸發) ---
-        async function submitOrder() {
-            if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
-            
-            const storeId = document.getElementById('selected-store-id').value;
-            const storeInfo = document.getElementById('store-info').value;
-            const name = document.getElementById('buyer-name').value.trim();
-            const phone = document.getElementById('buyer-phone').value.trim();
-            const email = document.getElementById('buyer-email').value.trim();
-            let notes = document.getElementById('buyer-notes').value.trim();
-
-            if (!storeId) {
-                alert("請搜尋並選擇您要取貨的 7-11 門市！");
-                sInput.focus();
-                return;
-            }
-            if (!name || !phone) return alert("請填寫完整的姓名與手機號碼！");
-
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-            btn.textContent = "訂單處理中...";
-
-            let storeName = "未知";
-            let storeAddr = "未知";
-            if (storeInfo.includes('|')) {
-                const parts = storeInfo.split('|').map(s => s.trim());
-                if (parts.length >= 3) {
-                    storeName = parts[1];
-                    storeAddr = parts[2];
-                }
-            }
-
-            const originalTotal = parseInt(document.getElementById('display-original').textContent.replace('$', ''));
-            const discountStr = document.getElementById('display-discount').textContent;
-            const shippingStr = document.getElementById('display-shipping').textContent;
-            const shippingAmt = shippingStr === '免運費' ? 0 : parseInt(shippingStr.replace('$', ''));
-
-            const orderItems = [];
-            let alertItemsText = ''; 
-            for (let uid in cart) {
-                if (cart[uid].qty > 0) {
-                    const p = cart[uid].product;
-                    orderItems.push({
-                        name: p['熟豆品項'],
-                        pkg: p['包裝'],
-                        price: parseInt(p['售價'] || 0),
-                        qty: cart[uid].qty,
-                        subtotal: parseInt(p['售價'] || 0) * cart[uid].qty
-                    });
-                    alertItemsText += `  • ${p['熟豆品項']} (${p['包裝']}) x ${cart[uid].qty}\n`;
-                }
-            }
-
-            const payload = {
-                name: name,
-                phone: phone,
-                email: email,
-                storeName: storeName,
-                storeId: storeId,
-                storeAddress: storeAddr,
-                notes: notes,
-                items: orderItems,
-                originalTotal: originalTotal,
-                discountStr: discountStr,
-                shipping: shippingAmt,
-                totalPrice: currentFinalTotal
-            };
-
-            try {
-                const response = await fetch(GAS_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await response.json();
-                
-                if (result.result === 'success') {
-                    let successMsg = `🎉 訂單已成功送出！\n`;
-                    successMsg += `------------------------------\n`;
-                    successMsg += `【訂購人姓名】${name}\n`;
-                    successMsg += `【購買明細】\n${alertItemsText}`;
-                    successMsg += `------------------------------\n`;
-                    successMsg += `【運費】${shippingStr}\n`;
-                    successMsg += `【結帳總額】$${currentFinalTotal}\n\n`;
-                    
-                    if(email) {
-                        successMsg += `※ 訂單明細已同步寄送至您的 Email。\n`;
-                    }
-                    successMsg += `感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕`;
-
-                    alert(successMsg);
-                    window.location.reload();
-                } else {
-                    console.error("後端錯誤:", result.error);
-                    alert("資料庫寫入失敗！錯誤訊息：\n" + result.error);
-                    btn.disabled = false;
-                    btn.textContent = "確認送出";
-                }
-            } catch (e) {
-                console.error("連線錯誤:", e);
-                alert("網路連線失敗，請稍後再試。");
-                btn.disabled = false;
-                btn.textContent = "確認送出";
-            }
-        }
-
-        window.onload = loadProducts;
-    </script>
-</body>
-</html>
+            document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping
