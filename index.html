@@ -9,22 +9,22 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 160px; }
         
-        /* 頁首設計 (加入響應式高度與底圖調整) */
+        /* 頁首設計 (鎖定圖片大小，不隨寬度變形放大) */
         header { 
             position: relative;
-            background-image: url('bg.jpg'); /* ⚠️ 請確保檔名正確 */
-            background-size: cover; 
-            background-position: center center; /* 確保圖片永遠對齊正中央 */
-            background-repeat: no-repeat;
-            background-color: #3e2723; /* 圖片載入前的過渡底色 */
+            background-image: url('bg.jpg'); /* ⚠️ 若圖片檔名不同請更改 */
             
-            /* 【關鍵修改】動態高度設定，讓圖片比例在手機與電腦上都好看 */
-            height: 40vw; 
-            min-height: 300px; 
-            max-height: 420px; 
+            /* 【關鍵修改】鎖定高度比例，寬度自動，圖片不會再隨螢幕拉寬而暴衝放大 */
+            background-size: auto 100%; 
+            background-position: center center; 
+            background-repeat: no-repeat;
+            background-color: #3e2723; /* 當螢幕極寬時，左右兩側會以深咖啡色自然填滿 */
+            
+            /* 固定區塊高度 */
+            height: 380px; 
             
             display: flex;
-            align-items: flex-end; /* 內部內容靠下對齊 */
+            align-items: flex-end; /* 將內容推至下方 */
             justify-content: center;
             padding: 20px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
@@ -32,12 +32,12 @@
             border-top: 6px solid #4e342e; 
         }
 
-        /* 漸層遮罩：上方透明，下方漸暗 (凸顯文字) */
+        /* 漸層遮罩：上方透明，下方漸暗，讓白色文字清楚浮現 */
         header::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0) 10%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.85) 100%);
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 10%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%);
         }
         
         .header-inner { 
@@ -87,9 +87,9 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
-        /* 【關鍵修改】手機版專屬防跑版微調 */
+        /* 手機版微調 */
         @media (max-width: 600px) {
-            header { min-height: 280px; padding: 15px; }
+            header { height: 280px; padding: 15px; background-size: cover; /* 手機窄螢幕維持填滿效果最好 */ }
             .header-inner h1 { font-size: 24px; }
             .header-inner p { font-size: 13px; margin-bottom: 15px; }
             .nav-item { padding: 6px 12px; font-size: 12px; }
