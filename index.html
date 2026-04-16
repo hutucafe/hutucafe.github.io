@@ -17,22 +17,13 @@
             margin: 0 auto; 
             position: relative; 
             text-align: center; 
-            padding-right: 60px; 
+            /* 移除右側 padding，讓內容完美置中 */
         }
 
         .header-inner h1 { font-size: 24px; color: #3e2723; margin-bottom: 4px; letter-spacing: 2px; }
         .header-inner p { color: #8d6e63; font-size: 13px; margin-bottom: 15px; }
 
-        .header-logo { 
-            position: absolute; 
-            top: -10px; 
-            right: 0px; 
-            width: 80px; 
-            height: auto; 
-            mix-blend-mode: multiply; 
-        }
-
-        /* 主導覽列 (恢復單行並可左右滑動) */
+        /* 主導覽列 (單行並可左右滑動) */
         .main-nav { 
             display: flex; 
             overflow-x: auto; 
@@ -83,7 +74,7 @@
             margin-bottom: 20px; 
             text-align: center; 
             box-shadow: 0 4px 12px rgba(230, 81, 0, 0.15);
-            line-height: 1.6; /* 增加行高，讓斷行後的兩句文字不會太擠 */
+            line-height: 1.6; 
         }
 
         /* 商品卡片 */
@@ -136,14 +127,17 @@
         
         #store-status { font-size: 12px; margin-top: 6px; display: block; color: #888; }
         .loading-text { text-align: center; color: #8d6e63; padding: 20px; }
+
+        /* 底部 Logo 區塊 */
+        .footer-logo-section { text-align: center; padding: 10px 20px 40px; }
+        .footer-logo { width: 180px; max-width: 100%; height: auto; mix-blend-mode: multiply; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="header-inner">
-            <img src="logo.jpg" alt="糊塗咖啡 Logo" class="header-logo">
-            <h1>HUTU CAFE</h1>
+            <h1>糊塗咖啡 HUTU CAFE</h1>
             <p>精品生豆精選 ‧ 職人自家烘焙</p>
             
             <nav class="main-nav">
@@ -158,8 +152,8 @@
 
     <div class="container">
         <div class="promo-banner">
-            🌐 官網限定 全商品 9 折優待 ｜ 🚚 運費 $38 <br>
-            🎉 結帳滿 $1,000 免運 ｜ 🏪 7-ELEVEN 門市取貨付款
+            🌐 官網限定 全商品 9 折優待!｜🚚 運費 $38 <br>
+            🎉 結帳滿 $1,000 免運!｜🏪 7-ELEVEN 門市取貨付款
         </div>
 
         <div class="section">
@@ -203,6 +197,10 @@
                 <label>訂單備註</label>
                 <textarea id="buyer-notes" rows="2" placeholder="如有磨豆需求或其他說明請填寫於此"></textarea>
             </div>
+        </div>
+        
+        <div class="footer-logo-section">
+            <img src="logo.jpg" alt="糊塗咖啡 LINE QR Code" class="footer-logo">
         </div>
     </div>
 
