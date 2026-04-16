@@ -9,16 +9,22 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 160px; }
         
-        /* 頁首設計 (增加高度、漸層遮罩、內容置底) */
+        /* 頁首設計 (加入響應式高度與底圖調整) */
         header { 
             position: relative;
-            background-image: url('bg.jpg'); /* ⚠️ 若您的底圖檔名不同，請在此修改 */
+            background-image: url('bg.jpg'); /* ⚠️ 請確保檔名正確 */
             background-size: cover; 
-            background-position: center; 
-            /* 1. 調整高度與對齊方式 */
-            min-height: 380px; /* 增加區塊高度，讓圖片能完整呈現 */
+            background-position: center center; /* 確保圖片永遠對齊正中央 */
+            background-repeat: no-repeat;
+            background-color: #3e2723; /* 圖片載入前的過渡底色 */
+            
+            /* 【關鍵修改】動態高度設定，讓圖片比例在手機與電腦上都好看 */
+            height: 40vw; 
+            min-height: 300px; 
+            max-height: 420px; 
+            
             display: flex;
-            align-items: flex-end; /* 將內部內容推到最下方 */
+            align-items: flex-end; /* 內部內容靠下對齊 */
             justify-content: center;
             padding: 20px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
@@ -26,12 +32,12 @@
             border-top: 6px solid #4e342e; 
         }
 
-        /* 2. 漸層遮罩：上方透明（不擋圖片），下方漸暗（凸顯白字） */
+        /* 漸層遮罩：上方透明，下方漸暗 (凸顯文字) */
         header::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0) 10%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.8) 100%);
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 10%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.85) 100%);
         }
         
         .header-inner { 
@@ -39,8 +45,8 @@
             max-width: 600px; 
             position: relative; 
             text-align: center; 
-            z-index: 1; /* 讓文字浮在遮罩上方 */
-            padding-bottom: 10px; /* 距離最底端留一點呼吸空間 */
+            z-index: 1; /* 浮在遮罩上方 */
+            padding-bottom: 5px; 
         }
 
         .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
@@ -57,7 +63,7 @@
         }
         .main-nav::-webkit-scrollbar { display: none; }
 
-        /* 頁籤改為半透明毛玻璃質感 */
+        /* 毛玻璃頁籤 */
         .nav-item { 
             flex: none;
             text-decoration: none;
@@ -67,8 +73,8 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 20px;
             background-color: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(8px); /* 毛玻璃模糊效果 */
-            -webkit-backdrop-filter: blur(8px); /* 支援 Safari */
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px); 
             transition: 0.3s;
             white-space: nowrap; 
             text-shadow: 0 1px 2px rgba(0,0,0,0.3);
@@ -79,6 +85,14 @@
             border-color: #fff;
             text-shadow: none;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* 【關鍵修改】手機版專屬防跑版微調 */
+        @media (max-width: 600px) {
+            header { min-height: 280px; padding: 15px; }
+            .header-inner h1 { font-size: 24px; }
+            .header-inner p { font-size: 13px; margin-bottom: 15px; }
+            .nav-item { padding: 6px 12px; font-size: 12px; }
         }
 
         /* 容器與區塊 */
