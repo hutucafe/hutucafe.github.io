@@ -371,7 +371,7 @@
             if (e.target !== sInput) sList.style.display = 'none';
         });
 
-        // --- 6. 送出訂單至 GAS ---
+       // --- 6. 送出訂單至 GAS (含 Email 觸發) ---
         async function submitOrder() {
             if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
             
@@ -380,7 +380,7 @@
             const name = document.getElementById('buyer-name').value.trim();
             const phone = document.getElementById('buyer-phone').value.trim();
             const email = document.getElementById('buyer-email').value.trim();
-            let notes = document.getElementById('buyer-notes').value.trim();
+            const notes = document.getElementById('buyer-notes').value.trim();
 
             if (!storeId) {
                 alert("請搜尋並選擇您要取貨的 7-11 門市！");
@@ -391,7 +391,7 @@
 
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
-            btn.textContent = "處理中...";
+            btn.textContent = "訂單處理中...";
 
             // 解析門市資訊
             let storeName = "未知";
@@ -404,12 +404,15 @@
                 }
             }
 
-            // 將折扣與運費資訊附加到備註中，方便後台查帳
-            const discountInfo = `【系統計算】小計: ${document.getElementById('display-original').textContent}, 折扣: ${document.getElementById('display-discount').textContent}, 運費: ${document.getElementById('display-shipping').textContent}`;
-            notes = notes ? `${notes}\n${discountInfo}` : discountInfo;
+            // 取得畫面上算好的原價、折扣與運費
+            const originalTotal = parseInt(document.getElementById('display-original').textContent.replace('$', ''));
+            const discountStr = document.getElementById('display-discount').textContent;
+            const shippingStr = document.getElementById('display-shipping').textContent;
+            const shippingAmt = shippingStr === '免運費' ? 0 : parseInt(shippingStr.replace('$', ''));
 
-            // 整理購買明細
+            // 整理購買明細，準備給 Alert 與 Email 使用
             const orderItems = [];
+            let alertItemsText = ''; // 專門給跳出視窗看的文字明細
             for (let uid in cart) {
                 if (cart[uid].qty > 0) {
                     const p = cart[uid].product;
@@ -420,6 +423,7 @@
                         qty: cart[uid].qty,
                         subtotal: parseInt(p['售價'] || 0) * cart[uid].qty
                     });
+                    alertItemsText += `  • ${p['熟豆品項']} (${p['包裝']}) x ${cart[uid].qty}\n`;
                 }
             }
 
@@ -430,9 +434,12 @@
                 storeName: storeName,
                 storeId: storeId,
                 storeAddress: storeAddr,
-                notes: notes,  // 送出的備註會包含折扣計算明細
+                notes: notes,
                 items: orderItems,
-                totalPrice: currentFinalTotal // 傳送最後的應付總額
+                originalTotal: originalTotal, // 原價
+                discountStr: discountStr,     // 折扣字串 (例如 -$100)
+                shipping: shippingAmt,        // 運費數字
+                totalPrice: currentFinalTotal // 最終總額
             };
 
             try {
@@ -445,7 +452,21 @@
                 const result = await response.json();
                 
                 if (result.result === 'success') {
-                    alert(`🎉 訂單送出成功！\n\n感謝您的訂購，糊塗咖啡會盡快為您安排出貨！☕`);
+                    // 組合豐富的成功提示視窗
+                    let successMsg = `🎉 訂單已成功送出！\n`;
+                    successMsg += `------------------------------\n`;
+                    successMsg += `【訂購人姓名】${name}\n`;
+                    successMsg += `【購買明細】\n${alertItemsText}`;
+                    successMsg += `------------------------------\n`;
+                    successMsg += `【運費】${shippingStr}\n`;
+                    successMsg += `【結帳總額】$${currentFinalTotal}\n\n`;
+                    
+                    if(email) {
+                        successMsg += `※ 訂單明細已同步寄送至您的 Email。\n`;
+                    }
+                    successMsg += `感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕`;
+
+                    alert(successMsg);
                     window.location.reload();
                 } else {
                     console.error("後端錯誤:", result.error);
