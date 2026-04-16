@@ -9,47 +9,70 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 160px; }
         
-        /* 頁首設計 */
-        header { background-color: #fff; padding: 25px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; border-top: 6px solid #4e342e; }
+        /* 頁首設計 (加入底圖與毛玻璃特效) */
+        header { 
+            position: relative;
+            background-image: url('bg.jpg'); /* ⚠️ 請替換為您的圖片檔名 */
+            background-size: cover; 
+            background-position: center; 
+            padding: 45px 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
+            margin-bottom: 25px; 
+            border-top: 6px solid #4e342e; 
+        }
+
+        /* 加上深色半透明遮罩，確保文字清楚可見 */
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.45); /* 45% 的黑色遮罩 */
+        }
         
         .header-inner { 
             max-width: 600px; 
             margin: 0 auto; 
             position: relative; 
             text-align: center; 
+            z-index: 1; /* 讓文字與按鈕浮在遮罩上方 */
         }
 
-        /* 調整標題與副標題字體大小 */
-        .header-inner h1 { font-size: 28px; color: #3e2723; margin-bottom: 4px; letter-spacing: 2px; }
-        .header-inner p { color: #8d6e63; font-size: 15px; margin-bottom: 15px; }
+        .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
+        .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
         /* 主導覽列 (單行置中並可左右滑動) */
         .main-nav { 
             display: flex; 
             justify-content: center; 
             overflow-x: auto; 
-            gap: 8px; 
+            gap: 10px; 
             padding: 5px 0;
             scrollbar-width: none;
         }
         .main-nav::-webkit-scrollbar { display: none; }
 
+        /* 頁籤改為半透明毛玻璃質感 */
         .nav-item { 
             flex: none;
             text-decoration: none;
             font-size: 13px;
-            color: #6d4c41;
-            padding: 6px 14px;
-            border: 1px solid #d7ccc8;
+            color: #fff;
+            padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 20px;
-            background-color: #fff;
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px); /* 毛玻璃模糊效果 */
+            -webkit-backdrop-filter: blur(8px); /* 支援 Safari */
             transition: 0.3s;
             white-space: nowrap; 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
         .nav-item:hover { 
-            background-color: #6d4c41; 
-            color: #fff; 
-            border-color: #6d4c41;
+            background-color: #fff; 
+            color: #4e342e; 
+            border-color: #fff;
+            text-shadow: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
         /* 容器與區塊 */
@@ -157,7 +180,7 @@
         </div>
 
         <div class="section">
-            <div class="section-title">☕ 糊塗咖啡精選品項</div>
+            <div class="section-title">☕ 精選豆單</div>
             <div id="tabs-container" class="tabs-container"></div>
             <div id="product-list">
                 <p class="loading-text">正在載入最新豆單...</p>
