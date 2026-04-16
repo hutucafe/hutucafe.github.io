@@ -3,104 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HUTU CAFE | 精品精品豆訂購</title>
+    <title>糊塗咖啡 Hutu Cafe | 專業訂購系統</title>
     <style>
-        /* 品牌核心色彩設定 */
-        :root {
-            --bg-color: #fcf9f6;        /* 燕麥暖灰 */
-            --primary-coffee: #2c1810;  /* 深濃縮色 */
-            --accent-clay: #8d6e63;     /* 煙燻陶土 */
-            --soft-white: #ffffff;
-            --border-light: #e9e2db;
-            --text-muted: #7a6e67;
+        /* 基礎樣式重置 */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
+        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 160px; }
+        
+        /* 頁首設計 */
+        header { background-color: #fff; padding: 25px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; border-top: 6px solid #4e342e; }
+        
+        .header-inner { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            position: relative; 
+            text-align: center; 
+            padding-right: 60px; /* 維持 Logo 空間的視覺平衡 */
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Optima', 'PingFang TC', '微軟正黑體', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--primary-coffee); line-height: 1.6; padding-bottom: 180px; }
-        
-        /* 頁首質感提升 */
-        header { background-color: var(--soft-white); padding: 40px 20px 30px; box-shadow: 0 4px 20px rgba(44, 24, 16, 0.05); margin-bottom: 25px; border-top: 8px solid var(--primary-coffee); position: relative; }
-        
-        .header-inner { max-width: 600px; margin: 0 auto; position: relative; text-align: center; padding-right: 70px; }
-        .header-inner h1 { font-size: 28px; font-weight: 800; color: var(--primary-coffee); margin-bottom: 6px; letter-spacing: 4px; text-transform: uppercase; }
-        .header-inner p { color: var(--accent-clay); font-size: 13px; letter-spacing: 2px; margin-bottom: 20px; font-weight: 500; }
+        .header-inner h1 { font-size: 24px; color: #3e2723; margin-bottom: 4px; letter-spacing: 2px; }
+        .header-inner p { color: #8d6e63; font-size: 13px; margin-bottom: 15px; }
 
-        .header-logo { position: absolute; top: -15px; right: -5px; width: 85px; height: auto; mix-blend-mode: multiply; filter: contrast(1.1); }
+        .header-logo { 
+            position: absolute; 
+            top: -10px; 
+            right: 0px; 
+            width: 80px; 
+            height: auto; 
+            mix-blend-mode: multiply; 
+        }
 
-        /* 主導覽列 - 磨砂簡約設計 */
-        .main-nav { display: flex; justify-content: center; gap: 10px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
+        /* 主導覽列 (6個頁籤) */
+        .main-nav { 
+            display: flex; 
+            justify-content: center; 
+            gap: 8px; 
+            overflow-x: auto; 
+            padding: 5px 0;
+            scrollbar-width: none;
+        }
         .main-nav::-webkit-scrollbar { display: none; }
 
         .nav-item { 
-            flex: none; text-decoration: none; font-size: 13px; color: var(--text-muted); padding: 7px 18px; 
-            border: 1px solid var(--border-light); border-radius: 50px; background-color: var(--soft-white); 
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); white-space: nowrap; font-weight: 500;
+            flex: none;
+            text-decoration: none;
+            font-size: 13px;
+            color: #6d4c41;
+            padding: 6px 14px;
+            border: 1px solid #d7ccc8;
+            border-radius: 20px;
+            background-color: #fff;
+            transition: 0.3s;
+            white-space: nowrap;
         }
-        .nav-item:hover { background-color: var(--primary-coffee); color: #fff; border-color: var(--primary-coffee); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .nav-item:hover { 
+            background-color: #6d4c41; 
+            color: #fff; 
+            border-color: #6d4c41;
+        }
 
-        /* 內容區塊 */
-        .container { max-width: 600px; margin: 0 auto; padding: 0 15px; }
-        .section { background: var(--soft-white); border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid rgba(233, 226, 219, 0.5); box-shadow: 0 10px 30px rgba(44, 24, 16, 0.03); }
-        .section-title { font-size: 19px; font-weight: bold; border-left: 4px solid var(--primary-coffee); padding-left: 15px; margin-bottom: 25px; color: var(--primary-coffee); letter-spacing: 1px; }
+        /* 容器與區塊 */
+        .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
+        .section { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        .section-title { font-size: 18px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 20px; color: #3e2723; }
         
-        /* 內部切換頁籤 */
-        .tabs-container { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 20px; padding-bottom: 5px; }
-        .tab-btn { 
-            flex: none; padding: 8px 18px; background: #f0edea; border: none; border-radius: 12px; 
-            font-size: 14px; color: var(--text-muted); cursor: pointer; transition: 0.3s; font-weight: 600;
-        }
-        .tab-btn.active { background: var(--primary-coffee); color: #fff; box-shadow: 0 4px 12px rgba(44, 24, 16, 0.2); }
+        /* 產品頁籤 (內部切換) */
+        .tabs-container { display: flex; overflow-x: auto; border-bottom: 1px solid #eee; margin-bottom: 15px; gap: 10px; padding-bottom: 5px; scrollbar-width: none; }
+        .tabs-container::-webkit-scrollbar { display: none; }
+        .tab-btn { flex: none; padding: 8px 16px; background: #f5f5f5; border: none; border-radius: 20px; font-size: 14px; color: #777; cursor: pointer; transition: 0.3s; }
+        .tab-btn.active { background: #6d4c41; color: #fff; font-weight: bold; }
 
         /* 行銷標語 */
-        .promo-banner { background: #fdf2f0; border: 1px solid #fae1dd; color: #b74a38; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-bottom: 20px; text-align: center; letter-spacing: 0.5px; }
+        .promo-banner { background: #fff3e0; border: 1px solid #ffcc80; color: #e65100; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-align: center; }
 
-        /* 進階豆單卡片 (對應 9 項專業資訊) */
-        .product-card { border: 1px solid var(--border-light); border-radius: 18px; padding: 20px; margin-bottom: 20px; background: #fff; transition: all 0.3s ease; }
-        .product-card:hover { transform: scale(1.01); border-color: var(--accent-clay); box-shadow: 0 15px 35px rgba(44, 24, 16, 0.06); }
+        /* 商品卡片 */
+        .product-card { border: 1px solid #f0f0f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; position: relative; transition: 0.2s; }
+        .product-card:hover { border-color: #d7ccc8; }
+        .bean-title { font-size: 17px; font-weight: 800; color: #3e2723; margin-bottom: 8px; display: block; }
         
-        .bean-title { font-size: 19px; font-weight: 800; color: var(--primary-coffee); margin-bottom: 12px; display: block; border-bottom: 1px solid #f4f1ee; padding-bottom: 8px; }
-        
-        .tag-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
-        .tag { font-size: 11px; padding: 4px 10px; border-radius: 6px; background: #f4f1ee; color: var(--accent-clay); font-weight: 600; }
-        .tag-roast { background: #fff4e5; color: #a35200; border: 1px solid #ffe8cc; }
+        .tag-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .tag { font-size: 11px; padding: 3px 8px; border-radius: 6px; background: #efebe9; color: #5d4037; }
+        .tag-roast { background: #fff3e0; color: #e65100; font-weight: bold; }
 
-        .flavor-box { background: #fbfaf8; padding: 15px; border-radius: 12px; font-size: 14px; color: #5a4d46; margin-bottom: 15px; border: 1px solid #f0edea; line-height: 1.6; position: relative; }
-        .flavor-box::before { content: "TASTING NOTES"; display: block; font-size: 9px; color: var(--accent-clay); letter-spacing: 1.5px; margin-bottom: 4px; font-weight: 800; }
+        .flavor-box { background: #fafafa; padding: 10px; border-radius: 8px; font-size: 13px; color: #666; margin-bottom: 12px; border-left: 3px solid #d7ccc8; line-height: 1.4; }
+        .flavor-box span { display: block; font-size: 11px; color: #9e9e9e; margin-bottom: 2px; }
 
         .card-footer { display: flex; justify-content: space-between; align-items: flex-end; }
-        .price-info .pkg { font-size: 12px; color: var(--text-muted); font-weight: 500; }
-        .price-info .amt { font-size: 22px; font-weight: 800; color: #d84315; margin: 2px 0; display: block; }
-        .price-info .stock { font-size: 11px; color: #5d8a66; font-weight: 700; background: #eff7f1; padding: 2px 8px; border-radius: 4px; }
-        .price-info .stock.out-of-stock { color: #c64d4d; background: #fdf2f2; }
+        .price-info { display: flex; flex-direction: column; }
+        .price-info .pkg { font-size: 12px; color: #888; }
+        .price-info .amt { font-size: 20px; font-weight: bold; color: #d84315; }
+        .price-info .stock { font-size: 11px; color: #2e7d32; margin-top: 2px; }
+        .price-info .stock.out-of-stock { color: #d32f2f; font-weight: bold; }
 
-        .quantity-control { display: flex; align-items: center; background: #f8f6f4; border-radius: 12px; padding: 5px; border: 1px solid #eee; }
-        .quantity-control button { width: 34px; height: 34px; background: #fff; border: 1px solid #e0ddd9; border-radius: 10px; cursor: pointer; font-size: 18px; color: var(--primary-coffee); font-weight: bold; }
-        .quantity-control input { width: 40px; text-align: center; border: none; background: none; font-size: 16px; font-weight: 800; color: var(--primary-coffee); }
+        .quantity-control { display: flex; align-items: center; background: #f8f9fa; border-radius: 8px; padding: 4px; border: 1px solid #eee; }
+        .quantity-control button { width: 30px; height: 30px; background: #fff; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 18px; color: #5d4037; }
+        .quantity-control button:disabled { background: #f0f0f0; color: #ccc; cursor: not-allowed; }
+        .quantity-control input { width: 36px; text-align: center; border: none; background: none; font-size: 15px; font-weight: bold; }
         
-        /* 底部明細結帳列 */
-        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(10px); padding: 20px 25px; box-shadow: 0 -10px 30px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: flex-end; z-index: 1000; border-top: 1px solid var(--border-light); }
-        .calc-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500; }
-        .total-row { border-top: 1px solid #eee; margin-top: 8px; padding-top: 8px; }
-        .total-amt { font-size: 28px; font-weight: 900; color: #d84315; }
+        /* 表單樣式 */
+        .form-group { margin-bottom: 15px; position: relative; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: bold; color: #555; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #fcfcfc; transition: 0.3s; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #8d6e63; background: #fff; }
+        .form-group input[readonly] { background: #f0f0f0; color: #888; cursor: not-allowed; }
         
-        #submit-btn { 
-            background: var(--primary-coffee); color: #fff; border: none; padding: 16px 40px; border-radius: 15px; 
-            font-size: 17px; font-weight: 800; cursor: pointer; transition: 0.3s; height: 56px; letter-spacing: 2px;
-            box-shadow: 0 8px 20px rgba(44, 24, 16, 0.2);
-        }
-        #submit-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(44, 24, 16, 0.3); background: #3e2723; }
+        /* 搜尋建議清單 */
+        .suggestions-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; z-index: 100; list-style: none; border-radius: 0 0 8px 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; margin-top: -4px; }
+        .suggestions-list li { padding: 12px; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 14px; line-height: 1.4; }
+        .suggestions-list li:hover { background: #fdf8f5; }
 
-        /* 輸入框美化 */
-        .form-group input, .form-group textarea { border: 1px solid #e0ddd9; background: #fcfcfb; border-radius: 14px; padding: 14px; font-weight: 500; }
-        .form-group input:focus { border-color: var(--accent-clay); background: #fff; box-shadow: 0 0 0 4px rgba(141, 110, 99, 0.1); }
+        /* 底部結帳列 */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 12px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: flex-end; z-index: 1000; }
+        .bottom-bar .total-info { flex: 1; margin-right: 15px; }
+        .calc-row { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 3px; }
+        .calc-row.text-red { color: #d84315; }
+        .calc-row.total-row { border-top: 1px solid #eee; margin-top: 5px; padding-top: 5px; align-items: center; }
+        .total-label { font-size: 15px; font-weight: bold; color: #333; }
+        .total-amt { font-size: 24px; font-weight: bold; color: #d84315; }
+        
+        .bottom-bar button { background: #3e2723; color: #fff; border: none; padding: 14px 28px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; height: 50px; }
+        .bottom-bar button:disabled { background: #aaa; cursor: not-allowed; }
+        
+        #store-status { font-size: 12px; margin-top: 6px; display: block; color: #888; }
+        .loading-text { text-align: center; color: #8d6e63; padding: 20px; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="header-inner">
-            <img src="logo.jpg" alt="HUTU CAFE" class="header-logo">
-            <h1>HUTU CAFE</h1>
+            <img src="logo.jpg" alt="糊塗咖啡 Logo" class="header-logo">
+            <h1>糊塗咖啡 Hutu Cafe</h1>
             <p>精品生豆精選 ‧ 職人自家烘焙</p>
             
             <nav class="main-nav">
@@ -116,48 +148,371 @@
 
     <div class="container">
         <div class="section">
-            <div class="section-title">☕ 現貨豆單訂購</div>
-            <div class="promo-banner">🎉 全站商品 9 折優待中 ‧ 滿 $1,000 即享免運 🎉</div>
+            <div class="section-title">☕ 精選豆單</div>
+            <div class="promo-banner">🎉 全站商品 9 折優待！結帳滿 $1,000 再享免運費 🎉</div>
             <div id="tabs-container" class="tabs-container"></div>
             <div id="product-list">
-                <p class="loading-text" style="text-align:center; padding:40px; color:var(--accent-clay); font-weight:600;">焙煎熟成中，請稍候...</p>
+                <p class="loading-text">正在載入最新豆單...</p>
             </div>
         </div>
 
         <div class="section">
             <div class="section-title">🏪 7-ELEVEN 取貨門市</div>
-            <div class="form-group" style="position:relative;">
-                <label>搜尋門市</label>
-                <input type="text" id="store-search" placeholder="輸入門市名稱、店號或地址" autocomplete="off">
-                <ul id="store-suggestions" class="suggestions-list" style="position:absolute; background:#fff; width:100%; z-index:100; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.1); list-style:none; display:none; margin-top:5px; border:1px solid #eee;"></ul>
+            <div class="form-group">
+                <label>搜尋門市 (名稱/店號/地址) <span style="color:red">*</span></label>
+                <input type="text" id="store-search" placeholder="例如: 集寶" autocomplete="off">
+                <span id="store-status">載入門市資料中...</span>
+                <ul id="store-suggestions" class="suggestions-list"></ul>
             </div>
             <div class="form-group">
-                <input type="text" id="store-info" readonly placeholder="尚未選取門市" style="background:#f8f6f4; border:none;">
+                <label>已選門市資訊</label>
+                <input type="text" id="store-info" readonly placeholder="請先從上方搜尋並選擇門市">
                 <input type="hidden" id="selected-store-id">
             </div>
         </div>
 
         <div class="section">
             <div class="section-title">📬 收件資訊</div>
-            <div class="form-group"><label>收件姓名</label><input type="text" id="buyer-name" placeholder="請填寫真實姓名"></div>
-            <div class="form-group"><label>手機號碼</label><input type="tel" id="buyer-phone" maxlength="10" placeholder="09xxxxxxxx"></div>
-            <div class="form-group"><label>Email</label><input type="email" id="buyer-email" placeholder="接收訂單成立通知信"></div>
-            <div class="form-group"><label>訂單備註</label><textarea id="buyer-notes" rows="2" placeholder="磨豆需求或其他特別交代"></textarea></div>
+            <div class="form-group">
+                <label>姓名 <span style="color:red">*</span></label>
+                <input type="text" id="buyer-name" placeholder="請輸入真實姓名 (取件核對用)">
+            </div>
+            <div class="form-group">
+                <label>手機 <span style="color:red">*</span></label>
+                <input type="tel" id="buyer-phone" placeholder="例如: 0912345678" maxlength="10">
+            </div>
+            <div class="form-group">
+                <label>Email (接收訂單通知)</label>
+                <input type="email" id="buyer-email" placeholder="example@email.com">
+            </div>
+            <div class="form-group">
+                <label>訂單備註</label>
+                <textarea id="buyer-notes" rows="2" placeholder="如有磨豆需求或其他說明請填寫於此"></textarea>
+            </div>
         </div>
     </div>
 
     <div class="bottom-bar">
-        <div class="total-info" style="flex:1;">
-            <div class="calc-row"><span>商品總計</span><span id="display-original">$0</span></div>
-            <div class="calc-row" style="color:#d84315;"><span>9 折優惠</span><span id="display-discount">-$0</span></div>
-            <div class="calc-row"><span>物流運費</span><span id="display-shipping">$0</span></div>
-            <div class="calc-row total-row"><span class="total-amt" style="font-size:16px; color:var(--primary-coffee); font-weight:bold;">應付金額</span><span class="total-amt"></span></div>
+        <div class="total-info">
+            <div class="calc-row"><span class="label">商品小計</span><span id="display-original">$0</span></div>
+            <div class="calc-row text-red"><span class="label">全站 9 折</span><span id="display-discount">-$0</span></div>
+            <div class="calc-row"><span class="label">運費 (滿千免運)</span><span id="display-shipping">$0</span></div>
+            <div class="calc-row total-row">
+                <span class="total-label">結帳總額</span>
+                <span class="total-amt">$0</span>
+            </div>
         </div>
-        <button id="submit-btn" onclick="submitOrder()">結帳送出</button>
+        <button id="submit-btn" onclick="submitOrder()">確認送出</button>
     </div>
 
     <script>
-        // ... 此處貼入您原本的 JavaScript 完整邏輯 ...
+        // --- 1. 全域變數設定 ---
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
+        let allProductsData = {};
+        let currentTab = '';
+        let cart = {};
+        let currentFinalTotal = 0;
+
+        // --- 2. 豆單讀取與渲染 ---
+        async function loadProducts() {
+            try {
+                const res = await fetch(GAS_URL);
+                const data = await res.json();
+                allProductsData = data;
+
+                let idCounter = 1;
+                for (let tab in allProductsData) {
+                    allProductsData[tab].forEach(p => {
+                        p.uid = 'p_' + idCounter++;
+                        cart[p.uid] = { product: p, qty: 0 };
+                    });
+                }
+
+                const tabs = Object.keys(allProductsData);
+                if (tabs.length > 0) {
+                    currentTab = tabs[0];
+                    renderTabs(tabs);
+                    renderProducts(currentTab);
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('product-list').innerHTML = '<p style="text-align:center; color:red; padding:20px;">豆單載入失敗，請檢查網路或 GAS 權限。</p>';
+            }
+        }
+
+        function renderTabs(tabs) {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = tabs.map(tab => `
+                <button class="tab-btn ${tab === currentTab ? 'active' : ''}" onclick="switchTab('${tab}')">${tab}</button>
+            `).join('');
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            renderTabs(Object.keys(allProductsData));
+            renderProducts(tabName);
+        }
+
+        function renderProducts(tabName) {
+            const listEl = document.getElementById('product-list');
+            const products = allProductsData[tabName] || [];
+            
+            listEl.innerHTML = products.map(p => {
+                const name = p['熟豆品項'] || '未命名品項';
+                const origin = p['產區'] || '-';
+                const process = p['處理法'] || '-';
+                const variety = p['品種'] || '-';
+                const roast = p['烘焙度'] || '-';
+                const flavor = p['風味'] || '職人精選推薦';
+                const pkg = p['包裝'] || '未標示';
+                const price = parseInt(p['售價'] || 0);
+                
+                const rawStock = p['庫存'];
+                const parsedStock = parseInt(rawStock);
+                const isOutOfStock = parsedStock === 0;
+                
+                let stockDisplay = `庫存：${rawStock || '現貨'}`;
+                let stockClass = 'stock';
+                if (isOutOfStock) {
+                    stockDisplay = '無庫存';
+                    stockClass = 'stock out-of-stock';
+                }
+                
+                const disableAddBtn = isOutOfStock ? 'disabled' : '';
+                
+                return `
+                    <div class="product-card">
+                        <span class="bean-title">${name}</span>
+                        <div class="tag-group">
+                            <span class="tag">${origin}</span>
+                            <span class="tag">${process}</span>
+                            <span class="tag">${variety}</span>
+                            <span class="tag tag-roast">${roast}</span>
+                        </div>
+                        <div class="flavor-box">
+                            <span>風味描述：</span>
+                            ${flavor}
+                        </div>
+                        <div class="card-footer">
+                            <div class="price-info">
+                                <span class="pkg">規格：${pkg}</span>
+                                <span class="amt">$${price}</span>
+                                <span class="${stockClass}">${stockDisplay}</span>
+                            </div>
+                            <div class="quantity-control">
+                                <button onclick="updateQty('${p.uid}', -1)">-</button>
+                                <input type="number" id="qty-${p.uid}" value="${cart[p.uid].qty}" readonly>
+                                <button onclick="updateQty('${p.uid}', 1)" ${disableAddBtn}>+</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- 3. 數量更新與防呆限制 ---
+        function updateQty(uid, change) {
+            const p = cart[uid].product;
+            const parsedStock = parseInt(p['庫存']);
+            const maxStock = isNaN(parsedStock) ? 9999 : parsedStock;
+            
+            let newVal = cart[uid].qty + change;
+            if (newVal < 0) newVal = 0;
+            
+            if (newVal > maxStock) {
+                alert(`抱歉，【${p['熟豆品項']}】目前庫存僅剩 ${maxStock} 包`);
+                newVal = maxStock;
+            }
+            
+            cart[uid].qty = newVal;
+            const input = document.getElementById(`qty-${uid}`);
+            if (input) input.value = newVal;
+            
+            calculateTotal();
+        }
+
+        // --- 4. 折扣與運費計算核心 ---
+        function calculateTotal() {
+            let originalTotal = 0;
+            let totalItems = 0; 
+            
+            for (let uid in cart) {
+                originalTotal += cart[uid].qty * parseInt(cart[uid].product['售價'] || 0);
+                totalItems += cart[uid].qty;
+            }
+            
+            let discountedTotal = Math.round(originalTotal * 0.9);
+            let discountAmt = originalTotal - discountedTotal;
+            
+            let shipping = 0;
+            if (totalItems > 0) {
+                shipping = (discountedTotal >= 1000) ? 0 : 38;
+            }
+            
+            currentFinalTotal = discountedTotal + shipping;
+            
+            document.getElementById('display-original').textContent = `$${originalTotal}`;
+            document.getElementById('display-discount').textContent = `-$${discountAmt}`;
+            document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
+            document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
+        }
+
+        // --- 5. 門市搜尋邏輯 ---
+        let storesData = [];
+        fetch('stores.json')
+            .then(res => res.json())
+            .then(data => {
+                storesData = data;
+                const status = document.getElementById('store-status');
+                status.textContent = "門市資料載入完成 ✓";
+                status.style.color = "#2e7d32";
+            })
+            .catch(e => {
+                document.getElementById('store-status').textContent = "無法載入 stores.json 檔案";
+            });
+
+        const sInput = document.getElementById('store-search');
+        const sList = document.getElementById('store-suggestions');
+
+        sInput.addEventListener('input', function() {
+            const kw = this.value.trim().toLowerCase();
+            sList.innerHTML = '';
+            if (!kw) { sList.style.display = 'none'; return; }
+
+            const filtered = storesData.filter(s => 
+                s.店號.includes(kw) || s.名稱.toLowerCase().includes(kw) || s.地址.includes(kw)
+            ).slice(0, 8);
+
+            if (filtered.length > 0) {
+                sList.style.display = 'block';
+                filtered.forEach(s => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${s.名稱}</strong> (${s.店號})<br><small style="color:#888;">${s.地址}</small>`;
+                    li.onclick = () => {
+                        sInput.value = s.名稱;
+                        document.getElementById('store-info').value = `店號：${s.店號} | ${s.名稱} | ${s.地址}`;
+                        document.getElementById('selected-store-id').value = s.店號;
+                        sList.style.display = 'none';
+                    };
+                    sList.appendChild(li);
+                });
+            } else {
+                sList.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target !== sInput) sList.style.display = 'none';
+        });
+
+        // --- 6. 送出訂單至 GAS (含 Email 觸發) ---
+        async function submitOrder() {
+            if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
+            
+            const storeId = document.getElementById('selected-store-id').value;
+            const storeInfo = document.getElementById('store-info').value;
+            const name = document.getElementById('buyer-name').value.trim();
+            const phone = document.getElementById('buyer-phone').value.trim();
+            const email = document.getElementById('buyer-email').value.trim();
+            let notes = document.getElementById('buyer-notes').value.trim();
+
+            if (!storeId) {
+                alert("請搜尋並選擇您要取貨的 7-11 門市！");
+                sInput.focus();
+                return;
+            }
+            if (!name || !phone) return alert("請填寫完整的姓名與手機號碼！");
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.textContent = "訂單處理中...";
+
+            let storeName = "未知";
+            let storeAddr = "未知";
+            if (storeInfo.includes('|')) {
+                const parts = storeInfo.split('|').map(s => s.trim());
+                if (parts.length >= 3) {
+                    storeName = parts[1];
+                    storeAddr = parts[2];
+                }
+            }
+
+            const originalTotal = parseInt(document.getElementById('display-original').textContent.replace('$', ''));
+            const discountStr = document.getElementById('display-discount').textContent;
+            const shippingStr = document.getElementById('display-shipping').textContent;
+            const shippingAmt = shippingStr === '免運費' ? 0 : parseInt(shippingStr.replace('$', ''));
+
+            const orderItems = [];
+            let alertItemsText = ''; 
+            for (let uid in cart) {
+                if (cart[uid].qty > 0) {
+                    const p = cart[uid].product;
+                    orderItems.push({
+                        name: p['熟豆品項'],
+                        pkg: p['包裝'],
+                        price: parseInt(p['售價'] || 0),
+                        qty: cart[uid].qty,
+                        subtotal: parseInt(p['售價'] || 0) * cart[uid].qty
+                    });
+                    alertItemsText += `  • ${p['熟豆品項']} (${p['包裝']}) x ${cart[uid].qty}\n`;
+                }
+            }
+
+            const payload = {
+                name: name,
+                phone: phone,
+                email: email,
+                storeName: storeName,
+                storeId: storeId,
+                storeAddress: storeAddr,
+                notes: notes,
+                items: orderItems,
+                originalTotal: originalTotal,
+                discountStr: discountStr,
+                shipping: shippingAmt,
+                totalPrice: currentFinalTotal
+            };
+
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.result === 'success') {
+                    let successMsg = `🎉 訂單已成功送出！\n`;
+                    successMsg += `------------------------------\n`;
+                    successMsg += `【訂購人姓名】${name}\n`;
+                    successMsg += `【購買明細】\n${alertItemsText}`;
+                    successMsg += `------------------------------\n`;
+                    successMsg += `【運費】${shippingStr}\n`;
+                    successMsg += `【結帳總額】$${currentFinalTotal}\n\n`;
+                    
+                    if(email) {
+                        successMsg += `※ 訂單明細已同步寄送至您的 Email。\n`;
+                    }
+                    successMsg += `感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕`;
+
+                    alert(successMsg);
+                    window.location.reload();
+                } else {
+                    console.error("後端錯誤:", result.error);
+                    alert("資料庫寫入失敗！錯誤訊息：\n" + result.error);
+                    btn.disabled = false;
+                    btn.textContent = "確認送出";
+                }
+            } catch (e) {
+                console.error("連線錯誤:", e);
+                alert("網路連線失敗，請稍後再試。");
+                btn.disabled = false;
+                btn.textContent = "確認送出";
+            }
+        }
+
+        window.onload = loadProducts;
     </script>
 </body>
 </html>
