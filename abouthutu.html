@@ -48,7 +48,16 @@
 
         .line-link { color: inherit; text-decoration: none; transition: 0.3s; display: inline-block; }
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
-        .line-icon { width: 18px; height: 18px; vertical-align: middle; margin-right: 4px; margin-bottom: 3px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+        
+        .line-img-icon {
+            width: 22px; 
+            height: auto;
+            vertical-align: middle;
+            margin-right: 4px;
+            position: relative;
+            top: -2px; 
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); 
+        }
 
         /* 主導覽列 */
         .main-nav { display: flex; justify-content: center; overflow-x: auto; gap: 10px; padding: 5px 0; scrollbar-width: none; }
@@ -81,8 +90,8 @@
         .cr-card { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 15px; display: flex; align-items: center; margin-bottom: 12px; transition: 0.3s; }
         .cr-card:hover { border-color: #d7ccc8; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-2px); }
         .cr-score { font-size: 36px; font-weight: 900; color: #b71c1c; margin-right: 15px; min-width: 60px; text-align: center; }
-        .cr-desc h4 { font-size: 16px; color: #333; margin-bottom: 4px; }
-        .cr-desc p { font-size: 13px; color: #777; }
+        .cr-desc h4 { font-size: 16px; color: #333; margin-bottom: 4px; font-weight: bold; }
+        .cr-desc p { font-size: 13px; color: #666; line-height: 1.5; }
 
         /* 獎狀圖片 */
         .cert-img { width: 100%; border-radius: 8px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; }
@@ -106,10 +115,8 @@
             <h1>糊塗咖啡 HUTU CAFE</h1>
             <p>職人嚴選 ‧ 極致烘焙 ‧ 
                 <a href="https://lin.ee/6oPqPhD" target="_blank" class="line-link">
-                    <svg class="line-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.122.303.079.778.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.572-3.843 2.572-5.992z" fill="#06C755"/>
-                        <path d="M7.421 14.331H4.667c-.218 0-.395-.177-.395-.395V7.472c0-.218.177-.395.395-.395h2.754c.218 0 .395.177.395.395v.395c0 .218-.177.395-.395.395H5.457v5.674h1.964c.218 0 .395.177.395.395v.395c0 .218-.177.395-.395.395zm4.846 0H10.59c-.218 0-.395-.177-.395-.395V7.472c0-.218.177-.395.395-.395h1.677c.218 0 .395.177.395.395v6.464c0 .218-.177.395-.395.395zm5.727-4.103v3.708c0 .218-.177.395-.395.395h-1.677c-.218 0-.395-.177-.395-.395V7.472c0-.218.177-.395.395-.395h1.677c.218 0 .395.177.395.395v3.708l3.149-4.041c.08-.106.216-.164.354-.148.136.015.25.097.306.216.015.031.022.064.022.097v6.464c0 .218-.177.395-.395.395h-1.677c-.218 0-.395-.177-.395-.395V10.23l-3.148 4.041c-.08.106-.216.164-.354.148-.137-.014-.25-.097-.306-.216-.015-.031-.022-.064-.022-.097zm4.767-6.059c0-.218.177-.395.395-.395h3.111c.218 0 .395.177.395.395v.395c0 .218-.177.395-.395.395h-2.716v1.391h2.716c.218 0 .395.177.395.395v.395c0 .218-.177.395-.395.395h-2.716v1.411h2.716c.218 0 .395.177.395.395v.395c0 .218-.177.395-.395.395H22.76c-.218 0-.395-.177-.395-.395V8.169z" fill="#FFFFFF"/>
-                    </svg>LineBC：@hutucafe
+                    <img src="line_logo.svg" alt="LINE" class="line-img-icon">
+                    LineBC：@hutucafe
                 </a>
             </p>
             
@@ -130,7 +137,7 @@
                 糊塗咖啡 HUTU CAFE 由烘豆師<span class="highlight">牛頓王</span>創立。我們將看似感性的咖啡烘焙，注入嚴謹客觀的科學精神。
             </p>
             <p class="about-text">
-                透過精準的數據分析，掌握每一批次生豆的含水量、水活性與生豆密度，並為藝伎、耶加雪菲等高海拔精品豆種，量身打造專屬的烘焙曲線。我們堅持職人手作的極致，確保每一鍋咖啡豆都能完美釋放其獨特的風土潛力與純粹風味。
+                透過精準的數據分析，掌握每一批次生豆的含水量、水活性與生豆密度，並量身打造專屬的烘焙曲線。我們堅持職人手作的極致，確保每一鍋咖啡豆都能完美釋放其獨特的風土潛力與純粹風味。
             </p>
         </div>
 
@@ -144,15 +151,15 @@
                 <div class="cr-card">
                     <div class="cr-score">94</div>
                     <div class="cr-desc">
-                        <h4>Coffee Review 卓越評級</h4>
-                        <p>Hutu Cafe Roastery 榮獲 94 分極高評價，展現優異的風味層次與烘焙工藝。</p>
+                        <h4>巴拿馬 藝伎 (Panama Geisha)</h4>
+                        <p>馥郁的熱帶水果與茉莉花香，口感滑順，專屬烘焙曲線徹底釋放豆體的細緻層次。</p>
                     </div>
                 </div>
                 <div class="cr-card">
                     <div class="cr-score">93</div>
                     <div class="cr-desc">
-                        <h4>Coffee Review 優異評級</h4>
-                        <p>以精準的烘焙曲線，穩定發揮精品咖啡豆的迷人香氣與醇厚口感。</p>
+                        <h4>衣索比亞 耶加雪菲 (Ethiopia Yirgacheffe)</h4>
+                        <p>明亮花香與柑橘酸調完美結合，甜感悠長，展現高海拔純淨風土與精準烘焙工藝。</p>
                     </div>
                 </div>
             </a>
@@ -161,12 +168,12 @@
         <div class="section">
             <div class="section-title">🏆 歷年賽事殊榮</div>
             <p class="about-text">
-                烘豆師牛頓王透過科學化分析與敏銳的感官杯測，在激烈的咖啡烘焙賽事中屢創佳績，以實力證明我們對完美風味的追求。
+                糊塗咖啡的烘豆師透過科學化分析與敏銳的感官杯測，在激烈的咖啡烘焙賽事中屢創佳績，以實力證明我們對完美風味的追求。
             </p>
             
             <ul class="award-list">
-                <li><strong>咖啡烘烘烘 烘豆賽 —— 榮獲 冠軍</strong></li>
-                <li>咖啡烘烘烘 烘豆賽 —— 榮獲 第六名</li>
+                <li><strong>2022 咖啡烘烘烘 12月 年底賽 —— 榮獲 冠軍</strong></li>
+                <li>2022 咖啡烘烘烘 10月 例賽 —— 榮獲 第六名</li>
             </ul>
 
             <img src="certificate.jpg" alt="咖啡烘烘烘 烘豆賽 冠軍獎狀" class="cert-img">
