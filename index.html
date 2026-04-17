@@ -52,14 +52,26 @@
         .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
         .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
-        /* 🔥 圖片版 LINE 小圖示專屬樣式 */
+        /* 🔥 LINE 超連結專屬樣式 */
+        .line-link {
+            color: inherit; /* 繼承文字原本的顏色，避免變成預設的藍色連結 */
+            text-decoration: none; /* 移除超連結底線 */
+            transition: 0.3s;
+            display: inline-block;
+        }
+        .line-link:hover {
+            opacity: 0.75; /* 滑鼠移過時微變透明，增加點擊回饋感 */
+            transform: scale(1.02);
+        }
+
+        /* 圖片版 LINE 小圖示專屬樣式 */
         .line-img-icon {
-            width: 22px; /* 您可以修改這個數字來調整圖片大小 */
+            width: 22px; 
             height: auto;
             vertical-align: middle;
             margin-right: 4px;
             position: relative;
-            top: -2px; /* 微調垂直位置，讓圖片中心對齊文字中心 */
+            top: -2px; 
             filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); 
         }
 
@@ -194,8 +206,10 @@
         <div class="header-inner">
             <h1>糊塗咖啡 HUTU CAFE</h1>
             <p>職人嚴選 ‧ 極致烘焙 ‧ 
-                <img src="line_logo.svg" alt="LINE" class="line-img-icon">
-                LineBC：@hutucafe
+                <a href="https://lin.ee/6oPqPhD" target="_blank" class="line-link">
+                    <img src="line_logo.svg" alt="LINE" class="line-img-icon">
+                    ：@hutucafe
+                </a>
             </p>
             
             <nav class="main-nav">
