@@ -102,6 +102,17 @@
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
         .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; transition: 0.3s; display: inline-block; width: 100%; max-width: 400px; text-align: center; letter-spacing: 2px; }
         .bottom-bar a:hover { background: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3); }
+
+        /* 圖片版 LINE 小圖示專屬樣式 */
+        .line-img-icon {
+            width: 22px; 
+            height: auto;
+            vertical-align: middle;
+            margin-right: 4px;
+            position: relative;
+            top: -2px; 
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); 
+        }
     </style>
 </head>
 <body>
@@ -111,10 +122,8 @@
             <h1>糊塗咖啡 HUTU CAFE</h1>
             <p>職人嚴選 ‧ 極致烘焙 ‧ 
                 <a href="https://lin.ee/6oPqPhD" target="_blank" class="line-link">
-                    <svg class="line-icon" viewBox="0 0 496 512" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="248" cy="218" r="160" fill="#FFFFFF" />
-                        <path fill="#06C755" d="M248 8C111.1 8 0 102.6 0 218.4c0 104.2 82.5 190.2 195.4 207.9 11.5 1.8 26.6 5.5 30.6 13.9 3.5 7.4 2.4 21.4 1.5 29.5-1.5 13.8-9.8 48.7-10 49.6-1.5 8.1-7.2 21.6 14.5 12.3 22.1-9.4 119.5-68.5 163.6-113.6C458 355.2 496 292.1 496 218.4 496 102.6 384.9 8 248 8zm-72.3 277.6h-54.8c-5.4 0-9.8-4.4-9.8-9.8V166.4c0-5.4 4.4-9.8 9.8-9.8h54.8c5.4 0 9.8 4.4 9.8 9.8v89.7h45c5.4 0 9.8 4.4 9.8 9.8v19.6c0 5.4-4.4 9.8-9.8-9.8zm76.2-9.8v-109.4c0-5.4-4.4-9.8-9.8-9.8h-19.6c-5.4 0-9.8 4.4-9.8 9.8v109.4c0 5.4 4.4 9.8 9.8 9.8h19.6c5.4 0 9.8-4.4 9.8-9.8zm114.6 0V166.4c0-5.4-4.4-9.8-9.8-9.8h-19.6c-5.4 0-9.8 4.4-9.8 9.8v56l-41.9-63.5c-1.3-2-3.5-3.3-5.9-3.3h-16.7c-5.4 0-9.8 4.4-9.8 9.8v109.4c0 5.4 4.4 9.8 9.8 9.8h19.6c5.4 0 9.8-4.4 9.8-9.8v-56l41.9 63.5c1.3 2 3.5 3.3 5.9 3.3h16.7c5.4 0 9.8-4.4 9.8-9.8zm83.3-19.6h-54.8v-23.7h54.8c5.4 0 9.8-4.4 9.8-9.8v-19.6c0-5.4-4.4-9.8-9.8-9.8h-54.8v-23.7h54.8c5.4 0 9.8-4.4 9.8-9.8v-19.6c0-5.4-4.4-9.8-9.8-9.8H346c-5.4 0-9.8 4.4-9.8 9.8v109.4c0 5.4 4.4 9.8 9.8 9.8h83.3c5.4 0 9.8-4.4 9.8-9.8v-19.6c0-5.4-4.4-9.8-9.8-9.8z"/>
-                    </svg>LineBC：@hutucafe
+                    <img src="line_logo.svg" alt="LINE" class="line-img-icon">
+                    LineBC：@hutucafe
                 </a>
             </p>
             
@@ -143,7 +152,7 @@
         <div class="section">
             <div class="section-title">🌟 國際權威評鑑肯定</div>
             <p class="about-text">
-                糊塗咖啡秉持對品質的堅持，參與全球最具指標性的咖啡評鑑權威機構 <strong>Coffee Review</strong>，並屢獲卓越高分肯定，讓台灣的自家烘焙實力被世界看見。
+                糊塗咖啡秉持對品質的堅持，參與全球最具指標性的咖啡評鑑權威機構 <strong>Coffee Review</strong>，共有 6 款咖啡榮獲卓越高分肯定，讓台灣的自家烘焙實力被世界看見。
             </p>
             
             <div class="cr-list">
@@ -151,42 +160,42 @@
                     <div class="cr-score">94</div>
                     <div class="cr-desc">
                         <h4>Ethiopia Banko Gotiti</h4>
-                        <p>散發迷人茉莉花香與水蜜桃甜感，伴隨明亮酸值，口感如絲綢般滑順，尾韻綿長。</p>
-                    </div>
-                </a>
-                <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
-                    <div class="cr-score">94</div>
-                    <div class="cr-desc">
-                        <h4>Blossom Spring Blend (繁花似錦)</h4>
-                        <p>專為新年打造的精品配方。莓果與花香層次豐富，融合巧克力厚實甜感，整體平衡細緻。</p>
-                    </div>
-                </a>
-                <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
-                    <div class="cr-score">94</div>
-                    <div class="cr-desc">
-                        <h4>Panama Boquete Geisha</h4>
-                        <p>奔放的熱帶水果與濃郁橙花香氣，酸甜感明亮乾淨，完美展現高海拔藝伎優雅風土。</p>
+                        <p>佛手柑與柑橘香氣，伴隨檸檬草與可可，酸值明亮，口感絲滑。</p>
                     </div>
                 </a>
                 <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
                     <div class="cr-score">93</div>
                     <div class="cr-desc">
-                        <h4>Ethiopia Yirgacheffe</h4>
-                        <p>經典檸檬柑橘調，夾帶清新伯爵茶香。酸值活潑柔和，口感清爽且帶有迷人蜂蜜甜感。</p>
+                        <h4>Blossom Spring Blend</h4>
+                        <p>黑莓與香草優格香，帶有洛神花風味，酸度明亮多汁，層次複雜。</p>
                     </div>
                 </a>
                 <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
                     <div class="cr-score">93</div>
                     <div class="cr-desc">
-                        <h4>Kenya Nyeri AA</h4>
-                        <p>強烈黑莓與烏梅香氣，果酸飽滿多汁，尾韻帶有獨特洛神花與黑糖香，層次厚實豐滿。</p>
+                        <h4>Ethiopia Halo Hartume</h4>
+                        <p>明亮水仙花與杏桃香氣，點綴可可與檸檬皮，酸甜平衡，糖漿般滑順。</p>
                     </div>
                 </a>
                 <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
                     <div class="cr-score">93</div>
                     <div class="cr-desc">
-                        <h4>Colombia Supremo</h4>
-                        <p>濃郁烤堅果與黑巧克力風味，伴隨微微蘋果酸甜。醇厚度佳，是非常適合日常品飲的經典。</p>
+                        <h4>Kenya Rumukia FCS Maganjo</h4>
+                        <p>黑醋栗與紫羅蘭香氣，帶有檸檬馬鞭草與可可，酸度活潑，口感柔順。</p>
+                    </div>
+                </a>
+                <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
+                    <div class="cr-score">93</div>
+                    <div class="cr-desc">
+                        <h4>Autumn Forest</h4>
+                        <p>黑櫻桃與黑巧克力香，伴隨薰衣草與柑橘皮，果酸明亮，口感飽滿。</p>
+                    </div>
+                </a>
+                <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
+                    <div class="cr-score">93</div>
+                    <div class="cr-desc">
+                        <h4>Passion Paradise</h4>
+                        <p>覆盆子與水仙花香，結合黑巧克力與葡萄柚皮，酸甜多汁，尾韻細緻。</p>
                     </div>
                 </a>
             </div>
