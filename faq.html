@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>常見問題 | 糊塗咖啡 HUTU CAFE</title>
+    <style>
+        /* 基礎樣式重置 */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
+        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
+        
+        /* 頁首設計 */
+        header { 
+            position: relative;
+            background-image: url('bg.jpg'); /* ⚠️ 若圖片檔名不同請更改 */
+            background-size: auto 100%; 
+            background-position: center center; 
+            background-repeat: no-repeat;
+            background-color: #000; 
+            height: 340px; 
+            display: flex;
+            align-items: flex-end; 
+            justify-content: center;
+            padding: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
+            margin-bottom: 25px; 
+            border-top: 6px solid #000; 
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 10%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%);
+        }
+        
+        .header-inner { 
+            width: 100%;
+            max-width: 600px; 
+            position: relative; 
+            text-align: center; 
+            z-index: 1; 
+            padding-bottom: 5px; 
+        }
+
+        .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
+        .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+
+        /* LINE 超連結與圖示專屬樣式 */
+        .line-link { color: inherit; text-decoration: none; transition: 0.3s; display: inline-block; }
+        .line-link:hover { opacity: 0.75; transform: scale(1.02); }
+        .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+
+        /* 主導覽列 */
+        .main-nav { display: flex; justify-content: center; overflow-x: auto; gap: 10px; padding: 5px 0; scrollbar-width: none; }
+        .main-nav::-webkit-scrollbar { display: none; }
+
+        .nav-item { 
+            flex: none; text-decoration: none; font-size: 13px; color: #fff; padding: 8px 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; 
+            background-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); 
+            transition: 0.3s; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .nav-item:hover, .nav-item.active { background-color: #fff; color: #4e342e; border-color: #fff; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+        @media (max-width: 600px) {
+            header { height: 280px; padding: 15px; background-size: cover; }
+            .header-inner h1 { font-size: 24px; }
+            .header-inner p { font-size: 13px; margin-bottom: 15px; }
+            .nav-item { padding: 6px 12px; font-size: 12px; }
+        }
+
+        /* 內容區塊 */
+        .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
+        .section { background: #fff; border-radius: 16px; padding: 25px 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
+        .intro-text { font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.6; }
+
+        /* 區塊 1：訂單查詢表單 */
+        .track-form { display: flex; gap: 8px; margin-top: 10px; }
+        .track-input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fcfcfc; transition: 0.3s; }
+        .track-input:focus { outline: none; border-color: #8d6e63; background: #fff; }
+        .track-btn { background: #6d4c41; color: #fff; border: none; padding: 0 20px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .track-btn:hover { background: #4e342e; }
+
+        /* 區塊 2：沖煮建議圖片 */
+        .guide-img { width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: block; border: 1px solid #eee; }
+        .guide-img:last-child { margin-bottom: 0; }
+
+        /* 區塊 3：FAQ 問答卡片 */
+        .faq-list { display: flex; flex-direction: column; gap: 12px; }
+        .faq-card { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 16px; transition: 0.3s; }
+        .faq-card:hover { border-color: #d7ccc8; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .faq-q { display: flex; align-items: flex-start; font-size: 15px; font-weight: bold; color: #3e2723; margin-bottom: 8px; }
+        .faq-a { display: flex; align-items: flex-start; font-size: 14px; color: #555; line-height: 1.6; }
+        .badge-q { background: #d84315; color: #fff; font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-right: 8px; margin-top: 2px; flex-shrink: 0; font-weight: normal; }
+        .badge-a { background: #8d6e63; color: #fff; font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-right: 8px; margin-top: 2px; flex-shrink: 0; font-weight: normal; }
+
+        /* 底部返回首頁按鈕 */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
+        .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; transition: 0.3s; display: inline-block; width: 100%; max-width: 400px; text-align: center; letter-spacing: 2px; }
+        .bottom-bar a:hover { background: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-inner">
+            <h1>糊塗咖啡 HUTU CAFE</h1>
+            <p>職人嚴選 ‧ 極致烘焙 ‧ 
+                <a href="https://lin.ee/6oPqPhD" target="_blank" class="line-link">
+                    <img src="line_logo.svg" alt="LINE" class="line-img-icon">
+                    @hutucafe
+                </a>
+            </p>
+            
+            <nav class="main-nav">
+                <a href="index.html" class="nav-item">訂購頁</a>
+                <a href="abouthutu.html" class="nav-item">關於糊塗</a>
+                <a href="contactus.html" class="nav-item">聯絡我們</a>
+                <a href="faq.html" class="nav-item active">常見問題</a>
+                <a href="more.html" class="nav-item">更多...</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="section">
+            <div class="section-title">📦 7-ELEVEN 物流狀態查詢</div>
+            <p class="intro-text">
+                請輸入您訂購時留下的手機號碼，即可快速查詢 7-11 賣貨便的最新包裹狀態。
+            </p>
+            <div class="track-form">
+                <input type="tel" id="track-phone" class="track-input" placeholder="請輸入手機號碼 (例如: 0912345678)" maxlength="10">
+                <button class="track-btn" onclick="trackOrder()">立即查詢</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">☕ 糊塗咖啡沖煮建議</div>
+            <p class="intro-text">
+                好的咖啡豆需要合適的萃取方式，為您附上烘豆師專屬的手沖與濾掛咖啡沖煮指南。
+            </p>
+            <img src="pourover.jpg" alt="手沖咖啡建議" class="guide-img">
+            <img src="dripbag.jpg" alt="濾掛咖啡建議" class="guide-img">
+        </div>
+
+        <div class="section">
+            <div class="section-title">💡 常見問題 (FAQ)</div>
+            
+            <div class="faq-list">
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>出貨時間？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>每天晚上 10 點統一出貨。當日 22:00 前的訂單會在當天寄出，之後的訂單隔天處理。</div>
+                </div>
+
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>怎麼取貨？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>商品寄達 7-ELEVEN 後，您會收到簡訊通知。到門市報手機號碼末 3 碼，付費取貨即可。</div>
+                </div>
+
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>可以代客磨粉嗎？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>我們不提供磨粉服務喔。本店只販售原豆，強烈建議您自行使用磨豆機「現磨現沖」，風味最佳。</div>
+                </div>
+
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>退換貨怎麼處理？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>收到商品如有任何問題，請透過 LINE 官方帳號或其他聯絡管道與我們反映。確認後直接退款，不需退回貨物。</div>
+                </div>
+
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>運費怎麼算？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>7-ELEVEN 超商取貨運費為 $38。目前官網訂購享「全站 9 折」優惠，且結帳滿 $1,000 即可享免運費！</div>
+                </div>
+
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>我是咖啡新手，不知道該怎麼選豆？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>本店販售的品項，只要是「淺中焙」的豆子都會帶有酸度，可接受的程度因人而異，歡迎加入官方 LINE 讓我們為您推薦。</div>
+                </div>
+
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>咖啡豆買回來要怎麼保存？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>未開封狀態下可保存 3 個月，請放置於陰涼處，避免陽光直射與高溫潮濕環境即可。</div>
+                </div>
+
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>有建議的沖煮方式嗎？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>依照您自己的習慣沖煮即可。若不熟悉，建議參考上方圖卡，或使用比例 1:15、水溫 92 度、一刀流的方式萃取。</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bottom-bar">
+        <a href="index.html">🛒 前往現貨豆單線上訂購</a>
+    </div>
+
+    <script>
+        function trackOrder() {
+            const phoneInput = document.getElementById('track-phone').value.trim();
+            
+            if (phoneInput === '') {
+                alert('請輸入您的手機號碼！');
+                return;
+            }
+            
+            if (!/^09\d{8}$/.test(phoneInput)) {
+                alert('請輸入正確的手機號碼格式 (例如 0912345678)');
+                return;
+            }
+
+            // 模擬物流查詢系統提示
+            alert(`您輸入的手機號碼：${phoneInput}\n\n此系統目前正在與 7-ELEVEN 賣貨便物流後台串接中，敬請期待！\n\n如需立即查詢包裹狀態，請點擊上方 LINE 圖示聯繫烘豆師，我們將有專人為您服務。`);
+        }
+    </script>
+</body>
+</html>
