@@ -14,7 +14,7 @@
             position: relative;
             background-image: url('bg.jpg'); /* ⚠️ 若圖片檔名不同請更改 */
             
-            /* 【關鍵修改】鎖定高度比例，寬度自動，圖片不會再隨螢幕拉寬而暴衝放大 */
+            /* 鎖定高度比例，寬度自動，圖片不會再隨螢幕拉寬而暴衝放大 */
             background-size: auto 100%; 
             background-position: center center; 
             background-repeat: no-repeat;
@@ -52,13 +52,14 @@
         .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
         .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
-        /* LINE 小圖示專屬樣式 */
-        .line-icon {
-            width: 18px;
-            height: 18px;
+        /* 🔥 圖片版 LINE 小圖示專屬樣式 */
+        .line-img-icon {
+            width: 22px; /* 您可以修改這個數字來調整圖片大小 */
+            height: auto;
             vertical-align: middle;
             margin-right: 4px;
-            margin-bottom: 3px;
+            position: relative;
+            top: -2px; /* 微調垂直位置，讓圖片中心對齊文字中心 */
             filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); 
         }
 
@@ -193,10 +194,8 @@
         <div class="header-inner">
             <h1>糊塗咖啡 HUTU CAFE</h1>
             <p>職人嚴選 ‧ 極致烘焙 ‧ 
-                <svg class="line-icon" viewBox="0 0 496 512" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="248" cy="218" r="160" fill="#FFFFFF" />
-                    <path fill="#06C755" d="M248 8C111.1 8 0 102.6 0 218.4c0 104.2 82.5 190.2 195.4 207.9 11.5 1.8 26.6 5.5 30.6 13.9 3.5 7.4 2.4 21.4 1.5 29.5-1.5 13.8-9.8 48.7-10 49.6-1.5 8.1-7.2 21.6 14.5 12.3 22.1-9.4 119.5-68.5 163.6-113.6C458 355.2 496 292.1 496 218.4 496 102.6 384.9 8 248 8zm-72.3 277.6h-54.8c-5.4 0-9.8-4.4-9.8-9.8V166.4c0-5.4 4.4-9.8 9.8-9.8h54.8c5.4 0 9.8 4.4 9.8 9.8v89.7h45c5.4 0 9.8 4.4 9.8 9.8v19.6c0 5.4-4.4 9.8-9.8-9.8zm76.2-9.8v-109.4c0-5.4-4.4-9.8-9.8-9.8h-19.6c-5.4 0-9.8 4.4-9.8 9.8v109.4c0 5.4 4.4 9.8 9.8 9.8h19.6c5.4 0 9.8-4.4 9.8-9.8zm114.6 0V166.4c0-5.4-4.4-9.8-9.8-9.8h-19.6c-5.4 0-9.8 4.4-9.8 9.8v56l-41.9-63.5c-1.3-2-3.5-3.3-5.9-3.3h-16.7c-5.4 0-9.8 4.4-9.8 9.8v109.4c0 5.4 4.4 9.8 9.8 9.8h19.6c5.4 0 9.8-4.4 9.8-9.8v-56l41.9 63.5c1.3 2 3.5 3.3 5.9 3.3h16.7c5.4 0 9.8-4.4 9.8-9.8zm83.3-19.6h-54.8v-23.7h54.8c5.4 0 9.8-4.4 9.8-9.8v-19.6c0-5.4-4.4-9.8-9.8-9.8h-54.8v-23.7h54.8c5.4 0 9.8-4.4 9.8-9.8v-19.6c0-5.4-4.4-9.8-9.8-9.8H346c-5.4 0-9.8 4.4-9.8 9.8v109.4c0 5.4 4.4 9.8 9.8 9.8h83.3c5.4 0 9.8-4.4 9.8-9.8v-19.6c0-5.4-4.4-9.8-9.8-9.8z"/>
-                </svg> @hutucafe
+                <img src="line-logo.png" alt="LINE" class="line-img-icon">
+                LineBC：@hutucafe
             </p>
             
             <nav class="main-nav">
