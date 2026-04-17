@@ -12,7 +12,7 @@
         /* 頁首設計 */
         header { 
             position: relative;
-            background-image: url('bg.jpg'); /* ⚠️ 若圖片檔名不同請更改 */
+            background-image: url('bg.jpg'); 
             background-size: auto 100%; 
             background-position: center center; 
             background-repeat: no-repeat;
@@ -46,12 +46,10 @@
         .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
         .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
-        /* LINE 超連結與圖示專屬樣式 */
         .line-link { color: inherit; text-decoration: none; transition: 0.3s; display: inline-block; }
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
         .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
-        /* 主導覽列 */
         .main-nav { display: flex; justify-content: center; overflow-x: auto; gap: 10px; padding: 5px 0; scrollbar-width: none; }
         .main-nav::-webkit-scrollbar { display: none; }
 
@@ -76,18 +74,25 @@
         .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
         .intro-text { font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.6; }
 
-        /* 區塊 1：訂單查詢表單 */
+        /* 訂單查詢表單與結果 */
         .track-form { display: flex; gap: 8px; margin-top: 10px; }
         .track-input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fcfcfc; transition: 0.3s; }
         .track-input:focus { outline: none; border-color: #8d6e63; background: #fff; }
         .track-btn { background: #6d4c41; color: #fff; border: none; padding: 0 20px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; white-space: nowrap; }
         .track-btn:hover { background: #4e342e; }
+        .track-btn:disabled { background: #aaa; cursor: not-allowed; }
+        
+        .track-result-box { margin-top: 20px; border: 1px solid #e0e0e0; border-radius: 12px; padding: 15px; background: #fafafa; display: none; }
+        .order-item { border-bottom: 1px dashed #ccc; padding-bottom: 15px; margin-bottom: 15px; }
+        .order-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; background: #eee; color: #555; }
+        .status-badge.highlight { background: #e65100; color: #fff; } 
+        .status-badge.prepare { background: #8d6e63; color: #fff; }
 
-        /* 區塊 2：沖煮建議圖片 */
         .guide-img { width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: block; border: 1px solid #eee; }
         .guide-img:last-child { margin-bottom: 0; }
 
-        /* 區塊 3：FAQ 問答卡片 */
         .faq-list { display: flex; flex-direction: column; gap: 12px; }
         .faq-card { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 16px; transition: 0.3s; }
         .faq-card:hover { border-color: #d7ccc8; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -96,7 +101,6 @@
         .badge-q { background: #d84315; color: #fff; font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-right: 8px; margin-top: 2px; flex-shrink: 0; font-weight: normal; }
         .badge-a { background: #8d6e63; color: #fff; font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-right: 8px; margin-top: 2px; flex-shrink: 0; font-weight: normal; }
 
-        /* 底部返回首頁按鈕 */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
         .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; transition: 0.3s; display: inline-block; width: 100%; max-width: 400px; text-align: center; letter-spacing: 2px; }
         .bottom-bar a:hover { background: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3); }
@@ -127,14 +131,15 @@
     <div class="container">
         
         <div class="section">
-            <div class="section-title">📦 7-ELEVEN 物流狀態查詢</div>
+            <div class="section-title">📦 訂單與物流狀態查詢</div>
             <p class="intro-text">
-                請輸入您訂購時留下的手機號碼，即可快速查詢 7-11 賣貨便的最新包裹狀態。
+                請輸入您訂購時留下的手機號碼，即可快速查詢您近期訂單的交貨便代碼與最新狀態。
             </p>
             <div class="track-form">
-                <input type="tel" id="track-phone" class="track-input" placeholder="請輸入手機號碼 (例如: 0912345678)" maxlength="10">
-                <button class="track-btn" onclick="trackOrder()">立即查詢</button>
+                <input type="tel" id="track-phone" class="track-input" placeholder="手機號碼 (例如: 0912345678)" maxlength="10">
+                <button class="track-btn" id="track-btn" onclick="trackOrder()">立即查詢</button>
             </div>
+            <div id="track-results" class="track-result-box"></div>
         </div>
 
         <div class="section">
@@ -199,21 +204,88 @@
     </div>
 
     <script>
-        function trackOrder() {
+        // ★ 請將此處替換為您實際的 Google Apps Script 網址
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
+
+        // 複製單號並開啟 7-11 查詢網頁的函數
+        function copyAndTrack(trackNum) {
+            navigator.clipboard.writeText(trackNum).then(() => {
+                alert(`已將交貨便代碼：【 ${trackNum} 】複製到您的剪貼簿！\n\n按下確定後將開啟 7-11 查詢網頁，請直接「貼上」單號進行查詢。`);
+                window.open('https://eservice.7-11.com.tw/E-Tracking/search.aspx', '_blank');
+            }).catch(err => {
+                // 若客人的瀏覽器不支援自動複製，提供備用方案
+                prompt('請手動複製下方的交貨便代碼，然後前往 7-11 網頁查詢：', trackNum);
+                window.open('https://eservice.7-11.com.tw/E-Tracking/search.aspx', '_blank');
+            });
+        }
+
+        async function trackOrder() {
             const phoneInput = document.getElementById('track-phone').value.trim();
-            
-            if (phoneInput === '') {
-                alert('請輸入您的手機號碼！');
-                return;
-            }
+            const btn = document.getElementById('track-btn');
+            const resBox = document.getElementById('track-results');
             
             if (!/^09\d{8}$/.test(phoneInput)) {
                 alert('請輸入正確的手機號碼格式 (例如 0912345678)');
                 return;
             }
 
-            // 模擬物流查詢系統提示
-            alert(`您輸入的手機號碼：${phoneInput}\n\n此系統目前正在與 7-ELEVEN 賣貨便物流後台串接中，敬請期待！\n\n如需立即查詢包裹狀態，請點擊上方 LINE 圖示聯繫烘豆師，我們將有專人為您服務。`);
+            btn.disabled = true;
+            btn.textContent = "查詢中...";
+            resBox.style.display = "block";
+            resBox.innerHTML = '<p style="text-align:center; color:#888;">連線資料庫查詢中，請稍候...</p>';
+
+            try {
+                const response = await fetch(GAS_URL + '?phone=' + phoneInput);
+                const data = await response.json();
+
+                if (data.result === 'success') {
+                    if (data.orders.length === 0) {
+                        resBox.innerHTML = '<p style="text-align:center; color:#d84315; font-weight:bold;">查無此手機號碼的近期訂單記錄。</p>';
+                    } else {
+                        let html = `<h4 style="margin-bottom:12px; color:#3e2723;">📞 ${phoneInput} 的近期訂單：</h4>`;
+                        
+                        data.orders.forEach(o => {
+                            // 根據狀態套用不同顏色的標籤
+                            let statusClass = '';
+                            if (o.status.includes('出貨') || o.status.includes('到達') || o.status.includes('店')) {
+                                statusClass = 'highlight'; // 橘色醒目
+                            } else if (o.status.includes('備貨')) {
+                                statusClass = 'prepare'; // 咖啡色
+                            }
+                            
+                            // 判斷是否有填寫交貨便單號，若有則顯示單號及按鈕
+                            let trackingUI = '';
+                            if (o.trackingNum) {
+                                trackingUI = `
+                                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size:14px; color:#555;">交貨便單號：<strong style="color:#3e2723; letter-spacing:1px;">${o.trackingNum}</strong></span>
+                                    <button onclick="copyAndTrack('${o.trackingNum}')" style="background:#e65100; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">追蹤物流 🚚</button>
+                                </div>`;
+                            }
+
+                            html += `
+                            <div class="order-item">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <span style="font-size:13px; color:#888;">📅 ${o.date}</span>
+                                    <span class="status-badge ${statusClass}">${o.status}</span>
+                                </div>
+                                <div style="font-size:14px; font-weight:bold; color:#3e2723; margin-bottom:4px;">🏠 門市：${o.store}</div>
+                                <div style="font-size:13px; color:#666; background:#f0f0f0; padding:8px; border-radius:6px; line-height:1.6;">${o.items}</div>
+                                <div style="font-size:15px; font-weight:bold; color:#d84315; text-align:right; margin-top:8px;">總計: $${o.total}</div>
+                                ${trackingUI}
+                            </div>`;
+                        });
+                        resBox.innerHTML = html;
+                    }
+                } else {
+                    resBox.innerHTML = '<p style="text-align:center; color:red;">伺服器錯誤，請稍後再試。</p>';
+                }
+            } catch (e) {
+                resBox.innerHTML = '<p style="text-align:center; color:red;">網路連線錯誤，請檢查您的網路狀態。</p>';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "立即查詢";
+            }
         }
     </script>
 </body>
