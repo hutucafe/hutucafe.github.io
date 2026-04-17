@@ -577,7 +577,7 @@
 
             const payload = {
                 name: name,
-                phone: phone,
+                phone: "'" + phone,  // 👈 在 phone 前面加上單引號，強制轉為純文字
                 email: email,
                 storeName: storeName,
                 storeId: storeId,
