@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>關於糊塗 | 糊塗咖啡 HUTU CAFE</title>
+    <style>
+        /* 基礎樣式重置 (沿用首頁風格) */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
+        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
+        
+        /* 頁首設計 */
+        header { 
+            position: relative;
+            background-image: url('bg.jpg'); 
+            background-size: auto 100%; 
+            background-position: center center; 
+            background-repeat: no-repeat;
+            background-color: #000; 
+            height: 340px; 
+            display: flex;
+            align-items: flex-end; 
+            justify-content: center;
+            padding: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
+            margin-bottom: 25px; 
+            border-top: 6px solid #000; 
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 10%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%);
+        }
+        
+        .header-inner { 
+            width: 100%;
+            max-width: 600px; 
+            position: relative; 
+            text-align: center; 
+            z-index: 1; 
+            padding-bottom: 5px; 
+        }
+
+        .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
+        .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+
+        .line-link { color: inherit; text-decoration: none; transition: 0.3s; display: inline-block; }
+        .line-link:hover { opacity: 0.75; transform: scale(1.02); }
+        .line-icon { width: 18px; height: 18px; vertical-align: middle; margin-right: 4px; margin-bottom: 3px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+
+        /* 主導覽列 */
+        .main-nav { display: flex; justify-content: center; overflow-x: auto; gap: 10px; padding: 5px 0; scrollbar-width: none; }
+        .main-nav::-webkit-scrollbar { display: none; }
+
+        .nav-item { 
+            flex: none; text-decoration: none; font-size: 13px; color: #fff; padding: 8px 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; 
+            background-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); 
+            transition: 0.3s; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .nav-item:hover, .nav-item.active { background-color: #fff; color: #4e342e; border-color: #fff; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+        @media (max-width: 600px) {
+            header { height: 280px; padding: 15px; background-size: cover; }
+            .header-inner h1 { font-size: 24px; }
+            .header-inner p { font-size: 13px; margin-bottom: 15px; }
+            .nav-item { padding: 6px 12px; font-size: 12px; }
+        }
+
+        /* 內容區塊專屬樣式 */
+        .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
+        .section { background: #fff; border-radius: 16px; padding: 25px 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
+        
+        .about-text { font-size: 15px; color: #555; line-height: 1.8; text-align: justify; margin-bottom: 15px; }
+        .highlight { color: #d84315; font-weight: bold; }
+        
+        /* Coffee Review 分數卡片 */
+        .cr-card { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 15px; display: flex; align-items: center; margin-bottom: 12px; transition: 0.3s; }
+        .cr-card:hover { border-color: #d7ccc8; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-2px); }
+        .cr-score { font-size: 36px; font-weight: 900; color: #b71c1c; margin-right: 15px; min-width: 60px; text-align: center; }
+        .cr-desc h4 { font-size: 16px; color: #333; margin-bottom: 4px; }
+        .cr-desc p { font-size: 13px; color: #777; }
+
+        /* 獎狀圖片 */
+        .cert-img { width: 100%; border-radius: 8px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; }
+        
+        /* 獎項列表 */
+        .award-list { list-style: none; margin-top: 10px; }
+        .award-list li { font-size: 15px; color: #444; padding: 10px 0; border-bottom: 1px dashed #eee; display: flex; align-items: center; }
+        .award-list li::before { content: '🏆'; margin-right: 10px; font-size: 18px; }
+        .award-list li:last-child { border-bottom: none; }
+
+        /* 底部返回按鈕 */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
+        .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; transition: 0.3s; display: inline-block; width: 100%; max-width: 400px; text-align: center; letter-spacing: 2px; }
+        .bottom-bar a:hover { background: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-inner">
+            <h1>糊塗咖啡 HUTU CAFE</h1>
+            <p>職人嚴選 ‧ 極致烘焙 ‧ 
+                <a href="https://lin.ee/6oPqPhD" target="_blank" class="line-link">
+                    <svg class="line-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.122.303.079.778.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.572-3.843 2.572-5.992z" fill="#06C755"/>
+                        <path d="M7.421 14.331H4.667c-.218 0-.395-.177-.395-.395V7.472c0-.218.177-.395.395-.395h2.754c.218 0 .395.177.395.395v.395c0 .218-.177.395-.395.395H5.457v5.674h1.964c.218 0 .395.177.395.395v.395c0 .218-.177.395-.395.395zm4.846 0H10.59c-.218 0-.395-.177-.395-.395V7.472c0-.218.177-.395.395-.395h1.677c.218 0 .395.177.395.395v6.464c0 .218-.177.395-.395.395zm5.727-4.103v3.708c0 .218-.177.395-.395.395h-1.677c-.218 0-.395-.177-.395-.395V7.472c0-.218.177-.395.395-.395h1.677c.218 0 .395.177.395.395v3.708l3.149-4.041c.08-.106.216-.164.354-.148.136.015.25.097.306.216.015.031.022.064.022.097v6.464c0 .218-.177.395-.395.395h-1.677c-.218 0-.395-.177-.395-.395V10.23l-3.148 4.041c-.08.106-.216.164-.354.148-.137-.014-.25-.097-.306-.216-.015-.031-.022-.064-.022-.097zm4.767-6.059c0-.218.177-.395.395-.395h3.111c.218 0 .395.177.395.395v.395c0 .218-.177.395-.395.395h-2.716v1.391h2.716c.218 0 .395.177.395.395v.395c0 .218-.177.395-.395.395h-2.716v1.411h2.716c.218 0 .395.177.395.395v.395c0 .218-.177.395-.395.395H22.76c-.218 0-.395-.177-.395-.395V8.169z" fill="#FFFFFF"/>
+                    </svg>LineBC：@hutucafe
+                </a>
+            </p>
+            
+            <nav class="main-nav">
+                <a href="abouthutu.html" class="nav-item active">關於糊塗</a>
+                <a href="contactus.html" class="nav-item">聯絡我們</a>
+                <a href="faq.html" class="nav-item">常見問題</a>
+                <a href="more.html" class="nav-item">更多...</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="section">
+            <div class="section-title">🌿 品牌精神</div>
+            <p class="about-text">
+                糊塗咖啡 HUTU CAFE 由烘豆師<span class="highlight">牛頓王</span>創立。我們將看似感性的咖啡烘焙，注入嚴謹客觀的科學精神。
+            </p>
+            <p class="about-text">
+                透過精準的數據分析，掌握每一批次生豆的含水量、水活性與生豆密度，並為藝伎、耶加雪菲等高海拔精品豆種，量身打造專屬的烘焙曲線。我們堅持職人手作的極致，確保每一鍋咖啡豆都能完美釋放其獨特的風土潛力與純粹風味。
+            </p>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🌟 國際權威評鑑肯定</div>
+            <p class="about-text">
+                糊塗咖啡秉持對品質的堅持，參與全球最具指標性的咖啡評鑑權威機構 <strong>Coffee Review</strong>，並榮獲卓越高分肯定，讓台灣的自家烘焙實力被世界看見。
+            </p>
+            
+            <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" style="text-decoration: none;">
+                <div class="cr-card">
+                    <div class="cr-score">94</div>
+                    <div class="cr-desc">
+                        <h4>Coffee Review 卓越評級</h4>
+                        <p>Hutu Cafe Roastery 榮獲 94 分極高評價，展現優異的風味層次與烘焙工藝。</p>
+                    </div>
+                </div>
+                <div class="cr-card">
+                    <div class="cr-score">93</div>
+                    <div class="cr-desc">
+                        <h4>Coffee Review 優異評級</h4>
+                        <p>以精準的烘焙曲線，穩定發揮精品咖啡豆的迷人香氣與醇厚口感。</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🏆 歷年賽事殊榮</div>
+            <p class="about-text">
+                烘豆師牛頓王透過科學化分析與敏銳的感官杯測，在激烈的咖啡烘焙賽事中屢創佳績，以實力證明我們對完美風味的追求。
+            </p>
+            
+            <ul class="award-list">
+                <li><strong>咖啡烘烘烘 烘豆賽 —— 榮獲 冠軍</strong></li>
+                <li>咖啡烘烘烘 烘豆賽 —— 榮獲 第六名</li>
+            </ul>
+
+            <img src="certificate.jpg" alt="咖啡烘烘烘 烘豆賽 冠軍獎狀" class="cert-img">
+        </div>
+
+    </div>
+
+    <div class="bottom-bar">
+        <a href="index.html">🛒 前往現貨豆單線上訂購</a>
+    </div>
+
+</body>
+</html>
