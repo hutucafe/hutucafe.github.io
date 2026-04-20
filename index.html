@@ -9,7 +9,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 160px; }
         
-        /* 頁首設計 (鎖定圖片大小，不隨寬度變形放大) */
+        /* 頁首設計 */
         header { 
             position: relative;
             background-image: url('bg.jpg'); /* ⚠️ 若圖片檔名不同請更改 */
@@ -86,7 +86,7 @@
             text-align: center; box-shadow: 0 4px 12px rgba(230, 81, 0, 0.15); line-height: 1.6; 
         }
 
-        /* 🔥 全新高質感商品卡片 */
+        /* 高質感商品卡片 */
         .modern-card { 
             background: #fff; border-radius: 16px; padding: 18px; margin-bottom: 14px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; 
@@ -96,11 +96,12 @@
         
         .card-left { flex: 1; padding-right: 12px; }
         
-        /* 第一列：標題與烘焙度 */
-        .card-title { font-size: 17px; font-weight: 800; color: #333; margin-bottom: 6px; display: flex; align-items: flex-start; flex-wrap: wrap; gap: 6px; line-height: 1.4; }
+        /* 🔥 第一列：標題、烘焙度、庫存 */
+        /* 改為 align-items: center 讓色塊、文字與庫存標籤垂直置中對齊 */
+        .card-title { font-size: 17px; font-weight: 800; color: #333; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; line-height: 1.4; }
         
         /* 七段烘焙度色塊 */
-        .roast-badge { font-size: 12px; padding: 3px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap; margin-top: 1px; }
+        .roast-badge { font-size: 12px; padding: 3px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap; }
         .roast-1-el { background: #f5eedc; color: #5d4037; border: 1px solid #eaddcc; } /* 極淺焙 */
         .roast-2-l { background: #e8d5c4; color: #5d4037; } /* 淺焙 */
         .roast-3-ml { background: #d2a679; color: #fff; } /* 中淺焙 */
@@ -113,14 +114,14 @@
         /* 第二列：產區｜品種｜處理法 */
         .card-meta { font-size: 13px; color: #777; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; }
 
-        /* 第三列：風味與庫存標籤 */
+        /* 第三列：風味標籤 */
         .card-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
         .modern-tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #fdfbf8; border: 1px solid #efe6de; color: #8a6341; }
         
-        /* 庫存狀態顏色 */
-        .stock-normal { background: #edf7ed; border-color: #c8e6c9; color: #2e7d32; font-weight: bold; }
-        .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; }
-        .stock-out { background: #eeeeee; color: #999; border-color: #ccc; }
+        /* 庫存狀態顏色 (現在會放在第一列) */
+        .stock-normal { background: #edf7ed; border-color: #c8e6c9; color: #2e7d32; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
+        .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
+        .stock-out { background: #eeeeee; color: #999; border-color: #ccc; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
 
         /* 右側價格與控制鈕 */
         .card-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 90px; }
@@ -322,7 +323,6 @@
         // 解析 7 段烘焙度對應的顏色 class
         function getRoastClass(roastStr) {
             if (!roastStr) return 'roast-default';
-            // 判斷順序很重要，先篩選極端與複合字詞
             if (roastStr.includes('極淺')) return 'roast-1-el';
             if (roastStr.includes('中淺') || roastStr.includes('淺中')) return 'roast-3-ml';
             if (roastStr.includes('淺')) return 'roast-2-l';
@@ -343,9 +343,27 @@
                 const pkg = p['包裝'] || '';
                 const price = parseInt(p['售價'] || 0);
                 
-                // --- 1. 第一列組合：[烘焙度色塊] + 品項名稱 ---
-                const titleHtml = roast ? 
-                    `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span> ${name}` : name;
+                // --- 計算庫存與狀態標籤 ---
+                const rawStock = p['庫存'];
+                const parsedStock = parseInt(rawStock);
+                const isOutOfStock = parsedStock === 0;
+                let stockTagHtml = '';
+                let disableAddBtn = '';
+                
+                if (isOutOfStock) {
+                    stockTagHtml = `<span class="stock-out">售完</span>`;
+                    disableAddBtn = 'disabled';
+                } else if (!isNaN(parsedStock)) {
+                    if (parsedStock <= 10) {
+                        stockTagHtml = `<span class="stock-warning">剩餘 ${parsedStock}</span>`;
+                    } else {
+                        stockTagHtml = `<span class="stock-normal">庫存 ${parsedStock}</span>`;
+                    }
+                }
+
+                // --- 1. 第一列組合：[烘焙度色塊] + 品項名稱 + [庫存標籤] ---
+                const roastHtml = roast ? `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span> ` : '';
+                const titleHtml = `${roastHtml} <span>${name}</span> ${stockTagHtml}`;
 
                 // --- 2. 第二列組合：產區 ｜ 品種 ｜ 處理法 ---
                 let metaArray = [];
@@ -354,31 +372,13 @@
                 if (p['處理法'] && p['處理法'] !== '-') metaArray.push(p['處理法']);
                 const metaHtml = metaArray.length > 0 ? `<div class="card-meta">${metaArray.join(' ｜ ')}</div>` : '';
 
-                // --- 3. 第三列組合：風味標籤 + 庫存標籤 ---
+                // --- 3. 第三列組合：風味標籤 ---
                 let tagsArray = [];
                 if (p['風味']) {
                     const flavors = p['風味'].split(/[、,，\s]+/);
                     flavors.forEach(f => { if(f.trim() && f !== '-') tagsArray.push(f.trim()); });
                 }
                 const tagsHtml = tagsArray.map(tag => `<span class="modern-tag">${tag}</span>`).join('');
-                
-                // 庫存標籤邏輯 (任何數量皆顯示)
-                const rawStock = p['庫存'];
-                const parsedStock = parseInt(rawStock);
-                const isOutOfStock = parsedStock === 0;
-                let stockTagHtml = '';
-                let disableAddBtn = '';
-                
-                if (isOutOfStock) {
-                    stockTagHtml = `<span class="modern-tag stock-out">售完</span>`;
-                    disableAddBtn = 'disabled';
-                } else if (!isNaN(parsedStock)) {
-                    if (parsedStock <= 10) {
-                        stockTagHtml = `<span class="modern-tag stock-warning">剩餘 ${parsedStock}</span>`;
-                    } else {
-                        stockTagHtml = `<span class="modern-tag stock-normal">庫存 ${parsedStock}</span>`;
-                    }
-                }
 
                 return `
                     <div class="modern-card">
@@ -387,7 +387,6 @@
                             ${metaHtml}
                             <div class="card-tags">
                                 ${tagsHtml}
-                                ${stockTagHtml}
                             </div>
                         </div>
                         <div class="card-right">
@@ -419,7 +418,7 @@
             
             cart[uid].qty = newVal;
             calculateTotal();
-            renderProducts(currentTab); // 更新畫面按鈕狀態
+            renderProducts(currentTab); // 更新畫面按鈕與標籤狀態
         }
 
         function calculateTotal() {
