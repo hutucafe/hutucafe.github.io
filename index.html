@@ -96,8 +96,7 @@
         
         .card-left { flex: 1; padding-right: 12px; }
         
-        /* 🔥 第一列：標題、烘焙度、庫存 */
-        /* 改為 align-items: center 讓色塊、文字與庫存標籤垂直置中對齊 */
+        /* 🔥 第一列：標題、烘焙度 */
         .card-title { font-size: 17px; font-weight: 800; color: #333; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; line-height: 1.4; }
         
         /* 七段烘焙度色塊 */
@@ -111,18 +110,21 @@
         .roast-7-ed { background: #261508; color: #fff; } /* 極深焙 */
         .roast-default { background: #eee; color: #666; }
 
-        /* 第二列：產區｜品種｜處理法 */
-        .card-meta { font-size: 13px; color: #777; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; }
+        /* 🔥 第二列：產區｜品種｜處理法 + 庫存標籤 */
+        .card-meta { 
+            font-size: 13px; color: #777; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; 
+            display: flex; align-items: center; flex-wrap: wrap; gap: 8px; 
+        }
+
+        /* 庫存狀態顏色 */
+        .stock-normal { background: #edf7ed; border-color: #c8e6c9; color: #2e7d32; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
+        .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
+        .stock-out { background: #eeeeee; color: #999; border-color: #ccc; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
 
         /* 第三列：風味標籤 */
         .card-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
         .modern-tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #fdfbf8; border: 1px solid #efe6de; color: #8a6341; }
         
-        /* 庫存狀態顏色 (現在會放在第一列) */
-        .stock-normal { background: #edf7ed; border-color: #c8e6c9; color: #2e7d32; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
-        .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
-        .stock-out { background: #eeeeee; color: #999; border-color: #ccc; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
-
         /* 右側價格與控制鈕 */
         .card-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 90px; }
         .card-price { font-size: 20px; font-weight: 900; color: #b77b3b; display: flex; align-items: baseline; gap: 2px; margin-bottom: 8px; }
@@ -361,16 +363,24 @@
                     }
                 }
 
-                // --- 1. 第一列組合：[烘焙度色塊] + 品項名稱 + [庫存標籤] ---
+                // --- 1. 第一列組合：[烘焙度色塊] + 品項名稱 ---
                 const roastHtml = roast ? `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span> ` : '';
-                const titleHtml = `${roastHtml} <span>${name}</span> ${stockTagHtml}`;
+                const titleHtml = `${roastHtml} <span>${name}</span>`;
 
-                // --- 2. 第二列組合：產區 ｜ 品種 ｜ 處理法 ---
+                // --- 2. 第二列組合：產區 ｜ 品種 ｜ 處理法 + [庫存標籤] ---
                 let metaArray = [];
                 if (p['產區'] && p['產區'] !== '-') metaArray.push(p['產區']);
                 if (p['品種'] && p['品種'] !== '-') metaArray.push(p['品種']);
                 if (p['處理法'] && p['處理法'] !== '-') metaArray.push(p['處理法']);
-                const metaHtml = metaArray.length > 0 ? `<div class="card-meta">${metaArray.join(' ｜ ')}</div>` : '';
+                
+                let metaText = metaArray.join(' ｜ ');
+                let metaHtml = '';
+                if (metaText || stockTagHtml) {
+                    metaHtml = `<div class="card-meta">
+                        ${metaText ? `<span>${metaText}</span>` : ''}
+                        ${stockTagHtml}
+                    </div>`;
+                }
 
                 // --- 3. 第三列組合：風味標籤 ---
                 let tagsArray = [];
