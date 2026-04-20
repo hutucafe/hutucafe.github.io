@@ -1,4 +1,4 @@
-=<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -448,11 +448,12 @@
                     let category = (p.category || '').toLowerCase();
                     let isDiscount = false;
                     
-                    // 🔥 更新折扣邏輯：將分類名稱(category)也納入判斷
+                    // 🔥 修正：包含頁籤(category)的判斷，確保濾掛頁籤能打折
                     if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || rawName.includes('濾掛') || category.includes('濾掛')) {
                         isDiscount = true;
                     }
-                    if (rawName.includes('特賣') || rawName.includes('生豆') || rawName.includes('大包裝') || pkg.includes('大包裝')) {
+                    // 🔥 修正：排除判斷也加入 category (避免特賣會頁籤被誤打折)
+                    if (rawName.includes('特賣') || category.includes('特賣') || rawName.includes('生豆') || category.includes('生豆') || rawName.includes('大包裝') || pkg.includes('大包裝')) {
                         isDiscount = false;
                     }
                     
@@ -543,7 +544,6 @@
             }
             if (!name || !phone) return alert("請填寫完整的姓名與手機號碼！");
             
-            // Email 必填驗證
             if (!email) {
                 alert("請填寫 Email，以便接收完整的訂單明細與出貨通知！");
                 document.getElementById('buyer-email').focus();
@@ -569,7 +569,7 @@
             const shippingStr = document.getElementById('display-shipping').textContent;
             const shippingAmt = shippingStr === '免運費' ? 0 : parseInt(shippingStr.replace('$', ''));
 
-            // 🔥 用來拆分顯示與傳送至 GAS 的陣列
+            // 用於傳遞給後端的獨立陣列
             const discountedOrderItems = [];
             const nonDiscountedOrderItems = [];
             let totalDiscountAmt = 0;
@@ -588,14 +588,14 @@
                     let rawName = (p['熟豆品項'] || '');
                     let category = p.category || '';
                     
-                    // 組合新的品項名稱：頁籤名稱 - 商品名稱
                     let displayName = `${category} - ${rawName}`;
                     let isDiscount = false;
                     
+                    // 🔥 同步最新的折扣判定邏輯
                     if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || rawName.toLowerCase().includes('濾掛') || category.toLowerCase().includes('濾掛')) {
                         isDiscount = true;
                     }
-                    if (rawName.includes('特賣') || rawName.includes('生豆') || rawName.includes('大包裝') || pkg.includes('大包裝')) {
+                    if (rawName.includes('特賣') || category.includes('特賣') || rawName.includes('生豆') || category.includes('生豆') || rawName.includes('大包裝') || pkg.includes('大包裝')) {
                         isDiscount = false;
                     }
 
@@ -620,30 +620,16 @@
                 }
             }
 
-            // 🔥 組合要傳給 GAS 後端的最終 OrderItems 陣列 (自動插入分類標題，讓 Email 表格自動分區)
-            const finalOrderItems = [];
             let alertItemsText = '';
-
-            if (discountedOrderItems.length > 0) {
-                // 插入 Email 表格分隔線
-                finalOrderItems.push({ name: '====== 👇 指定品項 (享 9 折) ====== ', pkg: '-', price: '-', qty: '-', subtotal: '-' });
-                finalOrderItems.push(...discountedOrderItems);
-                finalOrderItems.push({ name: '💡 指定品項折扣金額', pkg: '-', price: '-', qty: '-', subtotal: `-$${totalDiscountAmt}` });
-                
-                // 彈出視窗文字
+            if (discountedText) {
                 alertItemsText += `【指定品項 (享 9 折)】\n${discountedText}`;
                 alertItemsText += `  👉 折扣金額：-$${totalDiscountAmt}\n\n`;
             }
-            
-            if (nonDiscountedOrderItems.length > 0) {
-                // 插入 Email 表格分隔線
-                finalOrderItems.push({ name: '====== 👇 非指定品項 (原價) ====== ', pkg: '-', price: '-', qty: '-', subtotal: '-' });
-                finalOrderItems.push(...nonDiscountedOrderItems);
-                
-                // 彈出視窗文字
+            if (nonDiscountedText) {
                 alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`;
             }
 
+            // 🔥 傳遞給後端的全新 Payload 結構
             const payload = {
                 name: name,
                 phone: "'" + phone,
@@ -652,9 +638,10 @@
                 storeId: storeId,
                 storeAddress: storeAddr,
                 notes: notes,
-                items: finalOrderItems, // 送出包含分隔線的清單給後端畫表格
+                discountedItems: discountedOrderItems,     // 讓後端畫指定品項表格
+                nonDiscountedItems: nonDiscountedOrderItems, // 讓後端畫非指定品項表格
+                totalDiscountAmt: totalDiscountAmt,
                 originalTotal: originalTotal,
-                discountStr: discountStr,
                 shipping: shippingAmt,
                 totalPrice: currentFinalTotal
             };
