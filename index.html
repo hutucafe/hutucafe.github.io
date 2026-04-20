@@ -131,7 +131,7 @@
         .modern-qty button:disabled { color: #ccc; cursor: not-allowed; }
         .modern-qty input { width: 32px; text-align: center; border: none; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; font-size: 14px; font-weight: bold; color: #333; background: transparent; padding: 0; }
 
-        /* 庫存狀態標籤 (移動到右下方) */
+        /* 庫存狀態標籤 */
         .stock-container { margin-top: 8px; display: flex; justify-content: flex-end; width: 100%; }
         .stock-normal { background: #edf7ed; border-color: #c8e6c9; color: #2e7d32; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
         .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
@@ -201,7 +201,7 @@
 
     <div class="container">
         <div class="promo-banner">
-            🌐 官網限定 全商品 9 折優待 ｜ 🚚 運費 $ 38 <br>
+            🌐 指定品項 (100g/200g/濾掛) 享 9 折優待 ｜ 🚚 運費 $ 38 <br>
             🎉 結帳滿 $ 1,000 免運 ｜ 🏪 7-ELEVEN 門市取貨付款
         </div>
 
@@ -259,7 +259,7 @@
     <div class="bottom-bar">
         <div class="total-info">
             <div class="calc-row"><span class="label">商品小計</span><span id="display-original">$0</span></div>
-            <div class="calc-row text-red"><span class="label">全站 9 折</span><span id="display-discount">-$0</span></div>
+            <div class="calc-row text-red"><span class="label">指定品項 9 折</span><span id="display-discount">-$0</span></div>
             <div class="calc-row"><span class="label">運費 (滿千免運)</span><span id="display-shipping">$0</span></div>
             <div class="calc-row total-row">
                 <span class="total-label">結帳總額</span>
@@ -435,14 +435,41 @@
         function calculateTotal() {
             let originalTotal = 0;
             let totalItems = 0; 
+            let discountAmt = 0;
             
             for (let uid in cart) {
-                originalTotal += cart[uid].qty * parseInt(cart[uid].product['售價'] || 0);
-                totalItems += cart[uid].qty;
+                let qty = cart[uid].qty;
+                if (qty > 0) {
+                    let p = cart[uid].product;
+                    let price = parseInt(p['售價'] || 0);
+                    let subtotal = qty * price;
+                    
+                    originalTotal += subtotal;
+                    totalItems += qty;
+                    
+                    // 🔥 單品折扣邏輯判斷
+                    let pkg = (p['包裝'] || '').toLowerCase();
+                    let name = (p['熟豆品項'] || '').toLowerCase();
+                    let isDiscount = false;
+                    
+                    // 只要包裝含 100g、200g 或 名稱/包裝含濾掛，即享折扣
+                    if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || name.includes('濾掛')) {
+                        isDiscount = true;
+                    }
+                    
+                    // 排除特定關鍵字：特賣、大包裝、生豆
+                    if (name.includes('特賣') || name.includes('生豆') || name.includes('大包裝') || pkg.includes('大包裝')) {
+                        isDiscount = false;
+                    }
+                    
+                    if (isDiscount) {
+                        // 計算此品項的折扣金額 (原價 - 打9折並四捨五入)
+                        discountAmt += (subtotal - Math.round(subtotal * 0.9));
+                    }
+                }
             }
             
-            let discountedTotal = Math.round(originalTotal * 0.9);
-            let discountAmt = originalTotal - discountedTotal;
+            let discountedTotal = originalTotal - discountAmt;
             
             let shipping = 0;
             if (totalItems > 0) {
