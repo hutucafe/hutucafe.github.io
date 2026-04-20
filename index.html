@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+=<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -201,9 +201,8 @@
 
     <div class="container">
         <div class="promo-banner">
-            🌐 指定品項 (熟豆100g/熟豆200g/濾掛咖啡) 享 9 折優待! <br>
-            🚚 運費 $ 38🎉 ｜ 結帳滿 $ 1,000 免運 <br> 
-            🏪 7-ELEVEN 門市取貨付款
+            🌐 指定品項 (100g/200g/濾掛) 享 9 折優待 ｜ 🚚 運費 $ 38 <br>
+            🎉 結帳滿 $ 1,000 免運 ｜ 🏪 7-ELEVEN 門市取貨付款
         </div>
 
         <div class="section">
@@ -260,7 +259,7 @@
     <div class="bottom-bar">
         <div class="total-info">
             <div class="calc-row"><span class="label">商品小計</span><span id="display-original">$0</span></div>
-            <div class="calc-row text-red"><span class="label">指定品項 9 折</span><span id="display-discount">-$0</span></div>
+            <div class="calc-row text-red"><span class="label">指定品項折扣 (9折)</span><span id="display-discount">-$0</span></div>
             <div class="calc-row"><span class="label">運費 (滿千免運)</span><span id="display-shipping">$0</span></div>
             <div class="calc-row total-row">
                 <span class="total-label">結帳總額</span>
@@ -295,7 +294,7 @@
                 for (let tab in allProductsData) {
                     allProductsData[tab].forEach(p => {
                         p.uid = 'p_' + idCounter++;
-                        p.category = tab; // 🔥 儲存頁籤名稱
+                        p.category = tab; // 儲存頁籤名稱
                         cart[p.uid] = { product: p, qty: 0 };
                     });
                 }
@@ -445,13 +444,15 @@
                     totalItems += qty;
                     
                     let pkg = (p['包裝'] || '').toLowerCase();
-                    let name = (p['熟豆品項'] || '').toLowerCase();
+                    let rawName = (p['熟豆品項'] || '').toLowerCase();
+                    let category = (p.category || '').toLowerCase();
                     let isDiscount = false;
                     
-                    if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || name.includes('濾掛')) {
+                    // 🔥 更新折扣邏輯：將分類名稱(category)也納入判斷
+                    if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || rawName.includes('濾掛') || category.includes('濾掛')) {
                         isDiscount = true;
                     }
-                    if (name.includes('特賣') || name.includes('生豆') || name.includes('大包裝') || pkg.includes('大包裝')) {
+                    if (rawName.includes('特賣') || rawName.includes('生豆') || rawName.includes('大包裝') || pkg.includes('大包裝')) {
                         isDiscount = false;
                     }
                     
@@ -542,7 +543,7 @@
             }
             if (!name || !phone) return alert("請填寫完整的姓名與手機號碼！");
             
-            // 🔥 新增 Email 必填驗證
+            // Email 必填驗證
             if (!email) {
                 alert("請填寫 Email，以便接收完整的訂單明細與出貨通知！");
                 document.getElementById('buyer-email').focus();
@@ -568,12 +569,14 @@
             const shippingStr = document.getElementById('display-shipping').textContent;
             const shippingAmt = shippingStr === '免運費' ? 0 : parseInt(shippingStr.replace('$', ''));
 
-            const orderItems = [];
+            // 🔥 用來拆分顯示與傳送至 GAS 的陣列
+            const discountedOrderItems = [];
+            const nonDiscountedOrderItems = [];
+            let totalDiscountAmt = 0;
+            
             let discountedText = '';
             let nonDiscountedText = '';
-            let totalDiscountAmt = 0;
 
-            // 🔥 重新梳理訂單明細，加上分類頁籤名稱與折扣判斷
             for (let uid in cart) {
                 let qty = cart[uid].qty;
                 if (qty > 0) {
@@ -585,43 +588,59 @@
                     let rawName = (p['熟豆品項'] || '');
                     let category = p.category || '';
                     
-                    // 組合新的品項名稱 (例如：熟豆-100g - 凱永山 日曬)
+                    // 組合新的品項名稱：頁籤名稱 - 商品名稱
                     let displayName = `${category} - ${rawName}`;
                     let isDiscount = false;
                     
-                    if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || rawName.toLowerCase().includes('濾掛')) {
+                    if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || rawName.toLowerCase().includes('濾掛') || category.toLowerCase().includes('濾掛')) {
                         isDiscount = true;
                     }
                     if (rawName.includes('特賣') || rawName.includes('生豆') || rawName.includes('大包裝') || pkg.includes('大包裝')) {
                         isDiscount = false;
                     }
 
-                    let itemLine = `  • ${displayName} (${p['包裝']}) x ${qty}\n`;
-
-                    if (isDiscount) {
-                        discountedText += itemLine;
-                        totalDiscountAmt += (subtotal - Math.round(subtotal * 0.9));
-                    } else {
-                        nonDiscountedText += itemLine;
-                    }
-
-                    orderItems.push({
-                        name: displayName, // 將包含分類的名稱送至資料庫
+                    let itemObj = {
+                        name: displayName,
                         pkg: p['包裝'],
                         price: price,
                         qty: qty,
                         subtotal: subtotal
-                    });
+                    };
+
+                    let itemLine = `  • ${displayName} (${p['包裝']}) x ${qty}\n`;
+
+                    if (isDiscount) {
+                        discountedText += itemLine;
+                        discountedOrderItems.push(itemObj);
+                        totalDiscountAmt += (subtotal - Math.round(subtotal * 0.9));
+                    } else {
+                        nonDiscountedText += itemLine;
+                        nonDiscountedOrderItems.push(itemObj);
+                    }
                 }
             }
 
-            // 組合拆分後的顯示訊息
+            // 🔥 組合要傳給 GAS 後端的最終 OrderItems 陣列 (自動插入分類標題，讓 Email 表格自動分區)
+            const finalOrderItems = [];
             let alertItemsText = '';
-            if (discountedText) {
+
+            if (discountedOrderItems.length > 0) {
+                // 插入 Email 表格分隔線
+                finalOrderItems.push({ name: '====== 👇 指定品項 (享 9 折) ====== ', pkg: '-', price: '-', qty: '-', subtotal: '-' });
+                finalOrderItems.push(...discountedOrderItems);
+                finalOrderItems.push({ name: '💡 指定品項折扣金額', pkg: '-', price: '-', qty: '-', subtotal: `-$${totalDiscountAmt}` });
+                
+                // 彈出視窗文字
                 alertItemsText += `【指定品項 (享 9 折)】\n${discountedText}`;
                 alertItemsText += `  👉 折扣金額：-$${totalDiscountAmt}\n\n`;
             }
-            if (nonDiscountedText) {
+            
+            if (nonDiscountedOrderItems.length > 0) {
+                // 插入 Email 表格分隔線
+                finalOrderItems.push({ name: '====== 👇 非指定品項 (原價) ====== ', pkg: '-', price: '-', qty: '-', subtotal: '-' });
+                finalOrderItems.push(...nonDiscountedOrderItems);
+                
+                // 彈出視窗文字
                 alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`;
             }
 
@@ -633,12 +652,11 @@
                 storeId: storeId,
                 storeAddress: storeAddr,
                 notes: notes,
-                items: orderItems,
+                items: finalOrderItems, // 送出包含分隔線的清單給後端畫表格
                 originalTotal: originalTotal,
                 discountStr: discountStr,
                 shipping: shippingAmt,
-                totalPrice: currentFinalTotal,
-                formattedDetails: alertItemsText // 將整理好的字串一併拋給後端備用
+                totalPrice: currentFinalTotal
             };
 
             try {
