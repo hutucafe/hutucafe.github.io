@@ -374,7 +374,7 @@
                 if (p['品種'] && p['品種'] !== '-') metaArray.push(p['品種']);
                 if (p['處理法'] && p['處理法'] !== '-') metaArray.push(p['處理法']);
                 
-                let metaText = metaArray.join(' ｜ ');
+                let metaText = metaArray.join('｜');
                 let metaHtml = '';
                 if (metaText) {
                     metaHtml = `<div class="card-meta"><span>${metaText}</span></div>`;
