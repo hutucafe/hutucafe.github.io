@@ -62,7 +62,6 @@
         }
         .nav-item:hover { background-color: #fff; color: #4e342e; border-color: #fff; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
-        /* 手機版微調 */
         @media (max-width: 600px) {
             header { height: 280px; padding: 15px; background-size: cover; }
             .header-inner h1 { font-size: 24px; }
@@ -75,20 +74,19 @@
         .section { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         .section-title { font-size: 18px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 20px; color: #3e2723; }
         
-        /* 產品頁籤 (內部切換) */
+        /* 產品頁籤 */
         .tabs-container { display: flex; overflow-x: auto; border-bottom: 1px solid #eee; margin-bottom: 15px; gap: 10px; padding-bottom: 5px; scrollbar-width: none; }
         .tabs-container::-webkit-scrollbar { display: none; }
         .tab-btn { flex: none; padding: 8px 16px; background: #fff; border: 1px solid #e0e0e0; border-radius: 20px; font-size: 14px; color: #666; cursor: pointer; transition: 0.3s; }
         .tab-btn.active { background: #b8860b; color: #fff; font-weight: bold; border-color: #b8860b; }
 
-        /* 行銷標語 */
         .promo-banner { 
             background: #fff3e0; border: 1px solid #ffcc80; color: #e65100; padding: 15px 15px; 
             border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 20px; 
             text-align: center; box-shadow: 0 4px 12px rgba(230, 81, 0, 0.15); line-height: 1.6; 
         }
 
-        /* 🔥 全新高質感商品卡片設計 */
+        /* 🔥 全新高質感商品卡片 */
         .modern-card { 
             background: #fff; border-radius: 16px; padding: 18px; margin-bottom: 14px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; 
@@ -97,49 +95,45 @@
         .modern-card:hover { border-color: #e0e0e0; box-shadow: 0 6px 16px rgba(0,0,0,0.06); transform: translateY(-1px); }
         
         .card-left { flex: 1; padding-right: 12px; }
-        .card-title { font-size: 16px; font-weight: 800; color: #333; margin-bottom: 8px; line-height: 1.4; display: flex; align-items: flex-start; flex-wrap: wrap; gap: 4px; }
         
-        /* 烘焙度色塊標籤 */
-        .roast-badge { 
-            font-size: 12px; padding: 2px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap; margin-top: 2px;
-        }
-        .roast-light { background: #e8d5c4; color: #5d4037; }         /* 淺焙: 淺奶茶色 */
-        .roast-light-med { background: #c89f7a; color: #fff; }     /* 淺中焙: 焦糖色 */
-        .roast-med { background: #966642; color: #fff; }           /* 中焙: 中棕色 */
-        .roast-med-dark { background: #5d4037; color: #fff; }      /* 中深焙: 咖啡色 */
-        .roast-dark { background: #3e2723; color: #fff; }          /* 深焙: 黑巧克力色 */
+        /* 第一列：標題與烘焙度 */
+        .card-title { font-size: 17px; font-weight: 800; color: #333; margin-bottom: 6px; display: flex; align-items: flex-start; flex-wrap: wrap; gap: 6px; line-height: 1.4; }
+        
+        /* 七段烘焙度色塊 */
+        .roast-badge { font-size: 12px; padding: 3px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap; margin-top: 1px; }
+        .roast-1-el { background: #f5eedc; color: #5d4037; border: 1px solid #eaddcc; } /* 極淺焙 */
+        .roast-2-l { background: #e8d5c4; color: #5d4037; } /* 淺焙 */
+        .roast-3-ml { background: #d2a679; color: #fff; } /* 中淺焙 */
+        .roast-4-m { background: #ab7a4b; color: #fff; } /* 中焙 */
+        .roast-5-md { background: #734a26; color: #fff; } /* 中深焙 */
+        .roast-6-d { background: #4a2c11; color: #fff; } /* 深焙 */
+        .roast-7-ed { background: #261508; color: #fff; } /* 極深焙 */
         .roast-default { background: #eee; color: #666; }
 
-        /* 風味與產區標籤 */
-        .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-        .modern-tag { 
-            font-size: 11px; padding: 3px 8px; border-radius: 4px; 
-            background: #fdfbf8; border: 1px solid #efe6de; color: #8a6341; 
-        }
+        /* 第二列：產區｜品種｜處理法 */
+        .card-meta { font-size: 13px; color: #777; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; }
+
+        /* 第三列：風味與庫存標籤 */
+        .card-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .modern-tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #fdfbf8; border: 1px solid #efe6de; color: #8a6341; }
+        
+        /* 庫存狀態顏色 */
+        .stock-normal { background: #edf7ed; border-color: #c8e6c9; color: #2e7d32; font-weight: bold; }
         .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; }
         .stock-out { background: #eeeeee; color: #999; border-color: #ccc; }
 
+        /* 右側價格與控制鈕 */
         .card-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 90px; }
-        
         .card-price { font-size: 20px; font-weight: 900; color: #b77b3b; display: flex; align-items: baseline; gap: 2px; margin-bottom: 8px; }
         .card-price .unit { font-size: 11px; color: #999; font-weight: normal; }
         
-        /* 數量控制器 (膠囊狀) */
-        .modern-qty { 
-            display: flex; border: 1px solid #e0e0e0; border-radius: 20px; overflow: hidden; 
-            height: 32px; width: 90px; background: #fff;
-        }
-        .modern-qty button { 
-            flex: 1; background: transparent; border: none; font-size: 18px; color: #777; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
-        }
+        .modern-qty { display: flex; border: 1px solid #e0e0e0; border-radius: 20px; overflow: hidden; height: 32px; width: 90px; background: #fff; }
+        .modern-qty button { flex: 1; background: transparent; border: none; font-size: 18px; color: #777; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
         .modern-qty button:hover:not(:disabled) { background: #f5f5f5; color: #333; }
         .modern-qty button:disabled { color: #ccc; cursor: not-allowed; }
-        .modern-qty input { 
-            width: 32px; text-align: center; border: none; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; 
-            font-size: 14px; font-weight: bold; color: #333; background: transparent; padding: 0;
-        }
+        .modern-qty input { width: 32px; text-align: center; border: none; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; font-size: 14px; font-weight: bold; color: #333; background: transparent; padding: 0; }
 
-        /* 🔥 動態載入動畫 (Spinner) */
+        /* 載入動畫 */
         .loader-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; color: #8d6e63; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3e5f5; border-top: 4px solid #8d6e63; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -151,7 +145,6 @@
         .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #8d6e63; background: #fff; }
         .form-group input[readonly] { background: #f0f0f0; color: #888; cursor: not-allowed; }
         
-        /* 搜尋建議清單 */
         .suggestions-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; z-index: 100; list-style: none; border-radius: 0 0 8px 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; margin-top: -4px; }
         .suggestions-list li { padding: 12px; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 14px; line-height: 1.4; }
         .suggestions-list li:hover { background: #fdf8f5; }
@@ -169,12 +162,10 @@
         .bottom-bar button:disabled { background: #aaa; cursor: not-allowed; }
         
         #store-status { font-size: 12px; margin-top: 6px; display: block; color: #888; }
-        
-        /* 底部 Logo 區塊 */
         .footer-logo-section { text-align: center; padding: 10px 20px 40px; }
         .footer-logo { width: 270px; max-width: 100%; height: auto; mix-blend-mode: multiply; }
 
-        /* 自訂彈出視窗 (深色底白字) */
+        /* 自訂彈出視窗 */
         .custom-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
         .modal-content { background-color: #3e2723; color: #fcfcfc; border-radius: 12px; padding: 25px; width: 100%; max-width: 400px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         .modal-content h3 { color: #fff; margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 12px; text-align: center;}
@@ -328,14 +319,17 @@
             renderProducts(tabName);
         }
 
-        // 解析烘焙度對應的顏色 class
+        // 解析 7 段烘焙度對應的顏色 class
         function getRoastClass(roastStr) {
             if (!roastStr) return 'roast-default';
-            if (roastStr.includes('淺中')) return 'roast-light-med';
-            if (roastStr.includes('淺')) return 'roast-light';
-            if (roastStr.includes('中深')) return 'roast-med-dark';
-            if (roastStr.includes('中')) return 'roast-med';
-            if (roastStr.includes('深')) return 'roast-dark';
+            // 判斷順序很重要，先篩選極端與複合字詞
+            if (roastStr.includes('極淺')) return 'roast-1-el';
+            if (roastStr.includes('中淺') || roastStr.includes('淺中')) return 'roast-3-ml';
+            if (roastStr.includes('淺')) return 'roast-2-l';
+            if (roastStr.includes('極深')) return 'roast-7-ed';
+            if (roastStr.includes('中深') || roastStr.includes('深中')) return 'roast-5-md';
+            if (roastStr.includes('深')) return 'roast-6-d';
+            if (roastStr.includes('中')) return 'roast-4-m';
             return 'roast-default';
         }
 
@@ -349,7 +343,26 @@
                 const pkg = p['包裝'] || '';
                 const price = parseInt(p['售價'] || 0);
                 
-                // 處理庫存邏輯
+                // --- 1. 第一列組合：[烘焙度色塊] + 品項名稱 ---
+                const titleHtml = roast ? 
+                    `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span> ${name}` : name;
+
+                // --- 2. 第二列組合：產區 ｜ 品種 ｜ 處理法 ---
+                let metaArray = [];
+                if (p['產區'] && p['產區'] !== '-') metaArray.push(p['產區']);
+                if (p['品種'] && p['品種'] !== '-') metaArray.push(p['品種']);
+                if (p['處理法'] && p['處理法'] !== '-') metaArray.push(p['處理法']);
+                const metaHtml = metaArray.length > 0 ? `<div class="card-meta">${metaArray.join(' ｜ ')}</div>` : '';
+
+                // --- 3. 第三列組合：風味標籤 + 庫存標籤 ---
+                let tagsArray = [];
+                if (p['風味']) {
+                    const flavors = p['風味'].split(/[、,，\s]+/);
+                    flavors.forEach(f => { if(f.trim() && f !== '-') tagsArray.push(f.trim()); });
+                }
+                const tagsHtml = tagsArray.map(tag => `<span class="modern-tag">${tag}</span>`).join('');
+                
+                // 庫存標籤邏輯 (任何數量皆顯示)
                 const rawStock = p['庫存'];
                 const parsedStock = parseInt(rawStock);
                 const isOutOfStock = parsedStock === 0;
@@ -359,30 +372,19 @@
                 if (isOutOfStock) {
                     stockTagHtml = `<span class="modern-tag stock-out">售完</span>`;
                     disableAddBtn = 'disabled';
-                } else if (!isNaN(parsedStock) && parsedStock <= 10) {
-                    stockTagHtml = `<span class="modern-tag stock-warning">剩餘 ${parsedStock}</span>`;
+                } else if (!isNaN(parsedStock)) {
+                    if (parsedStock <= 10) {
+                        stockTagHtml = `<span class="modern-tag stock-warning">剩餘 ${parsedStock}</span>`;
+                    } else {
+                        stockTagHtml = `<span class="modern-tag stock-normal">庫存 ${parsedStock}</span>`;
+                    }
                 }
-
-                // 處理標籤：將產區、處理法、風味都拆成獨立標籤
-                let tagsArray = [];
-                if (p['產區'] && p['產區'] !== '-') tagsArray.push(p['產區']);
-                if (p['處理法'] && p['處理法'] !== '-') tagsArray.push(p['處理法']);
-                if (p['風味']) {
-                    // 用逗號、頓號或空格拆分風味描述
-                    const flavors = p['風味'].split(/[、,，\s]+/);
-                    flavors.forEach(f => { if(f.trim()) tagsArray.push(f.trim()); });
-                }
-                
-                const tagsHtml = tagsArray.map(tag => `<span class="modern-tag">${tag}</span>`).join('');
-                
-                // 組合標題：[烘焙度] + 品名
-                const titleHtml = roast ? 
-                    `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span> ${name}` : name;
 
                 return `
                     <div class="modern-card">
                         <div class="card-left">
                             <div class="card-title">${titleHtml}</div>
+                            ${metaHtml}
                             <div class="card-tags">
                                 ${tagsHtml}
                                 ${stockTagHtml}
@@ -417,9 +419,7 @@
             
             cart[uid].qty = newVal;
             calculateTotal();
-            
-            // 重新渲染該頁籤以更新按鈕狀態 (disabled/enabled)
-            renderProducts(currentTab); 
+            renderProducts(currentTab); // 更新畫面按鈕狀態
         }
 
         function calculateTotal() {
