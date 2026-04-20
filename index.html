@@ -96,7 +96,7 @@
         
         .card-left { flex: 1; padding-right: 12px; }
         
-        /* 🔥 第一列：標題、烘焙度 */
+        /* 第一列：標題、烘焙度 */
         .card-title { font-size: 17px; font-weight: 800; color: #333; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; line-height: 1.4; }
         
         /* 七段烘焙度色塊 */
@@ -110,16 +110,11 @@
         .roast-7-ed { background: #261508; color: #fff; } /* 極深焙 */
         .roast-default { background: #eee; color: #666; }
 
-        /* 🔥 第二列：產區｜品種｜處理法 + 庫存標籤 */
+        /* 第二列：產區｜品種｜處理法 */
         .card-meta { 
             font-size: 13px; color: #777; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; 
             display: flex; align-items: center; flex-wrap: wrap; gap: 8px; 
         }
-
-        /* 庫存狀態顏色 */
-        .stock-normal { background: #edf7ed; border-color: #c8e6c9; color: #2e7d32; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
-        .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
-        .stock-out { background: #eeeeee; color: #999; border-color: #ccc; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap;}
 
         /* 第三列：風味標籤 */
         .card-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -135,6 +130,12 @@
         .modern-qty button:hover:not(:disabled) { background: #f5f5f5; color: #333; }
         .modern-qty button:disabled { color: #ccc; cursor: not-allowed; }
         .modern-qty input { width: 32px; text-align: center; border: none; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; font-size: 14px; font-weight: bold; color: #333; background: transparent; padding: 0; }
+
+        /* 庫存狀態標籤 (移動到右下方) */
+        .stock-container { margin-top: 8px; display: flex; justify-content: flex-end; width: 100%; }
+        .stock-normal { background: #edf7ed; border-color: #c8e6c9; color: #2e7d32; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
+        .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
+        .stock-out { background: #eeeeee; color: #999; border-color: #ccc; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
 
         /* 載入動畫 */
         .loader-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; color: #8d6e63; }
@@ -367,7 +368,7 @@
                 const roastHtml = roast ? `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span> ` : '';
                 const titleHtml = `${roastHtml} <span>${name}</span>`;
 
-                // --- 2. 第二列組合：產區 ｜ 品種 ｜ 處理法 + [庫存標籤] ---
+                // --- 2. 第二列組合：產區 ｜ 品種 ｜ 處理法 ---
                 let metaArray = [];
                 if (p['產區'] && p['產區'] !== '-') metaArray.push(p['產區']);
                 if (p['品種'] && p['品種'] !== '-') metaArray.push(p['品種']);
@@ -375,11 +376,8 @@
                 
                 let metaText = metaArray.join(' ｜ ');
                 let metaHtml = '';
-                if (metaText || stockTagHtml) {
-                    metaHtml = `<div class="card-meta">
-                        ${metaText ? `<span>${metaText}</span>` : ''}
-                        ${stockTagHtml}
-                    </div>`;
+                if (metaText) {
+                    metaHtml = `<div class="card-meta"><span>${metaText}</span></div>`;
                 }
 
                 // --- 3. 第三列組合：風味標籤 ---
@@ -407,6 +405,9 @@
                                 <button onclick="updateQty('${p.uid}', -1)" ${cart[p.uid].qty === 0 ? 'disabled' : ''}>−</button>
                                 <input type="text" id="qty-${p.uid}" value="${cart[p.uid].qty}" readonly>
                                 <button onclick="updateQty('${p.uid}', 1)" ${disableAddBtn}>+</button>
+                            </div>
+                            <div class="stock-container">
+                                ${stockTagHtml}
                             </div>
                         </div>
                     </div>
