@@ -201,8 +201,9 @@
 
     <div class="container">
         <div class="promo-banner">
-            🌐 指定品項 (100g/200g/濾掛) 享 9 折優待 ｜ 🚚 運費 $ 38 <br>
-            🎉 結帳滿 $ 1,000 免運 ｜ 🏪 7-ELEVEN 門市取貨付款
+            🌐 指定品項 (熟豆100g/熟豆200g/濾掛咖啡) 享 9 折優待! <br>
+            🚚 運費 $ 38🎉 ｜ 結帳滿 $ 1,000 免運 <br> 
+            🏪 7-ELEVEN 門市取貨付款
         </div>
 
         <div class="section">
@@ -242,8 +243,8 @@
                 <input type="tel" id="buyer-phone" placeholder="例如: 0912345678" maxlength="10">
             </div>
             <div class="form-group">
-                <label>Email (接收訂單通知)</label>
-                <input type="email" id="buyer-email" placeholder="example@email.com">
+                <label>Email (接收訂單通知) <span style="color:red">*</span></label>
+                <input type="email" id="buyer-email" placeholder="example@email.com" required>
             </div>
             <div class="form-group">
                 <label>訂單備註</label>
@@ -294,6 +295,7 @@
                 for (let tab in allProductsData) {
                     allProductsData[tab].forEach(p => {
                         p.uid = 'p_' + idCounter++;
+                        p.category = tab; // 🔥 儲存頁籤名稱
                         cart[p.uid] = { product: p, qty: 0 };
                     });
                 }
@@ -323,7 +325,6 @@
             renderProducts(tabName);
         }
 
-        // 解析 7 段烘焙度對應的顏色 class
         function getRoastClass(roastStr) {
             if (!roastStr) return 'roast-default';
             if (roastStr.includes('極淺')) return 'roast-1-el';
@@ -346,7 +347,6 @@
                 const pkg = p['包裝'] || '';
                 const price = parseInt(p['售價'] || 0);
                 
-                // --- 計算庫存與狀態標籤 ---
                 const rawStock = p['庫存'];
                 const parsedStock = parseInt(rawStock);
                 const isOutOfStock = parsedStock === 0;
@@ -364,11 +364,9 @@
                     }
                 }
 
-                // --- 1. 第一列組合：[烘焙度色塊] + 品項名稱 ---
                 const roastHtml = roast ? `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span> ` : '';
                 const titleHtml = `${roastHtml} <span>${name}</span>`;
 
-                // --- 2. 第二列組合：產區 ｜ 品種 ｜ 處理法 ---
                 let metaArray = [];
                 if (p['產區'] && p['產區'] !== '-') metaArray.push(p['產區']);
                 if (p['品種'] && p['品種'] !== '-') metaArray.push(p['品種']);
@@ -380,7 +378,6 @@
                     metaHtml = `<div class="card-meta"><span>${metaText}</span></div>`;
                 }
 
-                // --- 3. 第三列組合：風味標籤 ---
                 let tagsArray = [];
                 if (p['風味']) {
                     const flavors = p['風味'].split(/[、,，\s]+/);
@@ -429,7 +426,7 @@
             
             cart[uid].qty = newVal;
             calculateTotal();
-            renderProducts(currentTab); // 更新畫面按鈕與標籤狀態
+            renderProducts(currentTab); 
         }
 
         function calculateTotal() {
@@ -447,23 +444,18 @@
                     originalTotal += subtotal;
                     totalItems += qty;
                     
-                    // 🔥 單品折扣邏輯判斷
                     let pkg = (p['包裝'] || '').toLowerCase();
                     let name = (p['熟豆品項'] || '').toLowerCase();
                     let isDiscount = false;
                     
-                    // 只要包裝含 100g、200g 或 名稱/包裝含濾掛，即享折扣
                     if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || name.includes('濾掛')) {
                         isDiscount = true;
                     }
-                    
-                    // 排除特定關鍵字：特賣、大包裝、生豆
                     if (name.includes('特賣') || name.includes('生豆') || name.includes('大包裝') || pkg.includes('大包裝')) {
                         isDiscount = false;
                     }
                     
                     if (isDiscount) {
-                        // 計算此品項的折扣金額 (原價 - 打9折並四捨五入)
                         discountAmt += (subtotal - Math.round(subtotal * 0.9));
                     }
                 }
@@ -549,6 +541,13 @@
                 return;
             }
             if (!name || !phone) return alert("請填寫完整的姓名與手機號碼！");
+            
+            // 🔥 新增 Email 必填驗證
+            if (!email) {
+                alert("請填寫 Email，以便接收完整的訂單明細與出貨通知！");
+                document.getElementById('buyer-email').focus();
+                return;
+            }
 
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
@@ -570,19 +569,60 @@
             const shippingAmt = shippingStr === '免運費' ? 0 : parseInt(shippingStr.replace('$', ''));
 
             const orderItems = [];
-            let alertItemsText = ''; 
+            let discountedText = '';
+            let nonDiscountedText = '';
+            let totalDiscountAmt = 0;
+
+            // 🔥 重新梳理訂單明細，加上分類頁籤名稱與折扣判斷
             for (let uid in cart) {
-                if (cart[uid].qty > 0) {
-                    const p = cart[uid].product;
+                let qty = cart[uid].qty;
+                if (qty > 0) {
+                    let p = cart[uid].product;
+                    let price = parseInt(p['售價'] || 0);
+                    let subtotal = qty * price;
+                    
+                    let pkg = (p['包裝'] || '').toLowerCase();
+                    let rawName = (p['熟豆品項'] || '');
+                    let category = p.category || '';
+                    
+                    // 組合新的品項名稱 (例如：熟豆-100g - 凱永山 日曬)
+                    let displayName = `${category} - ${rawName}`;
+                    let isDiscount = false;
+                    
+                    if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || rawName.toLowerCase().includes('濾掛')) {
+                        isDiscount = true;
+                    }
+                    if (rawName.includes('特賣') || rawName.includes('生豆') || rawName.includes('大包裝') || pkg.includes('大包裝')) {
+                        isDiscount = false;
+                    }
+
+                    let itemLine = `  • ${displayName} (${p['包裝']}) x ${qty}\n`;
+
+                    if (isDiscount) {
+                        discountedText += itemLine;
+                        totalDiscountAmt += (subtotal - Math.round(subtotal * 0.9));
+                    } else {
+                        nonDiscountedText += itemLine;
+                    }
+
                     orderItems.push({
-                        name: p['熟豆品項'],
+                        name: displayName, // 將包含分類的名稱送至資料庫
                         pkg: p['包裝'],
-                        price: parseInt(p['售價'] || 0),
-                        qty: cart[uid].qty,
-                        subtotal: parseInt(p['售價'] || 0) * cart[uid].qty
+                        price: price,
+                        qty: qty,
+                        subtotal: subtotal
                     });
-                    alertItemsText += `  • ${p['熟豆品項']} (${p['包裝']}) x ${cart[uid].qty}\n`;
                 }
+            }
+
+            // 組合拆分後的顯示訊息
+            let alertItemsText = '';
+            if (discountedText) {
+                alertItemsText += `【指定品項 (享 9 折)】\n${discountedText}`;
+                alertItemsText += `  👉 折扣金額：-$${totalDiscountAmt}\n\n`;
+            }
+            if (nonDiscountedText) {
+                alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`;
             }
 
             const payload = {
@@ -597,7 +637,8 @@
                 originalTotal: originalTotal,
                 discountStr: discountStr,
                 shipping: shippingAmt,
-                totalPrice: currentFinalTotal
+                totalPrice: currentFinalTotal,
+                formattedDetails: alertItemsText // 將整理好的字串一併拋給後端備用
             };
 
             try {
@@ -616,10 +657,7 @@
                     successMsg += `------------------------------\n`;
                     successMsg += `【運費】${shippingStr}\n`;
                     successMsg += `【結帳總額】$${currentFinalTotal}\n\n`;
-                    
-                    if(email) {
-                        successMsg += `※ 訂單明細已同步寄送至您的 Email。\n`;
-                    }
+                    successMsg += `※ 訂單明細已同步寄送至您的 Email。\n`;
                     successMsg += `感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕`;
 
                     document.getElementById('modal-msg').textContent = successMsg;
