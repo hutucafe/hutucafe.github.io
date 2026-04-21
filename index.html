@@ -202,8 +202,8 @@
 
     <div class="container">
         <div class="promo-banner">
-            🌐 指定品項 (現貨 / 熟豆 / 濾掛品項) 享 <span id="ui-banner-discount"></span> 優待！ <br>
-            🚚 運費 $ <span id="ui-banner-fee"></span> ｜ 🎉 結帳滿 $ <span id="ui-banner-free"></span> 享免運優惠！ <br>
+            🌐 指定品項 (現貨 / 熟豆 / 濾掛品項) 享 <span id="ui-banner-discount">...</span> 優待！ <br>
+            🚚 運費 $ <span id="ui-banner-fee">...</span> ｜ 🎉 結帳滿 $ <span id="ui-banner-free">...</span> 享免運優惠！ <br>
             🏪 7-ELEVEN 門市取貨付款
         </div>
 
@@ -261,7 +261,7 @@
     <div class="bottom-bar">
         <div class="total-info">
             <div class="calc-row"><span class="label">商品小計</span><span id="display-original">$0</span></div>
-            <div class="calc-row text-red"><span class="label">指定品項折扣 (<span id="ui-bottom-discount"></span>)</span><span id="display-discount">-$0</span></div>
+            <div class="calc-row text-red"><span class="label">指定品項折扣 (<span id="ui-bottom-discount">...</span>)</span><span id="display-discount">-$0</span></div>
             <div class="calc-row"><span class="label">運費 (滿千免運)</span><span id="display-shipping">$0</span></div>
             <div class="calc-row total-row">
                 <span class="total-label">結帳總額</span>
@@ -281,15 +281,13 @@
 
     <script>
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
-        
-        // 宣告動態設定變數
         let SHOP_CONFIG = {};
         let allProductsData = {};
         let currentTab = '';
         let cart = {};
         let currentFinalTotal = 0;
 
-        // 從後端載入資料 (包含設定檔與豆單)
+        // 載入資料 (包含設定檔與豆單)
         async function loadProducts() {
             try {
                 const res = await fetch(GAS_URL);
@@ -472,7 +470,6 @@
                         isDiscount = false;
                     }
                     
-                    // 🔥 使用動態抓取來的折扣率計算
                     if (isDiscount) {
                         discountAmt += (subtotal - Math.round(subtotal * SHOP_CONFIG.discountRate));
                     }
@@ -481,7 +478,6 @@
             
             let discountedTotal = originalTotal - discountAmt;
             
-            // 🔥 使用動態抓取來的運費門檻與金額
             let shipping = 0;
             if (totalItems > 0) {
                 shipping = (discountedTotal >= SHOP_CONFIG.freeShippingThreshold) ? 0 : SHOP_CONFIG.shippingFee;
@@ -661,7 +657,7 @@
                 originalTotal: originalTotal,
                 shipping: shippingAmt,
                 totalPrice: currentFinalTotal,
-                discountName: SHOP_CONFIG.discountName // 把動態折扣名傳給後端
+                discountName: SHOP_CONFIG.discountName
             };
 
             try {
@@ -704,7 +700,6 @@
             window.location.reload();
         }
 
-        // 綁定網頁載入後執行
         window.onload = loadProducts;
     </script>
 </body>
