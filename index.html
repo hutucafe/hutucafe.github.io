@@ -284,8 +284,8 @@
         // ⚙️ 糊塗咖啡 商店核心設定區 (直接在網頁修改，瞬間生效！)
         // ==========================================
         const SHOP_CONFIG = {
-            discountRate: 0.85,           // 【折扣數】 0.9 = 9折, 0.85 = 85折, 0.8 = 8折
-            discountName: "85 折",        // 【顯示名稱】 網頁、Email與報表會自動更新此名稱
+            discountRate: 0.9,           // 【折扣數】 0.9 = 9折, 0.85 = 85折, 0.8 = 8折
+            discountName: "9 折",        // 【顯示名稱】 網頁、Email與報表會自動更新此名稱
             freeShippingThreshold: 1000, // 【免運門檻】
             shippingFee: 38              // 【預設運費】
         };
@@ -623,8 +623,11 @@
                         isDiscount = false;
                     }
 
+                    // 🔥 加入 rawName 與 category，讓後端能精準扣庫存
                     let itemObj = {
                         name: displayName,
+                        rawName: rawName,
+                        category: category,
                         pkg: p['包裝'],
                         price: price,
                         qty: qty,
@@ -667,7 +670,7 @@
                 originalTotal: originalTotal,
                 shipping: shippingAmt,
                 totalPrice: currentFinalTotal,
-                discountName: SHOP_CONFIG.discountName // 🔥 把當前設定傳送給後端 Email 模板使用
+                discountName: SHOP_CONFIG.discountName
             };
 
             try {
