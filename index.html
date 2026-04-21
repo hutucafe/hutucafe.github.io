@@ -202,8 +202,8 @@
 
     <div class="container">
         <div class="promo-banner">
-            🌐 指定品項 (現貨 / 熟豆 / 濾掛品項) 享 <span id="ui-banner-discount">...</span> 優待！ <br>
-            🚚 運費 $ <span id="ui-banner-fee">...</span> ｜ 🎉 結帳滿 $ <span id="ui-banner-free">...</span> 享免運優惠！ <br>
+            🌐 指定品項 (現貨 / 熟豆 / 濾掛品項) 享 <span id="ui-banner-discount"></span> 優待！ <br>
+            🚚 運費 $ <span id="ui-banner-fee"></span> ｜ 🎉 結帳滿 $ <span id="ui-banner-free"></span> 享免運優惠！ <br>
             🏪 7-ELEVEN 門市取貨付款
         </div>
 
@@ -261,7 +261,7 @@
     <div class="bottom-bar">
         <div class="total-info">
             <div class="calc-row"><span class="label">商品小計</span><span id="display-original">$0</span></div>
-            <div class="calc-row text-red"><span class="label">指定品項折扣 (<span id="ui-bottom-discount">...</span>)</span><span id="display-discount">-$0</span></div>
+            <div class="calc-row text-red"><span class="label">指定品項折扣 (<span id="ui-bottom-discount"></span>)</span><span id="display-discount">-$0</span></div>
             <div class="calc-row"><span class="label">運費 (滿千免運)</span><span id="display-shipping">$0</span></div>
             <div class="calc-row total-row">
                 <span class="total-label">結帳總額</span>
@@ -280,28 +280,38 @@
     </div>
 
     <script>
+        // ==========================================
+        // ⚙️ 糊塗咖啡 商店核心設定區 (直接在網頁修改，瞬間生效！)
+        // ==========================================
+        const SHOP_CONFIG = {
+            discountRate: 0.9,           // 【折扣數】 0.9 = 9折, 0.85 = 85折, 0.8 = 8折
+            discountName: "9 折",        // 【顯示名稱】 網頁、Email與報表會自動更新此名稱
+            freeShippingThreshold: 1000, // 【免運門檻】
+            shippingFee: 38              // 【預設運費】
+        };
+        // ==========================================
+
+        // 🔥 網頁一打開，立刻零延遲替換畫面上的優惠字眼
+        document.getElementById('ui-banner-discount').textContent = SHOP_CONFIG.discountName;
+        document.getElementById('ui-banner-fee').textContent = SHOP_CONFIG.shippingFee;
+        document.getElementById('ui-banner-free').textContent = SHOP_CONFIG.freeShippingThreshold.toLocaleString();
+        document.getElementById('ui-bottom-discount').textContent = SHOP_CONFIG.discountName;
+
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
-        let SHOP_CONFIG = {};
         let allProductsData = {};
         let currentTab = '';
         let cart = {};
         let currentFinalTotal = 0;
 
-        // 載入資料 (包含設定檔與豆單)
+        // 僅向後端要求豆單資料
         async function loadProducts() {
             try {
                 const res = await fetch(GAS_URL);
                 const responseData = await res.json();
                 
-                // 1. 取得設定檔並更新畫面
-                SHOP_CONFIG = responseData.config;
-                document.getElementById('ui-banner-discount').textContent = SHOP_CONFIG.discountName;
-                document.getElementById('ui-banner-fee').textContent = SHOP_CONFIG.shippingFee;
-                document.getElementById('ui-banner-free').textContent = SHOP_CONFIG.freeShippingThreshold.toLocaleString();
-                document.getElementById('ui-bottom-discount').textContent = SHOP_CONFIG.discountName;
-
-                // 2. 處理豆單資料
-                allProductsData = responseData.products;
+                // 處理豆單資料 (支援舊版或新版的後端回傳格式)
+                allProductsData = responseData.products || responseData; 
+                
                 let idCounter = 1;
                 for (let tab in allProductsData) {
                     allProductsData[tab].forEach(p => {
@@ -657,7 +667,7 @@
                 originalTotal: originalTotal,
                 shipping: shippingAmt,
                 totalPrice: currentFinalTotal,
-                discountName: SHOP_CONFIG.discountName
+                discountName: SHOP_CONFIG.discountName // 🔥 把當前設定傳送給後端 Email 模板使用
             };
 
             try {
