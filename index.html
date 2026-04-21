@@ -248,8 +248,8 @@
                 <input type="email" id="buyer-email" placeholder="example@email.com" required>
             </div>
             <div class="form-group">
-                <label>訂單備註</label>
-                <textarea id="buyer-notes" rows="2" placeholder="如有其他需求請填寫於此"></textarea>
+                <label>訂單備註(請加官方Line:@hutucafe)</label>
+                <textarea id="buyer-notes" rows="2" placeholder="請加入糊塗咖啡官方Line(@hutucafe)，並哈囉老闆以方便聯繫，另如有其他需求請填寫於此~"></textarea>
             </div>
         </div>
         
@@ -691,7 +691,8 @@
                     successMsg += `【結帳總額】$${currentFinalTotal}\n\n`;
                     successMsg += `※ 訂單明細已同步寄送至您的 Email。\n`;
                     successMsg += `感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕`;
-
+                    successMsg += `另請加入糊塗咖啡官方Line(@hutucafe)，並哈囉老闆以方便聯繫`;
+                    
                     document.getElementById('modal-msg').textContent = successMsg;
                     document.getElementById('success-modal').style.display = 'flex';
                 } else {
