@@ -249,7 +249,7 @@
             </div>
             <div class="form-group">
                 <label>訂單備註 ( 請加入糊塗官方 Line：@hutucafe )</label>
-                <textarea id="buyer-notes" rows="2" placeholder="☕ 加入後請「哈囉老闆」以方便聯繫訂單需求，另如有其他需求可填寫於此~"></textarea>
+                <textarea id="buyer-notes" rows="2" placeholder="☕ 加入後請「哈囉老闆」以方便聯繫訂單需求！\n另如有其他需求也可填寫於此喔 ~"></textarea>
             </div>
         </div>
         
@@ -690,8 +690,8 @@
                     successMsg += `【運費】${shippingStr}\n`;
                     successMsg += `【結帳總額】$${currentFinalTotal}\n\n`;
                     successMsg += `※ 訂單明細已同步寄送至您的 Email。\n`;
-                    successMsg += `感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕`;
-                    successMsg += `另請加入糊塗咖啡官方Line(@hutucafe)，並哈囉老闆以方便聯繫`;
+                    successMsg += `感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n`;
+                    successMsg += `記得加入糊塗咖啡官方Line，並哈囉老闆喔！`;
                     
                     document.getElementById('modal-msg').textContent = successMsg;
                     document.getElementById('success-modal').style.display = 'flex';
