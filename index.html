@@ -202,7 +202,7 @@
 
     <div class="container">
         <div class="promo-banner">
-            🌐 指定品項 (熟豆100g / 200g / 濾掛品項) 享 9 折優待！ <br>
+            🌐 指定品項 (現貨 / 熟豆 / 濾掛品項) 享 9 折優待！ <br>
             🚚 運費 $ 38 ｜ 🎉 結帳滿 $ 1,000 享免運優惠！ <br>
             🏪 7-ELEVEN 門市取貨付款
         </div>
@@ -450,12 +450,15 @@
                     let category = (p.category || '').toLowerCase();
                     let isDiscount = false;
                     
-                    // 🔥 修正：包含頁籤(category)的判斷，確保濾掛頁籤能打折
-                    if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || rawName.includes('濾掛') || category.includes('濾掛')) {
+                    // 🔥 新的折扣判定：包含 現貨、熟豆、濾掛 即打折
+                    if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
+                        rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛')) {
                         isDiscount = true;
                     }
-                    // 🔥 修正：排除判斷也加入 category (避免特賣會頁籤被誤打折)
-                    if (rawName.includes('特賣') || category.includes('特賣') || rawName.includes('生豆') || category.includes('生豆') || rawName.includes('大包裝') || pkg.includes('大包裝')) {
+                    
+                    // 🔥 新的排除判定：包含 特賣、大包裝、生豆 即排除 (最高優先度)
+                    if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') ||
+                        rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) {
                         isDiscount = false;
                     }
                     
@@ -594,10 +597,13 @@
                     let isDiscount = false;
                     
                     // 🔥 同步最新的折扣判定邏輯
-                    if (pkg.includes('100g') || pkg.includes('200g') || pkg.includes('濾掛') || rawName.toLowerCase().includes('濾掛') || category.toLowerCase().includes('濾掛')) {
+                    if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
+                        rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛')) {
                         isDiscount = true;
                     }
-                    if (rawName.includes('特賣') || category.includes('特賣') || rawName.includes('生豆') || category.includes('生豆') || rawName.includes('大包裝') || pkg.includes('大包裝')) {
+                    
+                    if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') ||
+                        rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) {
                         isDiscount = false;
                     }
 
@@ -631,7 +637,6 @@
                 alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`;
             }
 
-            // 🔥 傳遞給後端的全新 Payload 結構
             const payload = {
                 name: name,
                 phone: "'" + phone,
@@ -640,8 +645,8 @@
                 storeId: storeId,
                 storeAddress: storeAddr,
                 notes: notes,
-                discountedItems: discountedOrderItems,     // 讓後端畫指定品項表格
-                nonDiscountedItems: nonDiscountedOrderItems, // 讓後端畫非指定品項表格
+                discountedItems: discountedOrderItems,     
+                nonDiscountedItems: nonDiscountedOrderItems, 
                 totalDiscountAmt: totalDiscountAmt,
                 originalTotal: originalTotal,
                 shipping: shippingAmt,
