@@ -13,7 +13,7 @@
         /* 頁首設計 */
         header { 
             position: relative;
-            background-image: url('bg.jpg'); 
+            background-image: url('bg.jpg'); /* ⚠️ 若圖片檔名不同請更改 */
             background-size: auto 100%; 
             background-position: center center; 
             background-repeat: no-repeat;
@@ -81,14 +81,26 @@
         .tab-btn { flex: none; padding: 8px 16px; background: #fff; border: 1px solid #e0e0e0; border-radius: 20px; font-size: 14px; color: #666; cursor: pointer; transition: 0.3s; }
         .tab-btn.active { background: #b8860b; color: #fff; font-weight: bold; border-color: #b8860b; }
 
-        .promo-banner { background: #fff3e0; border: 1px solid #ffcc80; color: #e65100; padding: 15px 15px; border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 12px rgba(230, 81, 0, 0.15); line-height: 1.6; }
+        .promo-banner { 
+            background: #fff3e0; border: 1px solid #ffcc80; color: #e65100; padding: 15px 15px; 
+            border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 20px; 
+            text-align: center; box-shadow: 0 4px 12px rgba(230, 81, 0, 0.15); line-height: 1.6; 
+        }
 
         /* 高質感商品卡片 */
-        .modern-card { background: #fff; border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; transition: 0.3s; border: 1px solid #f2f2f2; }
+        .modern-card { 
+            background: #fff; border-radius: 16px; padding: 18px; margin-bottom: 14px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; 
+            transition: 0.3s; border: 1px solid #f2f2f2;
+        }
         .modern-card:hover { border-color: #e0e0e0; box-shadow: 0 6px 16px rgba(0,0,0,0.06); transform: translateY(-1px); }
+        
         .card-left { flex: 1; padding-right: 12px; }
+        
+        /* 第一列：標題、烘焙度 */
         .card-title { font-size: 17px; font-weight: 800; color: #333; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; line-height: 1.4; }
         
+        /* 七段烘焙度色塊 */
         .roast-badge { font-size: 12px; padding: 3px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap; }
         .roast-1-el { background: #f5eedc; color: #5d4037; border: 1px solid #eaddcc; } 
         .roast-2-l { background: #e8d5c4; color: #5d4037; } 
@@ -99,10 +111,17 @@
         .roast-7-ed { background: #261508; color: #fff; } 
         .roast-default { background: #eee; color: #666; }
 
-        .card-meta { font-size: 13px; color: #777; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+        /* 第二列：產區｜品種｜處理法 */
+        .card-meta { 
+            font-size: 13px; color: #777; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; 
+            display: flex; align-items: center; flex-wrap: wrap; gap: 8px; 
+        }
+
+        /* 第三列：風味標籤 */
         .card-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
         .modern-tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #fdfbf8; border: 1px solid #efe6de; color: #8a6341; }
         
+        /* 右側價格與控制鈕 */
         .card-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 90px; }
         .card-price { font-size: 20px; font-weight: 900; color: #b77b3b; display: flex; align-items: baseline; gap: 2px; margin-bottom: 8px; }
         .card-price .unit { font-size: 11px; color: #999; font-weight: normal; }
@@ -113,21 +132,18 @@
         .modern-qty button:disabled { color: #ccc; cursor: not-allowed; }
         .modern-qty input { width: 32px; text-align: center; border: none; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; font-size: 14px; font-weight: bold; color: #333; background: transparent; padding: 0; }
 
+        /* 庫存狀態標籤 */
         .stock-container { margin-top: 8px; display: flex; justify-content: flex-end; width: 100%; }
         .stock-normal { background: #edf7ed; border-color: #c8e6c9; color: #2e7d32; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
         .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
         .stock-out { background: #eeeeee; color: #999; border-color: #ccc; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
 
-        /* 🔥 骨架屏 Skeleton Loading */
-        .skeleton-card { background: #fff; border-radius: 16px; padding: 18px; margin-bottom: 14px; display: flex; justify-content: space-between; border: 1px solid #f2f2f2; position: relative; overflow: hidden; }
-        .skeleton-box { background: #eee; border-radius: 4px; position: relative; }
-        .skeleton-title { width: 60%; height: 20px; margin-bottom: 10px; }
-        .skeleton-text { width: 80%; height: 14px; margin-bottom: 10px; }
-        .skeleton-tags { width: 40%; height: 12px; }
-        .skeleton-right { width: 60px; height: 50px; align-self: center; }
-        .shimmer-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; animation: shimmer 1.5s infinite; background: linear-gradient(to right, #eff1f3 4%, #e2e2e2 25%, #eff1f3 36%); background-size: 1000px 100%; }
-        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+        /* 載入動畫 */
+        .loader-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; color: #8d6e63; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3e5f5; border-top: 4px solid #8d6e63; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* 表單樣式 */
         .form-group { margin-bottom: 15px; position: relative; }
         .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: bold; color: #555; }
         .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #fcfcfc; transition: 0.3s; }
@@ -138,6 +154,7 @@
         .suggestions-list li { padding: 12px; border-bottom: 1px solid #f9f9f9; cursor: pointer; font-size: 14px; line-height: 1.4; }
         .suggestions-list li:hover { background: #fdf8f5; }
 
+        /* 底部結帳列 */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 12px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: flex-end; z-index: 1000; }
         .bottom-bar .total-info { flex: 1; margin-right: 15px; }
         .calc-row { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 3px; }
@@ -145,6 +162,7 @@
         .calc-row.total-row { border-top: 1px solid #eee; margin-top: 5px; padding-top: 5px; align-items: center; }
         .total-label { font-size: 15px; font-weight: bold; color: #333; }
         .total-amt { font-size: 24px; font-weight: bold; color: #d84315; }
+        
         .bottom-bar button { background: #3e2723; color: #fff; border: none; padding: 14px 28px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; height: 50px; }
         .bottom-bar button:disabled { background: #aaa; cursor: not-allowed; }
         
@@ -152,6 +170,7 @@
         .footer-logo-section { text-align: center; padding: 10px 20px 40px; }
         .footer-logo { width: 270px; max-width: 100%; height: auto; mix-blend-mode: multiply; }
 
+        /* 自訂彈出視窗 */
         .custom-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
         .modal-content { background-color: #3e2723; color: #fcfcfc; border-radius: 12px; padding: 25px; width: 100%; max-width: 400px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         .modal-content h3 { color: #fff; margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 12px; text-align: center;}
@@ -171,6 +190,7 @@
                     @hutucafe
                 </a>
             </p>
+            
             <nav class="main-nav">
                 <a href="abouthutu.html" class="nav-item">關於糊塗</a>
                 <a href="contactus.html" class="nav-item">聯絡我們</a>
@@ -182,8 +202,8 @@
 
     <div class="container">
         <div class="promo-banner">
-            🌐 指定品項 (現貨 / 熟豆 / 濾掛品項) 享 <span id="ui-banner-discount"></span> 優待！ <br>
-            🚚 運費 $ <span id="ui-banner-fee"></span> ｜ 🎉 結帳滿 $ <span id="ui-banner-free"></span> 享免運優惠！ <br>
+            🌐 慶開站指定品項 (現貨 / 熟豆 / 濾掛)限時 享 <span id="ui-banner-discount"></span> 優待！ <br>
+            🚚 運費 $ <span id="ui-banner-fee"></span> ｜ 🎉  結帳滿 $ <span id="ui-banner-free"></span> 享免運優惠！ <br>
             🏪 7-ELEVEN 門市取貨付款
         </div>
 
@@ -191,9 +211,10 @@
             <div class="section-title">☕ 糊塗精選 ‧ 左右滑 ‧ 查看更多品項</div>
             <div id="tabs-container" class="tabs-container"></div>
             <div id="product-list">
-                <div class="skeleton-card"><div class="shimmer-wrapper"></div><div class="card-left"><div class="skeleton-box skeleton-title"></div><div class="skeleton-box skeleton-text"></div><div class="skeleton-box skeleton-tags"></div></div><div class="skeleton-box skeleton-right"></div></div>
-                <div class="skeleton-card"><div class="shimmer-wrapper"></div><div class="card-left"><div class="skeleton-box skeleton-title"></div><div class="skeleton-box skeleton-text"></div><div class="skeleton-box skeleton-tags"></div></div><div class="skeleton-box skeleton-right"></div></div>
-                <div class="skeleton-card"><div class="shimmer-wrapper"></div><div class="card-left"><div class="skeleton-box skeleton-title"></div><div class="skeleton-box skeleton-text"></div><div class="skeleton-box skeleton-tags"></div></div><div class="skeleton-box skeleton-right"></div></div>
+                <div class="loader-container">
+                    <div class="spinner"></div>
+                    <p>正在為您準備最新豆單...</p>
+                </div>
             </div>
         </div>
 
@@ -227,8 +248,8 @@
                 <input type="email" id="buyer-email" placeholder="example@email.com" required>
             </div>
             <div class="form-group">
-                <label>訂單備註</label>
-                <textarea id="buyer-notes" rows="2" placeholder="如有其他需求請填寫於此"></textarea>
+                <label>訂單備註 ( 請加入糊塗官方 Line：@hutucafe )</label>
+                <textarea id="buyer-notes" rows="2" placeholder="☕ 加入後請「哈囉老闆」以方便聯繫訂單需求！ 另如有其他需求也可填寫於此喔 ~ "></textarea>
             </div>
         </div>
         
@@ -260,82 +281,55 @@
 
     <script>
         // ==========================================
-        // ⚙️ 糊塗咖啡 商店核心設定區 (直接修改，瞬間生效)
+        // ⚙️ 糊塗咖啡 商店核心設定區 (直接在網頁修改，瞬間生效！)
         // ==========================================
         const SHOP_CONFIG = {
-            discountRate: 0.9,           // 【折扣數】 0.9 = 9折, 0.85 = 85折, 0.8 = 8折
-            discountName: "9 折",        // 【顯示名稱】
+            discountRate: 0.85,           // 【折扣數】 0.9 = 9折, 0.85 = 85折, 0.8 = 8折
+            discountName: "85 折",        // 【顯示名稱】 網頁、Email與報表會自動更新此名稱
             freeShippingThreshold: 1000, // 【免運門檻】
             shippingFee: 38              // 【預設運費】
         };
         // ==========================================
 
+        // 🔥 網頁一打開，立刻零延遲替換畫面上的優惠字眼
         document.getElementById('ui-banner-discount').textContent = SHOP_CONFIG.discountName;
         document.getElementById('ui-banner-fee').textContent = SHOP_CONFIG.shippingFee;
         document.getElementById('ui-banner-free').textContent = SHOP_CONFIG.freeShippingThreshold.toLocaleString();
         document.getElementById('ui-bottom-discount').textContent = SHOP_CONFIG.discountName;
 
-        // ⚠️ 請確認下方引號內的網址是您自己的 Google Apps Script 網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
-        
         let allProductsData = {};
         let currentTab = '';
         let cart = {};
         let currentFinalTotal = 0;
 
-        // 🔥 軍規級資料載入與防呆機制
+        // 僅向後端要求豆單資料
         async function loadProducts() {
             try {
                 const res = await fetch(GAS_URL);
-                if (!res.ok) throw new Error(`HTTP Error: ${res.status}`); // 捕捉網路層錯誤
-                
                 const responseData = await res.json();
                 
-                // 捕捉後端主動回傳的錯誤
-                if (responseData.result === 'error') {
-                    throw new Error("後端處理錯誤: " + (responseData.error || '未知錯誤'));
-                }
-
-                // 安全獲取商品資料
-                let rawProducts = responseData.products || responseData; 
-                allProductsData = {};
+                // 處理豆單資料 (支援舊版或新版的後端回傳格式)
+                allProductsData = responseData.products || responseData; 
                 
                 let idCounter = 1;
-                let hasValidData = false;
-
-                // 安全過濾並重建商品陣列
-                for (let tab in rawProducts) {
-                    if (Array.isArray(rawProducts[tab]) && rawProducts[tab].length > 0) {
-                        hasValidData = true;
-                        allProductsData[tab] = rawProducts[tab].map(p => {
-                            p.uid = 'p_' + idCounter++;
-                            p.category = tab; 
-                            cart[p.uid] = { product: p, qty: 0 };
-                            return p;
-                        });
-                    }
+                for (let tab in allProductsData) {
+                    allProductsData[tab].forEach(p => {
+                        p.uid = 'p_' + idCounter++;
+                        p.category = tab; 
+                        cart[p.uid] = { product: p, qty: 0 };
+                    });
                 }
 
-                if (hasValidData) {
-                    const tabs = Object.keys(allProductsData);
+                const tabs = Object.keys(allProductsData);
+                if (tabs.length > 0) {
                     currentTab = tabs[0];
                     renderTabs(tabs);
                     renderProducts(currentTab);
-                } else {
-                    throw new Error("試算表中沒有讀取到任何商品資料！");
                 }
-
             } catch (e) {
-                console.error("載入豆單失敗:", e);
-                // 顯示精確錯誤訊息，方便除錯
-                document.getElementById('product-list').innerHTML = `
-                    <div style="text-align:center; padding:25px; border-radius:10px; background:#ffebee; border:1px solid #ffcdd2; color:#c62828;">
-                        <h4 style="margin-bottom:10px;">⚠️ 豆單載入異常</h4>
-                        <p style="font-size:14px; line-height:1.6;">
-                            <b>原因：</b>${e.message}<br>
-                            請確認 Google 試算表內容是否正確，或是否已將 GAS「部署為新版本」。
-                        </p>
-                    </div>`;
+                console.error(e);
+                document.getElementById('product-list').innerHTML = '<p style="text-align:center; color:red; padding:20px;">資料載入失敗，請檢查網路連線。</p>';
             }
         }
 
@@ -354,14 +348,13 @@
 
         function getRoastClass(roastStr) {
             if (!roastStr) return 'roast-default';
-            let s = String(roastStr); // 防呆：確保是字串
-            if (s.includes('極淺')) return 'roast-1-el';
-            if (s.includes('中淺') || s.includes('淺中')) return 'roast-3-ml';
-            if (s.includes('淺')) return 'roast-2-l';
-            if (s.includes('極深')) return 'roast-7-ed';
-            if (s.includes('中深') || s.includes('深中')) return 'roast-5-md';
-            if (s.includes('深')) return 'roast-6-d';
-            if (s.includes('中')) return 'roast-4-m';
+            if (roastStr.includes('極淺')) return 'roast-1-el';
+            if (roastStr.includes('中淺') || roastStr.includes('淺中')) return 'roast-3-ml';
+            if (roastStr.includes('淺')) return 'roast-2-l';
+            if (roastStr.includes('極深')) return 'roast-7-ed';
+            if (roastStr.includes('中深') || roastStr.includes('深中')) return 'roast-5-md';
+            if (roastStr.includes('深')) return 'roast-6-d';
+            if (roastStr.includes('中')) return 'roast-4-m';
             return 'roast-default';
         }
 
@@ -396,19 +389,20 @@
                 const titleHtml = `${roastHtml} <span>${name}</span>`;
 
                 let metaArray = [];
-                // 防呆：強制轉為字串避免 .includes 報錯
-                if (p['產區'] && p['產區'] !== '-') metaArray.push(String(p['產區']));
-                if (p['品種'] && p['品種'] !== '-') metaArray.push(String(p['品種']));
-                if (p['處理法'] && p['處理法'] !== '-') metaArray.push(String(p['處理法']));
+                if (p['產區'] && p['產區'] !== '-') metaArray.push(p['產區']);
+                if (p['品種'] && p['品種'] !== '-') metaArray.push(p['品種']);
+                if (p['處理法'] && p['處理法'] !== '-') metaArray.push(p['處理法']);
                 
                 let metaText = metaArray.join('｜');
-                let metaHtml = metaText ? `<div class="card-meta"><span>${metaText}</span></div>` : '';
+                let metaHtml = '';
+                if (metaText) {
+                    metaHtml = `<div class="card-meta"><span>${metaText}</span></div>`;
+                }
 
                 let tagsArray = [];
                 if (p['風味']) {
-                    String(p['風味']).split(/[、,，\s]+/).forEach(f => { 
-                        if(f.trim() && f !== '-') tagsArray.push(f.trim()); 
-                    });
+                    const flavors = p['風味'].split(/[、,，\s]+/);
+                    flavors.forEach(f => { if(f.trim() && f !== '-') tagsArray.push(f.trim()); });
                 }
                 const tagsHtml = tagsArray.map(tag => `<span class="modern-tag">${tag}</span>`).join('');
 
@@ -471,10 +465,9 @@
                     originalTotal += subtotal;
                     totalItems += qty;
                     
-                    // 防呆轉換，避免數字欄位導致 .toLowerCase 報錯
-                    let pkg = String(p['包裝'] || '').toLowerCase();
-                    let rawName = String(p['熟豆品項'] || '').toLowerCase();
-                    let category = String(p.category || '').toLowerCase();
+                    let pkg = (p['包裝'] || '').toLowerCase();
+                    let rawName = (p['熟豆品項'] || '').toLowerCase();
+                    let category = (p.category || '').toLowerCase();
                     let isDiscount = false;
                     
                     if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
@@ -508,6 +501,7 @@
             document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
         }
 
+        // --- 門市搜尋邏輯 ---
         let storesData = [];
         fetch('stores.json')
             .then(res => res.json())
@@ -555,6 +549,7 @@
             if (e.target !== sInput) sList.style.display = 'none';
         });
 
+        // --- 送出訂單 ---
         async function submitOrder() {
             if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
             
@@ -611,15 +606,15 @@
                     let price = parseInt(p['售價'] || 0);
                     let subtotal = qty * price;
                     
-                    let pkg = String(p['包裝'] || '').toLowerCase();
-                    let rawName = String(p['熟豆品項'] || '');
-                    let category = String(p.category || '');
+                    let pkg = (p['包裝'] || '').toLowerCase();
+                    let rawName = (p['熟豆品項'] || '');
+                    let category = p.category || '';
                     
                     let displayName = `${category} - ${rawName}`;
                     let isDiscount = false;
                     
                     if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
-                        rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛')) {
+                        rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛') || rawName.includes('浸泡')) {
                         isDiscount = true;
                     }
                     
@@ -628,6 +623,7 @@
                         isDiscount = false;
                     }
 
+                    // 🔥 加入 rawName 與 category，讓後端能精準扣庫存
                     let itemObj = {
                         name: displayName,
                         rawName: rawName,
@@ -696,7 +692,7 @@
                     successMsg += `※ 訂單明細已同步寄送至您的 Email。\n`;
                     successMsg += `感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n`;
                     successMsg += `也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
-
+                    
                     document.getElementById('modal-msg').textContent = successMsg;
                     document.getElementById('success-modal').style.display = 'flex';
                 } else {
