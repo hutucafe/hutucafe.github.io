@@ -102,13 +102,13 @@
         
         /* 七段烘焙度色塊 */
         .roast-badge { font-size: 12px; padding: 3px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap; }
-        .roast-1-el { background: #f5eedc; color: #5d4037; border: 1px solid #eaddcc; } /* 極淺焙 */
-        .roast-2-l { background: #e8d5c4; color: #5d4037; } /* 淺焙 */
-        .roast-3-ml { background: #d2a679; color: #fff; } /* 中淺焙 */
-        .roast-4-m { background: #ab7a4b; color: #fff; } /* 中焙 */
-        .roast-5-md { background: #734a26; color: #fff; } /* 中深焙 */
-        .roast-6-d { background: #4a2c11; color: #fff; } /* 深焙 */
-        .roast-7-ed { background: #261508; color: #fff; } /* 極深焙 */
+        .roast-1-el { background: #f5eedc; color: #5d4037; border: 1px solid #eaddcc; } 
+        .roast-2-l { background: #e8d5c4; color: #5d4037; } 
+        .roast-3-ml { background: #d2a679; color: #fff; } 
+        .roast-4-m { background: #ab7a4b; color: #fff; } 
+        .roast-5-md { background: #734a26; color: #fff; } 
+        .roast-6-d { background: #4a2c11; color: #fff; } 
+        .roast-7-ed { background: #261508; color: #fff; } 
         .roast-default { background: #eee; color: #666; }
 
         /* 第二列：產區｜品種｜處理法 */
@@ -202,8 +202,8 @@
 
     <div class="container">
         <div class="promo-banner">
-            🌐 指定品項 (現貨 / 熟豆 / 濾掛品項) 享 9 折優待！ <br>
-            🚚 運費 $ 38 ｜ 🎉 結帳滿 $ 1,000 享免運優惠！ <br>
+            🌐 指定品項 (現貨 / 熟豆 / 濾掛品項) 享 <span id="ui-banner-discount"></span> 優待！ <br>
+            🚚 運費 $ <span id="ui-banner-fee"></span> ｜ 🎉 結帳滿 $ <span id="ui-banner-free"></span> 享免運優惠！ <br>
             🏪 7-ELEVEN 門市取貨付款
         </div>
 
@@ -261,7 +261,7 @@
     <div class="bottom-bar">
         <div class="total-info">
             <div class="calc-row"><span class="label">商品小計</span><span id="display-original">$0</span></div>
-            <div class="calc-row text-red"><span class="label">指定品項折扣 (9折)</span><span id="display-discount">-$0</span></div>
+            <div class="calc-row text-red"><span class="label">指定品項折扣 (<span id="ui-bottom-discount"></span>)</span><span id="display-discount">-$0</span></div>
             <div class="calc-row"><span class="label">運費 (滿千免運)</span><span id="display-shipping">$0</span></div>
             <div class="calc-row total-row">
                 <span class="total-label">結帳總額</span>
@@ -281,22 +281,34 @@
 
     <script>
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
+        
+        // 宣告動態設定變數
+        let SHOP_CONFIG = {};
         let allProductsData = {};
         let currentTab = '';
         let cart = {};
         let currentFinalTotal = 0;
 
+        // 從後端載入資料 (包含設定檔與豆單)
         async function loadProducts() {
             try {
                 const res = await fetch(GAS_URL);
-                const data = await res.json();
-                allProductsData = data;
+                const responseData = await res.json();
+                
+                // 1. 取得設定檔並更新畫面
+                SHOP_CONFIG = responseData.config;
+                document.getElementById('ui-banner-discount').textContent = SHOP_CONFIG.discountName;
+                document.getElementById('ui-banner-fee').textContent = SHOP_CONFIG.shippingFee;
+                document.getElementById('ui-banner-free').textContent = SHOP_CONFIG.freeShippingThreshold.toLocaleString();
+                document.getElementById('ui-bottom-discount').textContent = SHOP_CONFIG.discountName;
 
+                // 2. 處理豆單資料
+                allProductsData = responseData.products;
                 let idCounter = 1;
                 for (let tab in allProductsData) {
                     allProductsData[tab].forEach(p => {
                         p.uid = 'p_' + idCounter++;
-                        p.category = tab; // 儲存頁籤名稱
+                        p.category = tab; 
                         cart[p.uid] = { product: p, qty: 0 };
                     });
                 }
@@ -450,29 +462,29 @@
                     let category = (p.category || '').toLowerCase();
                     let isDiscount = false;
                     
-                    // 🔥 新的折扣判定：包含 現貨、熟豆、濾掛 即打折
                     if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
                         rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛')) {
                         isDiscount = true;
                     }
                     
-                    // 🔥 新的排除判定：包含 特賣、大包裝、生豆 即排除 (最高優先度)
                     if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') ||
                         rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) {
                         isDiscount = false;
                     }
                     
+                    // 🔥 使用動態抓取來的折扣率計算
                     if (isDiscount) {
-                        discountAmt += (subtotal - Math.round(subtotal * 0.9));
+                        discountAmt += (subtotal - Math.round(subtotal * SHOP_CONFIG.discountRate));
                     }
                 }
             }
             
             let discountedTotal = originalTotal - discountAmt;
             
+            // 🔥 使用動態抓取來的運費門檻與金額
             let shipping = 0;
             if (totalItems > 0) {
-                shipping = (discountedTotal >= 1000) ? 0 : 38;
+                shipping = (discountedTotal >= SHOP_CONFIG.freeShippingThreshold) ? 0 : SHOP_CONFIG.shippingFee;
             }
             
             currentFinalTotal = discountedTotal + shipping;
@@ -574,7 +586,6 @@
             const shippingStr = document.getElementById('display-shipping').textContent;
             const shippingAmt = shippingStr === '免運費' ? 0 : parseInt(shippingStr.replace('$', ''));
 
-            // 用於傳遞給後端的獨立陣列
             const discountedOrderItems = [];
             const nonDiscountedOrderItems = [];
             let totalDiscountAmt = 0;
@@ -596,7 +607,6 @@
                     let displayName = `${category} - ${rawName}`;
                     let isDiscount = false;
                     
-                    // 🔥 同步最新的折扣判定邏輯
                     if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
                         rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛')) {
                         isDiscount = true;
@@ -620,7 +630,7 @@
                     if (isDiscount) {
                         discountedText += itemLine;
                         discountedOrderItems.push(itemObj);
-                        totalDiscountAmt += (subtotal - Math.round(subtotal * 0.9));
+                        totalDiscountAmt += (subtotal - Math.round(subtotal * SHOP_CONFIG.discountRate));
                     } else {
                         nonDiscountedText += itemLine;
                         nonDiscountedOrderItems.push(itemObj);
@@ -630,7 +640,7 @@
 
             let alertItemsText = '';
             if (discountedText) {
-                alertItemsText += `【指定品項 (享 9 折)】\n${discountedText}`;
+                alertItemsText += `【指定品項 (享 ${SHOP_CONFIG.discountName})】\n${discountedText}`;
                 alertItemsText += `  👉 折扣金額：-$${totalDiscountAmt}\n\n`;
             }
             if (nonDiscountedText) {
@@ -650,7 +660,8 @@
                 totalDiscountAmt: totalDiscountAmt,
                 originalTotal: originalTotal,
                 shipping: shippingAmt,
-                totalPrice: currentFinalTotal
+                totalPrice: currentFinalTotal,
+                discountName: SHOP_CONFIG.discountName // 把動態折扣名傳給後端
             };
 
             try {
@@ -693,6 +704,7 @@
             window.location.reload();
         }
 
+        // 綁定網頁載入後執行
         window.onload = loadProducts;
     </script>
 </body>
