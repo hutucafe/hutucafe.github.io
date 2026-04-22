@@ -13,7 +13,7 @@
         /* 頁首設計 */
         header { 
             position: relative;
-            background-image: url('bg.jpg'); /* ⚠️ 若圖片檔名不同請更改 */
+            background-image: url('bg.jpg');
             background-size: auto 100%; 
             background-position: center center; 
             background-repeat: no-repeat;
@@ -203,7 +203,7 @@
     <div class="container">
         <div class="promo-banner">
             🌐 慶開站指定品項 (現貨 / 熟豆 / 濾掛)限時 享 <span id="ui-banner-discount"></span> 優待！ <br>
-            🚚 運費 $ <span id="ui-banner-fee"></span> ｜ 🎉　結帳滿 $ <span id="ui-banner-free"></span> 享免運優惠！ <br>
+            🚚 運費 $ <span id="ui-banner-fee"></span> ｜ 🎉  結帳滿 $ <span id="ui-banner-free"></span> 享免運優惠！ <br>
             🏪 7-ELEVEN 門市取貨付款
         </div>
 
@@ -298,41 +298,128 @@
         document.getElementById('ui-bottom-discount').textContent = SHOP_CONFIG.discountName;
 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
+
+        // ==========================================
+        // 🚀 快取設定
+        // ==========================================
+        const CACHE_KEY = 'hutucafe_products_v1';
+        const CACHE_TTL = 5 * 60 * 1000; // 快取有效期：5 分鐘
+
         let allProductsData = {};
         let currentTab = '';
         let cart = {};
         let currentFinalTotal = 0;
 
-        // 僅向後端要求豆單資料
+        // ==========================================
+        // 🚀 三層快取載入策略
+        // ==========================================
+
+        // 【第一層】嘗試從 localStorage 讀取快取，有就先顯示
+        // 【第二層】快取過期或無快取，才顯示 loading 並向 GAS 拉資料
+        // 【第三層】頁面重新聚焦時，若快取超過 2 分鐘則靜默背景更新
         async function loadProducts() {
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const { data, timestamp } = JSON.parse(cached);
+                    const age = Date.now() - timestamp;
+
+                    // 有快取：先立即渲染，使用者馬上看到豆單
+                    renderFromData(data);
+
+                    if (age < CACHE_TTL) {
+                        // 快取還新鮮，直接結束，不打 GAS
+                        return;
+                    }
+                    // 快取過期：背景靜默更新（不顯示 loading，不打斷使用者）
+                    fetchAndUpdate(false);
+                    return;
+                }
+            } catch(e) {
+                // 快取損壞，清除後重新抓
+                localStorage.removeItem(CACHE_KEY);
+            }
+
+            // 完全沒有快取：顯示 loading 並等待
+            fetchAndUpdate(true);
+        }
+
+        // 向 GAS 拉取最新資料
+        async function fetchAndUpdate(showLoading) {
+            if (showLoading) {
+                document.getElementById('product-list').innerHTML = `
+                    <div class="loader-container">
+                        <div class="spinner"></div>
+                        <p>正在為您準備最新豆單...</p>
+                    </div>`;
+            }
             try {
                 const res = await fetch(GAS_URL);
                 const responseData = await res.json();
-                
-                // 處理豆單資料 (支援舊版或新版的後端回傳格式)
-                allProductsData = responseData.products || responseData; 
-                
-                let idCounter = 1;
-                for (let tab in allProductsData) {
-                    allProductsData[tab].forEach(p => {
-                        p.uid = 'p_' + idCounter++;
-                        p.category = tab; 
-                        cart[p.uid] = { product: p, qty: 0 };
-                    });
-                }
+                const data = responseData.products || responseData;
 
-                const tabs = Object.keys(allProductsData);
-                if (tabs.length > 0) {
-                    currentTab = tabs[0];
-                    renderTabs(tabs);
-                    renderProducts(currentTab);
-                }
+                // 存入 localStorage 快取
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+
+                renderFromData(data);
             } catch (e) {
-                console.error(e);
-                document.getElementById('product-list').innerHTML = '<p style="text-align:center; color:red; padding:20px;">資料載入失敗，請檢查網路連線。</p>';
+                console.error('載入豆單失敗:', e);
+                if (showLoading) {
+                    document.getElementById('product-list').innerHTML =
+                        '<p style="text-align:center; color:red; padding:20px;">資料載入失敗，請檢查網路連線。</p>';
+                }
+                // 背景更新失敗不影響已顯示的快取內容，靜默忽略
             }
         }
 
+        // 將資料渲染到畫面（快取或新資料都走這裡）
+        function renderFromData(data) {
+            allProductsData = data;
+            let idCounter = 1;
+            for (let tab in allProductsData) {
+                allProductsData[tab].forEach(p => {
+                    p.uid = 'p_' + idCounter++;
+                    p.category = tab;
+                    // 如果 cart 裡已有這個 uid（快取刷新時），保留使用者已選的數量
+                    if (!cart[p.uid]) {
+                        cart[p.uid] = { product: p, qty: 0 };
+                    } else {
+                        cart[p.uid].product = p; // 更新商品資訊（庫存等），保留 qty
+                    }
+                });
+            }
+
+            const tabs = Object.keys(allProductsData);
+            if (tabs.length > 0) {
+                // 若原本的 currentTab 在新資料裡不存在，重置為第一個
+                if (!currentTab || !allProductsData[currentTab]) {
+                    currentTab = tabs[0];
+                }
+                renderTabs(tabs);
+                renderProducts(currentTab);
+            }
+        }
+
+        // ==========================================
+        // 🔄 頁面重新聚焦時，若快取超過 2 分鐘就背景靜默更新
+        // ==========================================
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                try {
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        const { timestamp } = JSON.parse(cached);
+                        if (Date.now() - timestamp > 2 * 60 * 1000) {
+                            fetchAndUpdate(false);
+                        }
+                    }
+                } catch(e) {}
+            }
+        });
+
+        // ==========================================
+        // 渲染頁籤
+        // ==========================================
         function renderTabs(tabs) {
             const container = document.getElementById('tabs-container');
             container.innerHTML = tabs.map(tab => `
@@ -346,6 +433,9 @@
             renderProducts(tabName);
         }
 
+        // ==========================================
+        // 烘焙度 CSS class
+        // ==========================================
         function getRoastClass(roastStr) {
             if (!roastStr) return 'roast-default';
             if (roastStr.includes('極淺')) return 'roast-1-el';
@@ -358,6 +448,9 @@
             return 'roast-default';
         }
 
+        // ==========================================
+        // 渲染商品列表
+        // ==========================================
         function renderProducts(tabName) {
             const listEl = document.getElementById('product-list');
             const products = allProductsData[tabName] || [];
@@ -501,7 +594,9 @@
             document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
         }
 
-        // --- 門市搜尋邏輯 ---
+        // ==========================================
+        // 門市搜尋邏輯
+        // ==========================================
         let storesData = [];
         fetch('stores.json')
             .then(res => res.json())
@@ -549,7 +644,9 @@
             if (e.target !== sInput) sList.style.display = 'none';
         });
 
-        // --- 送出訂單 ---
+        // ==========================================
+        // 送出訂單
+        // ==========================================
         async function submitOrder() {
             if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
             
@@ -623,7 +720,7 @@
                         isDiscount = false;
                     }
 
-                    // 🔥 加入 rawName 與 category，讓後端能精準扣庫存
+                    // 加入 rawName 與 category，讓後端能精準扣庫存
                     let itemObj = {
                         name: displayName,
                         rawName: rawName,
@@ -683,6 +780,10 @@
                 const result = await response.json();
                 
                 if (result.result === 'success') {
+                    // ✅ 訂單成功後立即清除本地快取
+                    // 確保下次開啟頁面時重新從 GAS 拉取最新庫存
+                    localStorage.removeItem(CACHE_KEY);
+
                     let successMsg = `------------------------------\n`;
                     successMsg += `【訂購人姓名】${name}\n`;
                     successMsg += `【購買明細】\n${alertItemsText}`;
@@ -714,7 +815,8 @@
             window.location.reload();
         }
 
-        window.onload = loadProducts;
+        // 🚀 DOMContentLoaded 取代 window.onload，不等圖片載完就開始拉資料
+        document.addEventListener('DOMContentLoaded', loadProducts);
     </script>
 </body>
 </html>
