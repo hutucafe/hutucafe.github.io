@@ -562,40 +562,43 @@
 
         function calculateTotal() {
             let originalTotal = 0;
-            let totalItems = 0; 
-            let discountAmt = 0;
-            
+            let totalItems = 0;
+            let discountSubtotal = 0; // 所有指定品項的小計加總
+
             for (let uid in cart) {
                 let qty = cart[uid].qty;
                 if (qty > 0) {
                     let p = cart[uid].product;
                     let price = parseInt(p['售價'] || 0);
                     let subtotal = qty * price;
-                    
+
                     originalTotal += subtotal;
                     totalItems += qty;
-                    
-                    let pkg = (p['包裝'] || '').toLowerCase();
+
                     let rawName = (p['熟豆品項'] || '').toLowerCase();
                     let category = (p.category || '').toLowerCase();
                     let isDiscount = false;
-                    
+
                     if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
                         rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛')) {
                         isDiscount = true;
                     }
-                    
                     if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') ||
                         rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) {
                         isDiscount = false;
                     }
-                    
+
                     if (isDiscount) {
-                        discountAmt += (subtotal - Math.round(subtotal * SHOP_CONFIG.discountRate));
+                        discountSubtotal += subtotal; // 累積指定品項總金額
                     }
                 }
             }
-            
+
+            // 以指定品項【總金額】計算折扣，折扣金額無條件進位（對客戶有利）
+            // 例：指定品項總計 $1000，85折 → 折扣 $150（整數，無影響）
+            // 例：指定品項總計 $350，85折 → 折扣 $52.5 → 進位為 $53，客戶只付 $297
+            const discountAmt = Math.ceil(discountSubtotal * (1 - SHOP_CONFIG.discountRate));
+
             let discountedTotal = originalTotal - discountAmt;
             
             let shipping = 0;
@@ -708,8 +711,8 @@
 
             const discountedOrderItems = [];
             const nonDiscountedOrderItems = [];
-            let totalDiscountAmt = 0;
-            
+            let discountSubtotal = 0; // 指定品項總金額
+
             let discountedText = '';
             let nonDiscountedText = '';
 
@@ -719,19 +722,17 @@
                     let p = cart[uid].product;
                     let price = parseInt(p['售價'] || 0);
                     let subtotal = qty * price;
-                    
-                    let pkg = (p['包裝'] || '').toLowerCase();
+
                     let rawName = (p['熟豆品項'] || '');
                     let category = p.category || '';
-                    
+
                     let displayName = `${category} - ${rawName}`;
                     let isDiscount = false;
-                    
+
                     if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
                         rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛') || rawName.includes('浸泡')) {
                         isDiscount = true;
                     }
-                    
                     if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') ||
                         rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) {
                         isDiscount = false;
@@ -753,13 +754,16 @@
                     if (isDiscount) {
                         discountedText += itemLine;
                         discountedOrderItems.push(itemObj);
-                        totalDiscountAmt += (subtotal - Math.round(subtotal * SHOP_CONFIG.discountRate));
+                        discountSubtotal += subtotal; // 累積指定品項總金額
                     } else {
                         nonDiscountedText += itemLine;
                         nonDiscountedOrderItems.push(itemObj);
                     }
                 }
             }
+
+            // 以指定品項【總金額】計算折扣，無條件進位（與 calculateTotal 邏輯完全一致）
+            const totalDiscountAmt = Math.ceil(discountSubtotal * (1 - SHOP_CONFIG.discountRate));
 
             let alertItemsText = '';
             if (discountedText) {
