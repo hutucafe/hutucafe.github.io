@@ -325,10 +325,15 @@
         const CACHE_VERSION_KEY = 'hutucafe_cache_version';
         const CACHE_TTL         = 5 * 60 * 1000;
 
-        // ── 折扣設定快取（很少變動，24 小時過期，獨立版本號）──
+        // ── 折扣設定快取（很少變動，5 分鐘過期，獨立版本號）──
         const CONFIG_KEY         = 'hutucafe_config_v1';
         const CONFIG_VERSION_KEY = 'hutucafe_config_version';
-        const CONFIG_TTL         = 5 * 60 * 1000; // 5 分鐘（與豆單相同）
+        const CONFIG_TTL         = 5 * 60 * 1000;
+
+        // ── 711 門市快取（幾乎不變動，24 小時過期，獨立版本號）──
+        const STORES_KEY         = 'hutucafe_stores_v1';
+        const STORES_VERSION_KEY = 'hutucafe_stores_version';
+        const STORES_TTL         = 24 * 60 * 60 * 1000; // 24 小時
 
         let allProductsData = {};
         let currentTab = '';
@@ -344,9 +349,10 @@
         // 版本號相同 → 沿用快取，不打擾使用者
 
         async function loadProducts() {
-            // 折扣設定與豆單各自獨立載入，互不阻擋
-            loadConfig();   // 折扣設定：有快取立即套用，背景比對版本號
+            // 三者各自獨立載入，互不阻擋
+            loadConfig();         // 折扣設定：有快取立即套用，背景比對版本號
             loadProducts_inner(); // 豆單：有快取立即渲染，背景比對版本號
+            loadStores();         // 711 門市：有快取立即套用，背景比對版本號
         }
 
         // ── 折扣設定載入（獨立，24 小時快取）──────────────────────────
@@ -514,13 +520,22 @@
                         if (age > 2 * 60 * 1000) checkVersionAndUpdate(age);
                     }
                 } catch(e) {}
-                // 折扣設定：超過 2 分鐘就重新比對版本號（與豆單一致）
+                // 折扣設定：超過 2 分鐘就重新比對版本號
                 try {
                     const configCached = localStorage.getItem(CONFIG_KEY);
                     if (configCached) {
                         const { timestamp } = JSON.parse(configCached);
                         const age = Date.now() - timestamp;
                         if (age > 2 * 60 * 1000) checkConfigVersion(age);
+                    }
+                } catch(e) {}
+                // 711 門市：超過 30 分鐘才重新比對版本號（門市資料幾乎不變）
+                try {
+                    const storesCached = localStorage.getItem(STORES_KEY);
+                    if (storesCached) {
+                        const { timestamp } = JSON.parse(storesCached);
+                        const age = Date.now() - timestamp;
+                        if (age > 30 * 60 * 1000) checkStoresVersion(age);
                     }
                 } catch(e) {}
             }
@@ -707,20 +722,82 @@
         }
 
         // ==========================================
-        // 門市搜尋邏輯
+        // 🏪 711 門市搜尋邏輯（快取 + 版本號，獨立於豆單與折扣設定）
         // ==========================================
         let storesData = [];
-        fetch('stores.json')
-            .then(res => res.json())
-            .then(data => {
-                storesData = data;
-                const status = document.getElementById('store-status');
-                status.textContent = "門市資料載入完成 ✓";
-                status.style.color = "#2e7d32";
-            })
-            .catch(e => {
-                document.getElementById('store-status').textContent = "無法載入 stores.json 檔案";
-            });
+
+        // 入口：有快取立即套用，背景比對版本號
+        async function loadStores() {
+            try {
+                const cached = localStorage.getItem(STORES_KEY);
+                if (cached) {
+                    const { data, timestamp } = JSON.parse(cached);
+                    const age = Date.now() - timestamp;
+                    applyStoresData(data.stores || []);
+                    checkStoresVersion(age);
+                    return;
+                }
+            } catch(e) {
+                localStorage.removeItem(STORES_KEY);
+                localStorage.removeItem(STORES_VERSION_KEY);
+            }
+            fetchStores(); // 完全沒有快取：直接拉取
+        }
+
+        // 向 GAS 比對門市版本號
+        async function checkStoresVersion(cacheAge) {
+            try {
+                const res = await fetch(GAS_URL + '?action=version', { cache: 'no-store' });
+                const json = await res.json();
+                const serverVer = json.stores_cache_version || '';
+                const localVer  = localStorage.getItem(STORES_VERSION_KEY) || '';
+                if (serverVer && serverVer !== localVer) {
+                    // 版本號不同（你按了「更新711門市快取」或剛抓完新資料）→ 強制重拉
+                    localStorage.removeItem(STORES_KEY);
+                    localStorage.setItem(STORES_VERSION_KEY, serverVer);
+                    fetchStores();
+                } else if (cacheAge >= STORES_TTL) {
+                    fetchStores(); // 快取過期（超過 24 小時）
+                }
+            } catch(e) {
+                if (cacheAge >= STORES_TTL) fetchStores();
+            }
+        }
+
+        // 向 GAS 拉取門市資料
+        async function fetchStores() {
+            const status = document.getElementById('store-status');
+            try {
+                const res = await fetch(GAS_URL + '?action=stores', { cache: 'no-store' });
+                const data = await res.json();
+                if (data.stores_cache_version) {
+                    localStorage.setItem(STORES_VERSION_KEY, data.stores_cache_version);
+                }
+                localStorage.setItem(STORES_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+                applyStoresData(data.stores || []);
+            } catch(e) {
+                console.error('711 門市載入失敗:', e);
+                if (status) {
+                    status.textContent = '門市資料載入失敗，請重新整理頁面';
+                    status.style.color = '#c62828';
+                }
+            }
+        }
+
+        // 將門市資料套用到 storesData 並更新狀態文字
+        function applyStoresData(stores) {
+            storesData = stores;
+            const status = document.getElementById('store-status');
+            if (status) {
+                if (stores.length > 0) {
+                    status.textContent = `門市資料載入完成 ✓（共 ${stores.length.toLocaleString()} 間）`;
+                    status.style.color = '#2e7d32';
+                } else {
+                    status.textContent = '門市資料為空，請聯絡管理員';
+                    status.style.color = '#c62828';
+                }
+            }
+        }
 
         const sInput = document.getElementById('store-search');
         const sList = document.getElementById('store-suggestions');
