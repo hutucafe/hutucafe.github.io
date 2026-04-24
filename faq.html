@@ -165,7 +165,7 @@
 
                 <div class="faq-card">
                     <div class="faq-q"><span class="badge-q">Q</span>運費怎麼算？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>7-ELEVEN 超商取貨運費為 $38。目前官網訂購享「全站 9 折」優惠，且結帳滿 $1,000 即可享免運費！</div>
+                    <div class="faq-a"><span class="badge-a">A</span>7-ELEVEN 超商取貨運費為 $<span id="faq-shipping-fee">38</span>。目前官網訂購指定品項享「<span id="faq-discount-name">優惠折扣</span>」，且結帳滿 $<span id="faq-free-threshold">1,000</span> 即可享免運費！</div>
                 </div>
 
                 <div class="faq-card">
@@ -194,6 +194,48 @@
     <script>
         // ★ 請將此處替換為您實際的 Google Apps Script 網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
+
+        // ==========================================
+        // 📋 動態載入折扣設定，更新 FAQ 說明文字
+        // ==========================================
+        const FAQ_CONFIG_KEY = 'hutucafe_config_cache';
+
+        async function loadFaqConfig() {
+            // 先嘗試讀取 localStorage 快取（與訂購頁共用同一份）
+            try {
+                const cached = localStorage.getItem(FAQ_CONFIG_KEY);
+                if (cached) {
+                    const { data } = JSON.parse(cached);
+                    applyFaqConfig(data.shopConfig);
+                    return;
+                }
+            } catch(e) {}
+
+            // 快取不存在：向 GAS 拉取
+            try {
+                const res = await fetch(GAS_URL + '?action=config', { cache: 'no-store' });
+                const data = await res.json();
+                applyFaqConfig(data.shopConfig);
+            } catch(e) {
+                console.warn('折扣設定載入失敗，FAQ 顯示預設值。');
+            }
+        }
+
+        function applyFaqConfig(shopConfig) {
+            if (!shopConfig) return;
+            const discountName      = shopConfig['折扣顯示名稱'] || '優惠折扣';
+            const shippingFee       = shopConfig['運費']         || '38';
+            const freeThreshold     = shopConfig['免運門檻']     || '1000';
+
+            const elDiscount   = document.getElementById('faq-discount-name');
+            const elShipping   = document.getElementById('faq-shipping-fee');
+            const elThreshold  = document.getElementById('faq-free-threshold');
+            if (elDiscount)  elDiscount.textContent  = discountName;
+            if (elShipping)  elShipping.textContent  = shippingFee;
+            if (elThreshold) elThreshold.textContent = Number(freeThreshold).toLocaleString();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadFaqConfig);
 
         // 複製單號並開啟 7-11 查詢網頁的函數
         function copyAndTrack(trackNum) {
