@@ -204,10 +204,12 @@
         // ==========================================
         // 📋 動態載入折扣設定，更新 FAQ 說明文字
         // ==========================================
-        const FAQ_CONFIG_KEY = 'hutucafe_config_cache';
+        // ⚠️ KEY 必須與 index.html 的 CONFIG_KEY 完全一致，才能共用快取
+        const FAQ_CONFIG_KEY = 'hutucafe_config_v1';
 
         async function loadFaqConfig() {
             // 先嘗試讀取 localStorage 快取（與訂購頁共用同一份）
+            // index.html 存的結構為 { data: { shopConfig, ... }, timestamp }
             try {
                 const cached = localStorage.getItem(FAQ_CONFIG_KEY);
                 if (cached) {
@@ -217,7 +219,7 @@
                 }
             } catch(e) {}
 
-            // 快取不存在：向 GAS 拉取
+            // 快取不存在：直接向 GAS 拉取
             try {
                 const res = await fetch(GAS_URL + '?action=config', { cache: 'no-store' });
                 const data = await res.json();
@@ -229,16 +231,12 @@
 
         function applyFaqConfig(shopConfig) {
             if (!shopConfig) return;
-            const discountName      = shopConfig['折扣顯示名稱'] || '優惠折扣';
-            const shippingFee       = shopConfig['運費']         || '38';
-            const freeThreshold     = shopConfig['免運門檻']     || '1000';
-
-            const elDiscount   = document.getElementById('faq-discount-name');
-            const elShipping   = document.getElementById('faq-shipping-fee');
-            const elThreshold  = document.getElementById('faq-free-threshold');
-            if (elDiscount)  elDiscount.textContent  = discountName;
-            if (elShipping)  elShipping.textContent  = shippingFee;
-            if (elThreshold) elThreshold.textContent = Number(freeThreshold).toLocaleString();
+            const elDiscount  = document.getElementById('faq-discount-name');
+            const elShipping  = document.getElementById('faq-shipping-fee');
+            const elThreshold = document.getElementById('faq-free-threshold');
+            if (elDiscount)  elDiscount.textContent  = shopConfig['折扣顯示名稱'] || '優惠折扣';
+            if (elShipping)  elShipping.textContent  = shopConfig['運費']         || '38';
+            if (elThreshold) elThreshold.textContent = Number(shopConfig['免運門檻'] || 1000).toLocaleString();
         }
 
         document.addEventListener('DOMContentLoaded', loadFaqConfig);
