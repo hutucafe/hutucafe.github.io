@@ -100,7 +100,9 @@
         .faq-card { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 16px; transition: 0.3s; }
         .faq-card:hover { border-color: #d7ccc8; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .faq-q { display: flex; align-items: flex-start; font-size: 15px; font-weight: bold; color: #3e2723; margin-bottom: 8px; }
-        .faq-a { display: flex; align-items: flex-start; font-size: 14px; color: #555; line-height: 1.6; }
+        .faq-a { display: flex; align-items: flex-start; font-size: 14px; color: #555; line-height: 1.6; flex-wrap: wrap; }
+        .faq-a .badge-a { flex-shrink: 0; margin-bottom: 2px; }
+        .faq-a-text { flex: 1; min-width: 0; }
         .badge-q { background: #d84315; color: #fff; font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-right: 8px; margin-top: 2px; flex-shrink: 0; font-weight: normal; }
         .badge-a { background: #8d6e63; color: #fff; font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-right: 8px; margin-top: 2px; flex-shrink: 0; font-weight: normal; }
 
@@ -171,7 +173,7 @@
 
                 <div class="faq-card">
                     <div class="faq-q"><span class="badge-q">Q</span>運費怎麼算？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>7-ELEVEN 超商取貨運費為 $<span id="faq-shipping-fee">38</span>。目前官網訂購指定品項享「<span id="faq-discount-name">優惠折扣</span>」，且結帳滿 $<span id="faq-free-threshold">1,000</span> 即可享免運費！</div>
+                    <div class="faq-a"><span class="badge-a">A</span><span class="faq-a-text">7-ELEVEN 超商取貨運費為 $<span id="faq-shipping-fee">38</span>。目前官網訂購指定品項享「<span id="faq-discount-name">優惠折扣</span>」，且結帳滿 $<span id="faq-free-threshold">1,000</span> 即可享免運費！</span></div>
                 </div>
 
                 <div class="faq-card">
