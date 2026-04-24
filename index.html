@@ -268,7 +268,10 @@
                 <span class="total-amt">$0</span>
             </div>
         </div>
-        <button id="submit-btn" onclick="submitOrder()">確認送出</button>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+            <button id="submit-btn" onclick="submitOrder()">確認送出</button>
+            <button id="clear-cart-btn" onclick="clearCart()" style="background:transparent; color:#aaa; border:none; font-size:12px; cursor:pointer; padding:2px 0; text-decoration:underline; display:none;">🗑 清空購物車</button>
+        </div>
     </div>
 
     <div id="success-modal" class="custom-modal">
@@ -491,6 +494,11 @@
                         cart[p.uid] = { product: p, qty: 0 };
                     } else {
                         cart[p.uid].product = p; // 更新商品資訊（庫存等），保留 qty
+                        // 【第6點】若庫存刷新後變為 0，強制將購物車中的數量歸零
+                        const refreshedStock = parseInt(p['庫存']);
+                        if (refreshedStock === 0 && cart[p.uid].qty > 0) {
+                            cart[p.uid].qty = 0;
+                        }
                     }
                 });
             }
@@ -650,10 +658,35 @@
             }).join('');
         }
 
+        // ==========================================
+        // 🗑 清空購物車
+        // ==========================================
+        function clearCart() {
+            const hasItems = Object.values(cart).some(c => c.qty > 0);
+            if (!hasItems) return;
+            if (!confirm('確定要清空購物車嗎？')) return;
+            for (let uid in cart) {
+                cart[uid].qty = 0;
+            }
+            calculateTotal();
+            renderProducts(currentTab);
+        }
+
         function updateQty(uid, change) {
             const p = cart[uid].product;
             const parsedStock = parseInt(p['庫存']);
             const maxStock = isNaN(parsedStock) ? 9999 : parsedStock;
+
+            // 【第6點】售罄商品：即使購物車中已有數量（例如快取刷新後庫存歸零），
+            // 一律強制歸零，不允許再加購
+            if (maxStock === 0) {
+                if (cart[uid].qty > 0) {
+                    cart[uid].qty = 0;
+                    calculateTotal();
+                    renderProducts(currentTab);
+                }
+                return;
+            }
             
             let newVal = cart[uid].qty + change;
             if (newVal < 0) newVal = 0;
@@ -719,6 +752,10 @@
             document.getElementById('display-discount').textContent = `-$${discountAmt}`;
             document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
             document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
+
+            // 有商品才顯示「清空購物車」按鈕
+            const clearBtn = document.getElementById('clear-cart-btn');
+            if (clearBtn) clearBtn.style.display = totalItems > 0 ? 'block' : 'none';
         }
 
         // ==========================================
@@ -836,7 +873,14 @@
         // ==========================================
         // 送出訂單
         // ==========================================
+        // 【第10點】防重複送單：每次進入頁面產生一個唯一 token，
+        // 訂單送出成功後立即作廢，避免網路重試造成重複寫入
+        let _submitToken = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+        let _isSubmitting = false;
+
         async function submitOrder() {
+            // 防止重複點擊 / 重複送出
+            if (_isSubmitting) return;
             if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
             
             const storeId = document.getElementById('selected-store-id').value;
@@ -862,6 +906,7 @@
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
             btn.textContent = "訂單處理中...";
+            _isSubmitting = true;
 
             let storeName = "未知";
             let storeAddr = "未知";
@@ -944,6 +989,7 @@
             }
 
             const payload = {
+                submitToken: _submitToken,
                 name: name,
                 phone: "'" + phone,
                 email: email,
@@ -970,9 +1016,9 @@
                 const result = await response.json();
                 
                 if (result.result === 'success') {
-                    // ✅ 訂單成功後立即清除本地快取
-                    // 確保下次開啟頁面時重新從 GAS 拉取最新庫存
+                    // ✅ 訂單成功後立即清除本地快取 + 作廢送單 token（防止重複送出）
                     localStorage.removeItem(CACHE_KEY);
+                    _submitToken = null; // token 作廢，此後任何重試都會被 GAS 拒絕
 
                     let successMsg = `------------------------------\n`;
                     successMsg += `【訂購人姓名】${name}\n`;
@@ -991,12 +1037,14 @@
                     alert("資料庫寫入失敗！錯誤訊息：\n" + result.error);
                     btn.disabled = false;
                     btn.textContent = "確認送出";
+                    _isSubmitting = false;
                 }
             } catch (e) {
                 console.error("連線錯誤:", e);
                 alert("網路連線失敗，請稍後再試。");
                 btn.disabled = false;
                 btn.textContent = "確認送出";
+                _isSubmitting = false;
             }
         }
 
