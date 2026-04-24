@@ -61,7 +61,8 @@
             background-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); 
             transition: 0.3s; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
-        .nav-item:hover { background-color: #fff; color: #4e342e; border-color: #fff; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        /* 這裡新增了 .active 判斷，確保與其他頁面一致 */
+        .nav-item:hover, .nav-item.active { background-color: #fff; color: #4e342e; border-color: #fff; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
         @media (max-width: 600px) {
             header { height: 280px; padding: 15px; background-size: cover; }
@@ -192,6 +193,7 @@
             </p>
             
             <nav class="main-nav">
+                <a href="index.html" class="nav-item active">訂購頁</a>
                 <a href="abouthutu.html" class="nav-item">關於糊塗</a>
                 <a href="contactus.html" class="nav-item">聯絡我們</a>
                 <a href="faq.html" class="nav-item">常見問題</a>
@@ -283,20 +285,17 @@
     </div>
 
     <script>
+        // ... (以下 JavaScript 代碼保持不變)
         // ==========================================
-        // ⚙️ 糊塗咖啡 商店核心設定區 (直接在網頁修改，瞬間生效！)
+        // ⚙️ 糊塗咖啡 商店核心設定區
         // ==========================================
-        // SHOP_CONFIG 從 Google 試算表「折扣設定」頁籤動態載入
-        // 以下為預設值（fallback），頁面開啟時先用這個零延遲渲染，折扣設定載入後自動更新
         let SHOP_CONFIG = {
             discountRate: 0.85,
             discountName: "85 折",
             freeShippingThreshold: 1000,
             shippingFee: 38
         };
-        // ==========================================
 
-        // 將 SHOP_CONFIG 套用到畫面上的 Banner 與底部結帳列
         function applyShopConfig() {
             document.getElementById('ui-banner-discount').textContent = SHOP_CONFIG.discountName;
             document.getElementById('ui-banner-fee').textContent = SHOP_CONFIG.shippingFee;
@@ -304,7 +303,6 @@
             document.getElementById('ui-bottom-discount').textContent = SHOP_CONFIG.discountName;
         }
 
-        // 從 GAS 回傳的 shopConfig 物件更新 SHOP_CONFIG 並重新套用畫面
         function applyRemoteConfig(shopConfig) {
             if (!shopConfig) return;
             if (shopConfig['折扣比率'])     SHOP_CONFIG.discountRate          = parseFloat(shopConfig['折扣比率']);
@@ -312,62 +310,41 @@
             if (shopConfig['免運門檻'])     SHOP_CONFIG.freeShippingThreshold = parseInt(shopConfig['免運門檻']);
             if (shopConfig['運費'])         SHOP_CONFIG.shippingFee           = parseInt(shopConfig['運費']);
             applyShopConfig();
-            calculateTotal(); // 套用新設定後重算金額
+            calculateTotal(); 
         }
 
-        // 🔥 網頁一打開，先用預設值零延遲渲染 Banner（折扣設定載入後自動更新）
         applyShopConfig();
 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
 
-        // ==========================================
-        // 🚀 快取設定
-        // ==========================================
-        // ── 豆單快取（常變動，5 分鐘過期，版本號控制）──
         const CACHE_KEY         = 'hutucafe_products_v1';
         const CACHE_VERSION_KEY = 'hutucafe_cache_version';
         const CACHE_TTL         = 5 * 60 * 1000;
-
-        // ── 折扣設定快取（很少變動，5 分鐘過期，獨立版本號）──
         const CONFIG_KEY         = 'hutucafe_config_v1';
         const CONFIG_VERSION_KEY = 'hutucafe_config_version';
         const CONFIG_TTL         = 5 * 60 * 1000;
-
-        // ── 711 門市快取（幾乎不變動，24 小時過期，獨立版本號）──
         const STORES_KEY         = 'hutucafe_stores_v1';
         const STORES_VERSION_KEY = 'hutucafe_stores_version';
-        const STORES_TTL         = 24 * 60 * 60 * 1000; // 24 小時
+        const STORES_TTL         = 24 * 60 * 60 * 1000; 
 
         let allProductsData = {};
         let currentTab = '';
         let cart = {};
         let currentFinalTotal = 0;
 
-        // ==========================================
-        // 🚀 快取載入策略（含版本號強制刷新）
-        // ==========================================
-        // 每次載入頁面，先用輕量請求向 GAS 詢問 cache_version。
-        // 只有在你按下「🔄 更新豆單快取」時 GAS 的版本號才會變動。
-        // 版本號不同 → 強制清除 localStorage 重拉新資料（客戶重新整理即生效）
-        // 版本號相同 → 沿用快取，不打擾使用者
-
         async function loadProducts() {
-            // 三者各自獨立載入，互不阻擋
-            loadConfig();         // 折扣設定：有快取立即套用，背景比對版本號
-            loadProducts_inner(); // 豆單：有快取立即渲染，背景比對版本號
-            loadStores();         // 711 門市：有快取立即套用，背景比對版本號
+            loadConfig();         
+            loadProducts_inner(); 
+            loadStores();         
         }
 
-        // ── 折扣設定載入（獨立，24 小時快取）──────────────────────────
         async function loadConfig() {
             try {
                 const cached = localStorage.getItem(CONFIG_KEY);
                 if (cached) {
                     const { data, timestamp } = JSON.parse(cached);
                     const age = Date.now() - timestamp;
-                    // 有快取：立即套用折扣設定（使用者瞬間看到正確折扣）
                     applyRemoteConfig(data.shopConfig);
-                    // 背景比對折扣版本號
                     checkConfigVersion(age);
                     return;
                 }
@@ -375,11 +352,9 @@
                 localStorage.removeItem(CONFIG_KEY);
                 localStorage.removeItem(CONFIG_VERSION_KEY);
             }
-            // 完全沒有快取：拉取折扣設定
             fetchConfig();
         }
 
-        // 向 GAS 詢問折扣版本號
         async function checkConfigVersion(cacheAge) {
             try {
                 const res = await fetch(GAS_URL + '?action=version', { cache: 'no-store' });
@@ -387,7 +362,6 @@
                 const serverVer = json.config_cache_version || '';
                 const localVer  = localStorage.getItem(CONFIG_VERSION_KEY) || '';
                 if (serverVer && serverVer !== localVer) {
-                    // 版本號不同：你按了「更新折扣設定快取」，強制重拉
                     localStorage.removeItem(CONFIG_KEY);
                     localStorage.setItem(CONFIG_VERSION_KEY, serverVer);
                     fetchConfig();
@@ -399,7 +373,6 @@
             }
         }
 
-        // 向 GAS 拉取折扣設定
         async function fetchConfig() {
             try {
                 const res = await fetch(GAS_URL + '?action=config', { cache: 'no-store' });
@@ -411,11 +384,9 @@
                 applyRemoteConfig(data.shopConfig);
             } catch(e) {
                 console.error('折扣設定載入失敗:', e);
-                // 失敗時保留預設值，不影響豆單顯示
             }
         }
 
-        // ── 豆單載入（獨立，5 分鐘快取）──────────────────────────────
         async function loadProducts_inner() {
             try {
                 const cached = localStorage.getItem(CACHE_KEY);
@@ -433,21 +404,17 @@
             fetchAndUpdate(true);
         }
 
-        // 向 GAS 詢問版本號，判斷是否需要強制刷新
         async function checkVersionAndUpdate(cacheAge) {
             try {
                 const res = await fetch(GAS_URL + '?action=version', { cache: 'no-store' });
                 const json = await res.json();
                 const serverVersion = json.cache_version || '';
                 const localVersion = localStorage.getItem(CACHE_VERSION_KEY) || '';
-
                 if (serverVersion && serverVersion !== localVersion) {
-                    // 版本號不同：你按了「更新豆單快取」，強制清除並重拉
-                    localStorage.removeItem(CACHE_KEY); // 折扣設定快取獨立，不清除
+                    localStorage.removeItem(CACHE_KEY);
                     localStorage.setItem(CACHE_VERSION_KEY, serverVersion);
                     fetchAndUpdate(false);
                 } else if (cacheAge >= CACHE_TTL) {
-                    // 版本號相同但快取已過期：背景靜默更新
                     fetchAndUpdate(false);
                 }
             } catch(e) {
@@ -455,7 +422,6 @@
             }
         }
 
-        // 向 GAS 拉取豆單資料（不含折扣設定，兩者已獨立）
         async function fetchAndUpdate(showLoading) {
             if (showLoading) {
                 document.getElementById('product-list').innerHTML = `
@@ -481,7 +447,6 @@
             }
         }
 
-        // 將豆單資料渲染到畫面（折扣設定由 loadConfig 獨立處理，不在此處理）
         function renderFromData(data) {
             allProductsData = data.products || data;
             let idCounter = 1;
@@ -489,12 +454,10 @@
                 allProductsData[tab].forEach(p => {
                     p.uid = 'p_' + idCounter++;
                     p.category = tab;
-                    // 如果 cart 裡已有這個 uid（快取刷新時），保留使用者已選的數量
                     if (!cart[p.uid]) {
                         cart[p.uid] = { product: p, qty: 0 };
                     } else {
-                        cart[p.uid].product = p; // 更新商品資訊（庫存等），保留 qty
-                        // 【第6點】若庫存刷新後變為 0，強制將購物車中的數量歸零
+                        cart[p.uid].product = p;
                         const refreshedStock = parseInt(p['庫存']);
                         if (refreshedStock === 0 && cart[p.uid].qty > 0) {
                             cart[p.uid].qty = 0;
@@ -502,10 +465,8 @@
                     }
                 });
             }
-
             const tabs = Object.keys(allProductsData);
             if (tabs.length > 0) {
-                // 若原本的 currentTab 在新資料裡不存在，重置為第一個
                 if (!currentTab || !allProductsData[currentTab]) {
                     currentTab = tabs[0];
                 }
@@ -514,12 +475,8 @@
             }
         }
 
-        // ==========================================
-        // 🔄 頁面重新聚焦時，若快取超過 2 分鐘就背景靜默更新
-        // ==========================================
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'visible') {
-                // 豆單：超過 2 分鐘就重新比對版本號
                 try {
                     const cached = localStorage.getItem(CACHE_KEY);
                     if (cached) {
@@ -528,7 +485,6 @@
                         if (age > 2 * 60 * 1000) checkVersionAndUpdate(age);
                     }
                 } catch(e) {}
-                // 折扣設定：超過 2 分鐘就重新比對版本號
                 try {
                     const configCached = localStorage.getItem(CONFIG_KEY);
                     if (configCached) {
@@ -537,7 +493,6 @@
                         if (age > 2 * 60 * 1000) checkConfigVersion(age);
                     }
                 } catch(e) {}
-                // 711 門市：超過 30 分鐘才重新比對版本號（門市資料幾乎不變）
                 try {
                     const storesCached = localStorage.getItem(STORES_KEY);
                     if (storesCached) {
@@ -549,9 +504,6 @@
             }
         });
 
-        // ==========================================
-        // 渲染頁籤
-        // ==========================================
         function renderTabs(tabs) {
             const container = document.getElementById('tabs-container');
             container.innerHTML = tabs.map(tab => `
@@ -565,9 +517,6 @@
             renderProducts(tabName);
         }
 
-        // ==========================================
-        // 烘焙度 CSS class
-        // ==========================================
         function getRoastClass(roastStr) {
             if (!roastStr) return 'roast-default';
             if (roastStr.includes('極淺')) return 'roast-1-el';
@@ -580,25 +529,19 @@
             return 'roast-default';
         }
 
-        // ==========================================
-        // 渲染商品列表
-        // ==========================================
         function renderProducts(tabName) {
             const listEl = document.getElementById('product-list');
             const products = allProductsData[tabName] || [];
-            
             listEl.innerHTML = products.map(p => {
                 const name = p['熟豆品項'] || '未命名品項';
                 const roast = p['烘焙度'] || '';
                 const pkg = p['包裝'] || '';
                 const price = parseInt(p['售價'] || 0);
-                
                 const rawStock = p['庫存'];
                 const parsedStock = parseInt(rawStock);
                 const isOutOfStock = parsedStock === 0;
                 let stockTagHtml = '';
                 let disableAddBtn = '';
-                
                 if (isOutOfStock) {
                     stockTagHtml = `<span class="stock-out">售完</span>`;
                     disableAddBtn = 'disabled';
@@ -609,65 +552,45 @@
                         stockTagHtml = `<span class="stock-normal">庫存 ${parsedStock}</span>`;
                     }
                 }
-
                 const roastHtml = roast ? `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span> ` : '';
                 const titleHtml = `${roastHtml} <span>${name}</span>`;
-
                 let metaArray = [];
                 if (p['產區'] && p['產區'] !== '-') metaArray.push(p['產區']);
                 if (p['品種'] && p['品種'] !== '-') metaArray.push(p['品種']);
                 if (p['處理法'] && p['處理法'] !== '-') metaArray.push(p['處理法']);
-                
                 let metaText = metaArray.join('｜');
-                let metaHtml = '';
-                if (metaText) {
-                    metaHtml = `<div class="card-meta"><span>${metaText}</span></div>`;
-                }
-
+                let metaHtml = metaText ? `<div class="card-meta"><span>${metaText}</span></div>` : '';
                 let tagsArray = [];
                 if (p['風味']) {
                     const flavors = p['風味'].split(/[、,，\s]+/);
                     flavors.forEach(f => { if(f.trim() && f !== '-') tagsArray.push(f.trim()); });
                 }
                 const tagsHtml = tagsArray.map(tag => `<span class="modern-tag">${tag}</span>`).join('');
-
                 return `
                     <div class="modern-card">
                         <div class="card-left">
                             <div class="card-title">${titleHtml}</div>
                             ${metaHtml}
-                            <div class="card-tags">
-                                ${tagsHtml}
-                            </div>
+                            <div class="card-tags">${tagsHtml}</div>
                         </div>
                         <div class="card-right">
-                            <div class="card-price">
-                                $${price}<span class="unit">/${pkg}</span>
-                            </div>
+                            <div class="card-price">$${price}<span class="unit">/${pkg}</span></div>
                             <div class="modern-qty">
                                 <button onclick="updateQty('${p.uid}', -1)" ${cart[p.uid].qty === 0 ? 'disabled' : ''}>−</button>
                                 <input type="text" id="qty-${p.uid}" value="${cart[p.uid].qty}" readonly>
                                 <button onclick="updateQty('${p.uid}', 1)" ${disableAddBtn}>+</button>
                             </div>
-                            <div class="stock-container">
-                                ${stockTagHtml}
-                            </div>
+                            <div class="stock-container">${stockTagHtml}</div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
 
-        // ==========================================
-        // 🗑 清空購物車
-        // ==========================================
         function clearCart() {
             const hasItems = Object.values(cart).some(c => c.qty > 0);
             if (!hasItems) return;
             if (!confirm('確定要清空購物車嗎？')) return;
-            for (let uid in cart) {
-                cart[uid].qty = 0;
-            }
+            for (let uid in cart) { cart[uid].qty = 0; }
             calculateTotal();
             renderProducts(currentTab);
         }
@@ -676,9 +599,6 @@
             const p = cart[uid].product;
             const parsedStock = parseInt(p['庫存']);
             const maxStock = isNaN(parsedStock) ? 9999 : parsedStock;
-
-            // 【第6點】售罄商品：即使購物車中已有數量（例如快取刷新後庫存歸零），
-            // 一律強制歸零，不允許再加購
             if (maxStock === 0) {
                 if (cart[uid].qty > 0) {
                     cart[uid].qty = 0;
@@ -687,14 +607,12 @@
                 }
                 return;
             }
-            
             let newVal = cart[uid].qty + change;
             if (newVal < 0) newVal = 0;
             if (newVal > maxStock) {
                 alert(`抱歉，【${p['熟豆品項']}】目前庫存僅剩 ${maxStock}`);
                 newVal = maxStock;
             }
-            
             cart[uid].qty = newVal;
             calculateTotal();
             renderProducts(currentTab); 
@@ -703,22 +621,18 @@
         function calculateTotal() {
             let originalTotal = 0;
             let totalItems = 0;
-            let discountSubtotal = 0; // 所有指定品項的小計加總
-
+            let discountSubtotal = 0; 
             for (let uid in cart) {
                 let qty = cart[uid].qty;
                 if (qty > 0) {
                     let p = cart[uid].product;
                     let price = parseInt(p['售價'] || 0);
                     let subtotal = qty * price;
-
                     originalTotal += subtotal;
                     totalItems += qty;
-
                     let rawName = (p['熟豆品項'] || '').toLowerCase();
                     let category = (p.category || '').toLowerCase();
                     let isDiscount = false;
-
                     if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
                         rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛')) {
                         isDiscount = true;
@@ -727,43 +641,25 @@
                         rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) {
                         isDiscount = false;
                     }
-
-                    if (isDiscount) {
-                        discountSubtotal += subtotal; // 累積指定品項總金額
-                    }
+                    if (isDiscount) discountSubtotal += subtotal;
                 }
             }
-
-            // 以指定品項【總金額】計算折扣，折扣金額無條件進位（對客戶有利）
-            // 例：指定品項總計 $1000，85折 → 折扣 $150（整數，無影響）
-            // 例：指定品項總計 $350，85折 → 折扣 $52.5 → 進位為 $53，客戶只付 $297
             const discountAmt = Math.ceil(Math.round(discountSubtotal * (1 - SHOP_CONFIG.discountRate) * 1e10) / 1e10);
-
             let discountedTotal = originalTotal - discountAmt;
-            
             let shipping = 0;
             if (totalItems > 0) {
                 shipping = (discountedTotal >= SHOP_CONFIG.freeShippingThreshold) ? 0 : SHOP_CONFIG.shippingFee;
             }
-            
             currentFinalTotal = discountedTotal + shipping;
-            
             document.getElementById('display-original').textContent = `$${originalTotal}`;
             document.getElementById('display-discount').textContent = `-$${discountAmt}`;
             document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
             document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
-
-            // 有商品才顯示「清空購物車」按鈕
             const clearBtn = document.getElementById('clear-cart-btn');
             if (clearBtn) clearBtn.style.display = totalItems > 0 ? 'block' : 'none';
         }
 
-        // ==========================================
-        // 🏪 711 門市搜尋邏輯（快取 + 版本號，獨立於豆單與折扣設定）
-        // ==========================================
         let storesData = [];
-
-        // 入口：有快取立即套用，背景比對版本號
         async function loadStores() {
             try {
                 const cached = localStorage.getItem(STORES_KEY);
@@ -778,10 +674,9 @@
                 localStorage.removeItem(STORES_KEY);
                 localStorage.removeItem(STORES_VERSION_KEY);
             }
-            fetchStores(); // 完全沒有快取：直接拉取
+            fetchStores();
         }
 
-        // 向 GAS 比對門市版本號
         async function checkStoresVersion(cacheAge) {
             try {
                 const res = await fetch(GAS_URL + '?action=version', { cache: 'no-store' });
@@ -789,19 +684,17 @@
                 const serverVer = json.stores_cache_version || '';
                 const localVer  = localStorage.getItem(STORES_VERSION_KEY) || '';
                 if (serverVer && serverVer !== localVer) {
-                    // 版本號不同（你按了「更新711門市快取」或剛抓完新資料）→ 強制重拉
                     localStorage.removeItem(STORES_KEY);
                     localStorage.setItem(STORES_VERSION_KEY, serverVer);
                     fetchStores();
                 } else if (cacheAge >= STORES_TTL) {
-                    fetchStores(); // 快取過期（超過 24 小時）
+                    fetchStores();
                 }
             } catch(e) {
                 if (cacheAge >= STORES_TTL) fetchStores();
             }
         }
 
-        // 向 GAS 拉取門市資料
         async function fetchStores() {
             const status = document.getElementById('store-status');
             try {
@@ -821,7 +714,6 @@
             }
         }
 
-        // 將門市資料套用到 storesData 並更新狀態文字
         function applyStoresData(stores) {
             storesData = stores;
             const status = document.getElementById('store-status');
@@ -838,16 +730,11 @@
 
         const sInput = document.getElementById('store-search');
         const sList = document.getElementById('store-suggestions');
-
         sInput.addEventListener('input', function() {
             const kw = this.value.trim().toLowerCase();
             sList.innerHTML = '';
             if (!kw) { sList.style.display = 'none'; return; }
-
-            const filtered = storesData.filter(s => 
-                s.店號.includes(kw) || s.名稱.toLowerCase().includes(kw) || s.地址.includes(kw)
-            ).slice(0, 8);
-
+            const filtered = storesData.filter(s => s.店號.includes(kw) || s.名稱.toLowerCase().includes(kw) || s.地址.includes(kw)).slice(0, 8);
             if (filtered.length > 0) {
                 sList.style.display = 'block';
                 filtered.forEach(s => {
@@ -861,199 +748,68 @@
                     };
                     sList.appendChild(li);
                 });
-            } else {
-                sList.style.display = 'none';
-            }
+            } else { sList.style.display = 'none'; }
         });
+        document.addEventListener('click', (e) => { if (e.target !== sInput) sList.style.display = 'none'; });
 
-        document.addEventListener('click', (e) => {
-            if (e.target !== sInput) sList.style.display = 'none';
-        });
-
-        // ==========================================
-        // 送出訂單
-        // ==========================================
-        // 【第10點】防重複送單：每次進入頁面產生一個唯一 token，
-        // 訂單送出成功後立即作廢，避免網路重試造成重複寫入
         let _submitToken = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         let _isSubmitting = false;
 
         async function submitOrder() {
-            // 防止重複點擊 / 重複送出
             if (_isSubmitting) return;
             if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
-            
             const storeId = document.getElementById('selected-store-id').value;
             const storeInfo = document.getElementById('store-info').value;
             const name = document.getElementById('buyer-name').value.trim();
             const phone = document.getElementById('buyer-phone').value.trim();
             const email = document.getElementById('buyer-email').value.trim();
             let notes = document.getElementById('buyer-notes').value.trim();
-
-            if (!storeId) {
-                alert("請搜尋並選擇您要取貨的 7-11 門市！");
-                sInput.focus();
-                return;
-            }
+            if (!storeId) { alert("請搜尋並選擇您要取貨的 7-11 門市！"); sInput.focus(); return; }
             if (!name || !phone) return alert("請填寫完整的姓名與手機號碼！");
-            
-            if (!email) {
-                alert("請填寫 Email，以便接收完整的訂單明細與出貨通知！");
-                document.getElementById('buyer-email').focus();
-                return;
-            }
-
+            if (!email) { alert("請填寫 Email，以便接收完整的訂單明細與出貨通知！"); document.getElementById('buyer-email').focus(); return; }
             const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-            btn.textContent = "訂單處理中...";
-            _isSubmitting = true;
-
-            let storeName = "未知";
-            let storeAddr = "未知";
+            btn.disabled = true; btn.textContent = "訂單處理中..."; _isSubmitting = true;
+            let storeName = "未知"; let storeAddr = "未知";
             if (storeInfo.includes('|')) {
                 const parts = storeInfo.split('|').map(s => s.trim());
-                if (parts.length >= 3) {
-                    storeName = parts[1];
-                    storeAddr = parts[2];
-                }
+                if (parts.length >= 3) { storeName = parts[1]; storeAddr = parts[2]; }
             }
-
             const originalTotal = parseInt(document.getElementById('display-original').textContent.replace('$', ''));
-            const discountStr = document.getElementById('display-discount').textContent;
             const shippingStr = document.getElementById('display-shipping').textContent;
             const shippingAmt = shippingStr === '免運費' ? 0 : parseInt(shippingStr.replace('$', ''));
-
-            const discountedOrderItems = [];
-            const nonDiscountedOrderItems = [];
-            let discountSubtotal = 0; // 指定品項總金額
-
-            let discountedText = '';
-            let nonDiscountedText = '';
-
+            const discountedOrderItems = []; const nonDiscountedOrderItems = [];
+            let discountSubtotal = 0; let discountedText = ''; let nonDiscountedText = '';
             for (let uid in cart) {
                 let qty = cart[uid].qty;
                 if (qty > 0) {
-                    let p = cart[uid].product;
-                    let price = parseInt(p['售價'] || 0);
-                    let subtotal = qty * price;
-
-                    let rawName = (p['熟豆品項'] || '');
-                    let category = p.category || '';
-
-                    let displayName = `${category} - ${rawName}`;
-                    let isDiscount = false;
-
-                    if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
-                        rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛') || rawName.includes('浸泡')) {
-                        isDiscount = true;
-                    }
-                    if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') ||
-                        rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) {
-                        isDiscount = false;
-                    }
-
-                    // 加入 rawName 與 category，讓後端能精準扣庫存
-                    let itemObj = {
-                        name: displayName,
-                        rawName: rawName,
-                        category: category,
-                        pkg: p['包裝'],
-                        price: price,
-                        qty: qty,
-                        subtotal: subtotal
-                    };
-
+                    let p = cart[uid].product; let price = parseInt(p['售價'] || 0); let subtotal = qty * price;
+                    let rawName = (p['熟豆品項'] || ''); let category = p.category || '';
+                    let displayName = `${category} - ${rawName}`; let isDiscount = false;
+                    if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') || rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛') || rawName.includes('浸泡')) { isDiscount = true; }
+                    if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') || rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) { isDiscount = false; }
+                    let itemObj = { name: displayName, rawName: rawName, category: category, pkg: p['包裝'], price: price, qty: qty, subtotal: subtotal };
                     let itemLine = `  • ${displayName} (${p['包裝']}) x ${qty}\n`;
-
-                    if (isDiscount) {
-                        discountedText += itemLine;
-                        discountedOrderItems.push(itemObj);
-                        discountSubtotal += subtotal; // 累積指定品項總金額
-                    } else {
-                        nonDiscountedText += itemLine;
-                        nonDiscountedOrderItems.push(itemObj);
-                    }
+                    if (isDiscount) { discountedText += itemLine; discountedOrderItems.push(itemObj); discountSubtotal += subtotal; } else { nonDiscountedText += itemLine; nonDiscountedOrderItems.push(itemObj); }
                 }
             }
-
-            // 以指定品項【總金額】計算折扣，無條件進位（與 calculateTotal 邏輯完全一致）
             const totalDiscountAmt = Math.ceil(Math.round(discountSubtotal * (1 - SHOP_CONFIG.discountRate) * 1e10) / 1e10);
-
             let alertItemsText = '';
-            if (discountedText) {
-                alertItemsText += `【指定品項 (享 ${SHOP_CONFIG.discountName})】\n${discountedText}`;
-                alertItemsText += `  👉 折扣金額：-$${totalDiscountAmt}\n\n`;
-            }
-            if (nonDiscountedText) {
-                alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`;
-            }
-
-            const payload = {
-                submitToken: _submitToken,
-                name: name,
-                phone: "'" + phone,
-                email: email,
-                storeName: storeName,
-                storeId: storeId,
-                storeAddress: storeAddr,
-                notes: notes,
-                discountedItems: discountedOrderItems,     
-                nonDiscountedItems: nonDiscountedOrderItems, 
-                totalDiscountAmt: totalDiscountAmt,
-                originalTotal: originalTotal,
-                shipping: shippingAmt,
-                totalPrice: currentFinalTotal,
-                discountName: SHOP_CONFIG.discountName
-            };
-
+            if (discountedText) { alertItemsText += `【指定品項 (享 ${SHOP_CONFIG.discountName})】\n${discountedText}  👉 折扣金額：-$${totalDiscountAmt}\n\n`; }
+            if (nonDiscountedText) { alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`; }
+            const payload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: SHOP_CONFIG.discountName };
             try {
-                const response = await fetch(GAS_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-                
+                const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
                 const result = await response.json();
-                
                 if (result.result === 'success') {
-                    // ✅ 訂單成功後立即清除本地快取 + 作廢送單 token（防止重複送出）
-                    localStorage.removeItem(CACHE_KEY);
-                    _submitToken = null; // token 作廢，此後任何重試都會被 GAS 拒絕
-
-                    let successMsg = `------------------------------\n`;
-                    successMsg += `【訂購人姓名】${name}\n`;
-                    successMsg += `【購買明細】\n${alertItemsText}`;
-                    successMsg += `------------------------------\n`;
-                    successMsg += `【運費】${shippingStr}\n`;
-                    successMsg += `【結帳總額】$${currentFinalTotal}\n\n`;
-                    successMsg += `※ 訂單明細已同步寄送至您的 Email。\n`;
-                    successMsg += `感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n`;
-                    successMsg += `也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
-                    
+                    localStorage.removeItem(CACHE_KEY); _submitToken = null;
+                    let successMsg = `------------------------------\n【訂購人姓名】${name}\n【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr}\n【結帳總額】$${currentFinalTotal}\n\n※ 訂單明細已同步寄送至您的 Email。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
                     document.getElementById('modal-msg').textContent = successMsg;
                     document.getElementById('success-modal').style.display = 'flex';
-                } else {
-                    console.error("後端錯誤:", result.error);
-                    alert("資料庫寫入失敗！錯誤訊息：\n" + result.error);
-                    btn.disabled = false;
-                    btn.textContent = "確認送出";
-                    _isSubmitting = false;
-                }
-            } catch (e) {
-                console.error("連線錯誤:", e);
-                alert("網路連線失敗，請稍後再試。");
-                btn.disabled = false;
-                btn.textContent = "確認送出";
-                _isSubmitting = false;
-            }
+                } else { alert("資料庫寫入失敗！錯誤訊息：\n" + result.error); btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false; }
+            } catch (e) { alert("網路連線失敗，請稍後再試。"); btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false; }
         }
 
-        function closeModal() {
-            document.getElementById('success-modal').style.display = 'none';
-            window.location.reload();
-        }
-
-        // 🚀 DOMContentLoaded 取代 window.onload，不等圖片載完就開始拉資料
+        function closeModal() { document.getElementById('success-modal').style.display = 'none'; window.location.reload(); }
         document.addEventListener('DOMContentLoaded', loadProducts);
     </script>
 </body>
