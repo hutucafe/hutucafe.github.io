@@ -11,14 +11,14 @@
     <meta property="og:image" content="https://hutucafe.github.io/certificate.jpg">
     <link rel="icon" href="logo2.jpg" type="image/jpeg">
     <style>
-        /* 基礎樣式重置 (完全對齊 index.html 風格) */
+        /* 基礎樣式重置 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
         
-        /* 頁首設計 (鎖定圖片大小，不隨寬度變形放大) */
+        /* 頁首設計 */
         header { 
             position: relative;
-            background-image: url('bg.jpg'); /* ⚠️ 若圖片檔名不同請更改 */
+            background-image: url('bg.jpg'); 
             background-size: auto 100%; 
             background-position: center center; 
             background-repeat: no-repeat;
@@ -33,7 +33,6 @@
             border-top: 6px solid #000; 
         }
 
-        /* 漸層遮罩：上方透明，下方漸暗 */
         header::before {
             content: '';
             position: absolute;
@@ -53,16 +52,13 @@
         .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
         .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
-        /* LINE 超連結與圖示專屬樣式 */
         .line-link { color: inherit; text-decoration: none; transition: 0.3s; display: inline-block; }
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
-        .line-icon { width: 18px; height: 18px; vertical-align: middle; margin-right: 4px; margin-bottom: 3px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+        .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
-        /* 主導覽列 */
         .main-nav { display: flex; justify-content: center; overflow-x: auto; gap: 10px; padding: 5px 0; scrollbar-width: none; }
         .main-nav::-webkit-scrollbar { display: none; }
 
-        /* 毛玻璃頁籤 */
         .nav-item { 
             flex: none; text-decoration: none; font-size: 13px; color: #fff; padding: 8px 16px; 
             border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; 
@@ -78,7 +74,6 @@
             .nav-item { padding: 6px 12px; font-size: 12px; }
         }
 
-        /* 內容區塊專屬樣式 */
         .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
         .section { background: #fff; border-radius: 16px; padding: 25px 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
@@ -86,39 +81,51 @@
         .about-text { font-size: 15px; color: #555; line-height: 1.8; text-align: justify; margin-bottom: 15px; }
         .highlight { color: #d84315; font-weight: bold; }
         
-        /* Coffee Review 評分卡片清單 */
+        /* Coffee Review 評分卡片與分數徽章樣式 */
         .cr-list { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
         .cr-card { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 15px; display: flex; align-items: center; transition: 0.3s; text-decoration: none; color: inherit; }
         .cr-card:hover { border-color: #d7ccc8; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-2px); }
-        .cr-score { font-size: 32px; font-weight: 900; color: #b71c1c; margin-right: 15px; min-width: 55px; text-align: center; }
+        
+        /* 基本分數方塊 (用於 93 分) */
+        .cr-score { 
+            font-size: 26px; 
+            font-weight: 900; 
+            color: #fff; 
+            background-color: #b71c1c; /* 基本深紅 */
+            margin-right: 18px; 
+            min-width: 58px; 
+            height: 58px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 10px; 
+            flex-shrink: 0; 
+            transition: 0.3s;
+        }
+
+        /* 最高分強化樣式 (用於 94 分) */
+        .cr-score.top-score {
+            background-color: #d84315; /* 更亮眼、顯著的橘紅 */
+            transform: scale(1.15);    /* 尺寸微幅放大 */
+            box-shadow: 0 4px 12px rgba(216, 67, 21, 0.4); /* 增加專屬陰影 */
+            border: 2px solid #fff;     /* 增加白色內框感 */
+            outline: 2px solid #d84315; /* 增加外部線框增加層次 */
+        }
+
         .cr-desc { flex: 1; }
         .cr-desc h4 { font-size: 15px; color: #3e2723; margin-bottom: 4px; font-weight: bold; }
         .cr-desc p { font-size: 13px; color: #666; line-height: 1.5; }
 
-        /* 獎狀圖片 */
         .cert-img { width: 100%; border-radius: 8px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; }
         
-        /* 獎項列表 */
         .award-list { list-style: none; margin-top: 10px; }
         .award-list li { font-size: 15px; color: #444; padding: 10px 0; border-bottom: 1px dashed #eee; display: flex; align-items: center; }
         .award-list li::before { content: '🏆'; margin-right: 10px; font-size: 18px; }
         .award-list li:last-child { border-bottom: none; }
 
-        /* 底部返回首頁按鈕 */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
         .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; transition: 0.3s; display: inline-block; width: 100%; max-width: 400px; text-align: center; letter-spacing: 2px; }
         .bottom-bar a:hover { background: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3); }
-
-        /* 圖片版 LINE 小圖示專屬樣式 */
-        .line-img-icon {
-            width: 22px; 
-            height: auto;
-            vertical-align: middle;
-            margin-right: 4px;
-            position: relative;
-            top: -2px; 
-            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); 
-        }
     </style>
 </head>
 <body>
@@ -158,17 +165,18 @@
         <div class="section">
             <div class="section-title">🌟 國際權威機構 CR 評鑑肯定</div>
             <p class="about-text">
-                糊塗咖啡秉持對品質的堅持，參與全球最具指標性的咖啡評鑑權威機構 <strong>Coffee Review</strong>，送測的 6 款咖啡皆榮獲卓越高分肯定，讓台灣的烘焙實力被世界看見。
+                糊塗咖啡秉持對品質的堅持，參與全球最具指標性的咖啡評鑑權威機構 <strong>Coffee Review</strong>，送測的 6 款咖啡皆榮獲卓越高分肯定。
             </p>
             
             <div class="cr-list">
                 <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
-                    <div class="cr-score">94</div>
+                    <div class="cr-score top-score">94</div>
                     <div class="cr-desc">
                         <h4>Ethiopia Banko Gotiti</h4>
                         <p>佛手柑與柑橘香氣，伴隨檸檬草與可可，酸值明亮，口感絲滑。</p>
                     </div>
                 </a>
+                
                 <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
                     <div class="cr-score">93</div>
                     <div class="cr-desc">
@@ -210,25 +218,17 @@
         <div class="section">
             <div class="section-title">🎓 SCA 國際精品咖啡協會 專業級認證</div>
             <p class="about-text">
-                糊塗咖啡烘豆師已正式取得 <strong>SCA CSP Roasting Professional（咖啡烘焙專業級）</strong>證照。這是國際精品咖啡協會（SCA）認證的最高烘焙等級。
-            </p>
-            <p class="about-text">
-                該認證課程深入探討烘焙科學（如物理/化學變化、梅納反應與熱力學），並涵蓋高階烘焙曲線設計、不同烘焙技法精進、瑕疵修正及商業化量產管理。透過嚴謹的理論與實作考驗，展現我們對高階烘豆知識與極致風味的專業掌握。
+                糊塗咖啡烘豆師已正式取得 <strong>SCA CSP Roasting Professional（咖啡烘焙專業級）</strong>證照。這是國際精品咖啡協會認證的最高等級。
             </p>
             <img src="sca_csp.jpg" alt="SCA CSP Roasting Professional 證照" class="cert-img">
         </div>
 
         <div class="section">
             <div class="section-title">🏆 歷年賽事殊榮</div>
-            <p class="about-text">
-                糊塗咖啡的烘豆師透過科學化分析與敏銳的感官杯測，在激烈的咖啡烘焙賽事中屢創佳績，以實力證明我們對完美風味的追求。
-            </p>
-            
             <ul class="award-list">
                 <li><strong>咖啡烘烘烘 2022 年末賽 —— 榮獲 冠軍</strong></li>
                 <li>咖啡烘烘烘 2022 10月例賽 —— 榮獲 第六名</li>
             </ul>
-
             <img src="certificate.jpg" alt="咖啡烘烘烘 烘豆賽 冠軍獎狀" class="cert-img">
         </div>
 
