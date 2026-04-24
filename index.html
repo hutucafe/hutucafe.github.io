@@ -10,6 +10,65 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 160px; }
         
+        /* 頁首設計 */
+        header { 
+            position: relative;
+            background-image: url('bg.jpg');
+            background-size: auto 100%; 
+            background-position: center center; 
+            background-repeat: no-repeat;
+            background-color: #000; 
+            height: 340px; 
+            display: flex;
+            align-items: flex-end; 
+            justify-content: center;
+            padding: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
+            margin-bottom: 25px; 
+            border-top: 6px solid #000; 
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 10%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%);
+        }
+        
+        .header-inner { 
+            width: 100%;
+            max-width: 600px; 
+            position: relative; 
+            text-align: center; 
+            z-index: 1; 
+            padding-bottom: 5px; 
+        }
+
+        .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
+        .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+
+        .line-link { color: inherit; text-decoration: none; transition: 0.3s; display: inline-block; }
+        .line-link:hover { opacity: 0.75; transform: scale(1.02); }
+        .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+
+        /* 主導覽列 */
+        .main-nav { display: flex; justify-content: center; overflow-x: auto; gap: 10px; padding: 5px 0; scrollbar-width: none; }
+        .main-nav::-webkit-scrollbar { display: none; }
+
+        .nav-item { 
+            flex: none; text-decoration: none; font-size: 13px; color: #fff; padding: 8px 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; 
+            background-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); 
+            transition: 0.3s; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .nav-item:hover { background-color: #fff; color: #4e342e; border-color: #fff; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+        @media (max-width: 600px) {
+            header { height: 280px; padding: 15px; background-size: cover; }
+            .header-inner h1 { font-size: 24px; }
+            .header-inner p { font-size: 13px; margin-bottom: 15px; }
+            .nav-item { padding: 6px 12px; font-size: 12px; }
+        }
 
         /* 容器與區塊 */
         .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
@@ -119,12 +178,27 @@
         .modal-content button { background: #d84315; color: #fff; border: none; padding: 12px 0; width: 100%; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .modal-content button:hover { background: #bf360c; }
     </style>
-    <!-- ★ 共用頁首樣式與載入器：修改 header.css / header-loader.js 即可同步所有頁面 -->
-    <link rel="stylesheet" href="header.css">
-    <script src="header-loader.js" defer></script>
 </head>
 <body>
 
+    <header>
+        <div class="header-inner">
+            <h1>糊塗咖啡 HUTU CAFE</h1>
+            <p>職人嚴選 ‧ 極致烘焙 ‧ 
+                <a href="https://lin.ee/6oPqPhD" target="_blank" class="line-link">
+                    <img src="line_logo.svg" alt="LINE" class="line-img-icon">
+                    @hutucafe
+                </a>
+            </p>
+            
+            <nav class="main-nav">
+                <a href="abouthutu.html" class="nav-item">關於糊塗</a>
+                <a href="contactus.html" class="nav-item">聯絡我們</a>
+                <a href="faq.html" class="nav-item">常見問題</a>
+                <a href="more.html" class="nav-item">更多...</a>
+            </nav>
+        </div>
+    </header>
 
     <div class="container">
         <div class="promo-banner">
@@ -194,10 +268,7 @@
                 <span class="total-amt">$0</span>
             </div>
         </div>
-        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
-            <button id="submit-btn" onclick="submitOrder()">確認送出</button>
-            <button id="clear-cart-btn" onclick="clearCart()" style="background:transparent; color:#aaa; border:none; font-size:12px; cursor:pointer; padding:2px 0; text-decoration:underline; display:none;">🗑 清空購物車</button>
-        </div>
+        <button id="submit-btn" onclick="submitOrder()">確認送出</button>
     </div>
 
     <div id="success-modal" class="custom-modal">
@@ -420,11 +491,6 @@
                         cart[p.uid] = { product: p, qty: 0 };
                     } else {
                         cart[p.uid].product = p; // 更新商品資訊（庫存等），保留 qty
-                        // 【第6點】若庫存刷新後變為 0，強制將購物車中的數量歸零
-                        const refreshedStock = parseInt(p['庫存']);
-                        if (refreshedStock === 0 && cart[p.uid].qty > 0) {
-                            cart[p.uid].qty = 0;
-                        }
                     }
                 });
             }
@@ -584,35 +650,10 @@
             }).join('');
         }
 
-        // ==========================================
-        // 🗑 清空購物車
-        // ==========================================
-        function clearCart() {
-            const hasItems = Object.values(cart).some(c => c.qty > 0);
-            if (!hasItems) return;
-            if (!confirm('確定要清空購物車嗎？')) return;
-            for (let uid in cart) {
-                cart[uid].qty = 0;
-            }
-            calculateTotal();
-            renderProducts(currentTab);
-        }
-
         function updateQty(uid, change) {
             const p = cart[uid].product;
             const parsedStock = parseInt(p['庫存']);
             const maxStock = isNaN(parsedStock) ? 9999 : parsedStock;
-
-            // 【第6點】售罄商品：即使購物車中已有數量（例如快取刷新後庫存歸零），
-            // 一律強制歸零，不允許再加購
-            if (maxStock === 0) {
-                if (cart[uid].qty > 0) {
-                    cart[uid].qty = 0;
-                    calculateTotal();
-                    renderProducts(currentTab);
-                }
-                return;
-            }
             
             let newVal = cart[uid].qty + change;
             if (newVal < 0) newVal = 0;
@@ -678,10 +719,6 @@
             document.getElementById('display-discount').textContent = `-$${discountAmt}`;
             document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
             document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
-
-            // 有商品才顯示「清空購物車」按鈕
-            const clearBtn = document.getElementById('clear-cart-btn');
-            if (clearBtn) clearBtn.style.display = totalItems > 0 ? 'block' : 'none';
         }
 
         // ==========================================
@@ -799,14 +836,7 @@
         // ==========================================
         // 送出訂單
         // ==========================================
-        // 【第10點】防重複送單：每次進入頁面產生一個唯一 token，
-        // 訂單送出成功後立即作廢，避免網路重試造成重複寫入
-        let _submitToken = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-        let _isSubmitting = false;
-
         async function submitOrder() {
-            // 防止重複點擊 / 重複送出
-            if (_isSubmitting) return;
             if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
             
             const storeId = document.getElementById('selected-store-id').value;
@@ -832,7 +862,6 @@
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
             btn.textContent = "訂單處理中...";
-            _isSubmitting = true;
 
             let storeName = "未知";
             let storeAddr = "未知";
@@ -915,7 +944,6 @@
             }
 
             const payload = {
-                submitToken: _submitToken,
                 name: name,
                 phone: "'" + phone,
                 email: email,
@@ -942,9 +970,9 @@
                 const result = await response.json();
                 
                 if (result.result === 'success') {
-                    // ✅ 訂單成功後立即清除本地快取 + 作廢送單 token（防止重複送出）
+                    // ✅ 訂單成功後立即清除本地快取
+                    // 確保下次開啟頁面時重新從 GAS 拉取最新庫存
                     localStorage.removeItem(CACHE_KEY);
-                    _submitToken = null; // token 作廢，此後任何重試都會被 GAS 拒絕
 
                     let successMsg = `------------------------------\n`;
                     successMsg += `【訂購人姓名】${name}\n`;
@@ -963,14 +991,12 @@
                     alert("資料庫寫入失敗！錯誤訊息：\n" + result.error);
                     btn.disabled = false;
                     btn.textContent = "確認送出";
-                    _isSubmitting = false;
                 }
             } catch (e) {
                 console.error("連線錯誤:", e);
                 alert("網路連線失敗，請稍後再試。");
                 btn.disabled = false;
                 btn.textContent = "確認送出";
-                _isSubmitting = false;
             }
         }
 

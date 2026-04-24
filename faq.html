@@ -9,6 +9,64 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
         
+        /* 頁首設計 */
+        header { 
+            position: relative;
+            background-image: url('bg.jpg'); 
+            background-size: auto 100%; 
+            background-position: center center; 
+            background-repeat: no-repeat;
+            background-color: #000; 
+            height: 340px; 
+            display: flex;
+            align-items: flex-end; 
+            justify-content: center;
+            padding: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
+            margin-bottom: 25px; 
+            border-top: 6px solid #000; 
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 10%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%);
+        }
+        
+        .header-inner { 
+            width: 100%;
+            max-width: 600px; 
+            position: relative; 
+            text-align: center; 
+            z-index: 1; 
+            padding-bottom: 5px; 
+        }
+
+        .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
+        .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+
+        .line-link { color: inherit; text-decoration: none; transition: 0.3s; display: inline-block; }
+        .line-link:hover { opacity: 0.75; transform: scale(1.02); }
+        .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+
+        .main-nav { display: flex; justify-content: center; overflow-x: auto; gap: 10px; padding: 5px 0; scrollbar-width: none; }
+        .main-nav::-webkit-scrollbar { display: none; }
+
+        .nav-item { 
+            flex: none; text-decoration: none; font-size: 13px; color: #fff; padding: 8px 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; 
+            background-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); 
+            transition: 0.3s; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .nav-item:hover, .nav-item.active { background-color: #fff; color: #4e342e; border-color: #fff; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+        @media (max-width: 600px) {
+            header { height: 280px; padding: 15px; background-size: cover; }
+            .header-inner h1 { font-size: 24px; }
+            .header-inner p { font-size: 13px; margin-bottom: 15px; }
+            .nav-item { padding: 6px 12px; font-size: 12px; }
+        }
 
         /* 內容區塊 */
         .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
@@ -44,12 +102,28 @@
         .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; transition: 0.3s; display: inline-block; width: 100%; max-width: 400px; text-align: center; letter-spacing: 2px; }
         .bottom-bar a:hover { background: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3); }
     </style>
-    <!-- ★ 共用頁首樣式與載入器：修改 header.css / header-loader.js 即可同步所有頁面 -->
-    <link rel="stylesheet" href="header.css">
-    <script src="header-loader.js" defer></script>
 </head>
 <body>
 
+    <header>
+        <div class="header-inner">
+            <h1>糊塗咖啡 HUTU CAFE</h1>
+            <p>職人嚴選 ‧ 極致烘焙 ‧ 
+                <a href="https://lin.ee/6oPqPhD" target="_blank" class="line-link">
+                    <img src="line_logo.svg" alt="LINE" class="line-img-icon">
+                    @hutucafe
+                </a>
+            </p>
+            
+            <nav class="main-nav">
+                <a href="index.html" class="nav-item">訂購頁</a>
+                <a href="abouthutu.html" class="nav-item">關於糊塗</a>
+                <a href="contactus.html" class="nav-item">聯絡我們</a>
+                <a href="faq.html" class="nav-item active">常見問題</a>
+                <a href="more.html" class="nav-item">更多...</a>
+            </nav>
+        </div>
+    </header>
 
     <div class="container">
         
@@ -91,7 +165,7 @@
 
                 <div class="faq-card">
                     <div class="faq-q"><span class="badge-q">Q</span>運費怎麼算？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>7-ELEVEN 超商取貨運費為 $<span id="faq-shipping-fee">38</span>。目前官網訂購指定品項享「<span id="faq-discount-name">優惠折扣</span>」，且結帳滿 $<span id="faq-free-threshold">1,000</span> 即可享免運費！</div>
+                    <div class="faq-a"><span class="badge-a">A</span>7-ELEVEN 超商取貨運費為 $38。目前官網訂購享「全站 9 折」優惠，且結帳滿 $1,000 即可享免運費！</div>
                 </div>
 
                 <div class="faq-card">
@@ -120,48 +194,6 @@
     <script>
         // ★ 請將此處替換為您實際的 Google Apps Script 網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
-
-        // ==========================================
-        // 📋 動態載入折扣設定，更新 FAQ 說明文字
-        // ==========================================
-        const FAQ_CONFIG_KEY = 'hutucafe_config_cache';
-
-        async function loadFaqConfig() {
-            // 先嘗試讀取 localStorage 快取（與訂購頁共用同一份）
-            try {
-                const cached = localStorage.getItem(FAQ_CONFIG_KEY);
-                if (cached) {
-                    const { data } = JSON.parse(cached);
-                    applyFaqConfig(data.shopConfig);
-                    return;
-                }
-            } catch(e) {}
-
-            // 快取不存在：向 GAS 拉取
-            try {
-                const res = await fetch(GAS_URL + '?action=config', { cache: 'no-store' });
-                const data = await res.json();
-                applyFaqConfig(data.shopConfig);
-            } catch(e) {
-                console.warn('折扣設定載入失敗，FAQ 顯示預設值。');
-            }
-        }
-
-        function applyFaqConfig(shopConfig) {
-            if (!shopConfig) return;
-            const discountName      = shopConfig['折扣顯示名稱'] || '優惠折扣';
-            const shippingFee       = shopConfig['運費']         || '38';
-            const freeThreshold     = shopConfig['免運門檻']     || '1000';
-
-            const elDiscount   = document.getElementById('faq-discount-name');
-            const elShipping   = document.getElementById('faq-shipping-fee');
-            const elThreshold  = document.getElementById('faq-free-threshold');
-            if (elDiscount)  elDiscount.textContent  = discountName;
-            if (elShipping)  elShipping.textContent  = shippingFee;
-            if (elThreshold) elThreshold.textContent = Number(freeThreshold).toLocaleString();
-        }
-
-        document.addEventListener('DOMContentLoaded', loadFaqConfig);
 
         // 複製單號並開啟 7-11 查詢網頁的函數
         function copyAndTrack(trackNum) {
