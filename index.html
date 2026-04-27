@@ -142,9 +142,9 @@
 
         /* 統一卡片樣式：左圖右文 */
         .modern-card { flex-direction: row !important; align-items: stretch; padding: 0 !important; overflow: hidden; }
-        .card-thumb { width: 90px; min-width: 90px; flex-shrink: 0; cursor: pointer; overflow: hidden; background: #f5f0eb; display: flex; align-items: flex-start; }
-        .card-thumb img { width: 90px; height: 90px; object-fit: contain; display: block; flex-shrink: 0; }
-        .card-thumb:hover img { opacity: 0.9; }
+        .card-thumb { width: 120px; min-width: 120px; flex-shrink: 0; cursor: pointer; overflow: hidden; background: #f5f0eb; display: flex; align-items: center; justify-content: center; }
+        .card-thumb img { width: 120px; height: 120px; object-fit: contain; display: block; }
+        .card-thumb:hover img { opacity: 0.88; }
         .card-body { flex: 1; padding: 10px 12px 10px 14px; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
         .card-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 3px; }
         .card-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); line-height: 1.4; flex: 1; min-width: 0; }
@@ -167,8 +167,8 @@
         .lightbox-price { font-size: 22px; font-weight: 500; color: #b77b3b; }
         .lightbox-price .unit { font-size: 12px; color: #999; font-weight: normal; }
         .lightbox-close { position: absolute; top: 10px; right: 12px; background: rgba(0,0,0,0.45); color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
-        .lightbox-back { display: block; width: calc(100% - 36px); margin: 0 18px 18px; padding: 10px; background: #f5f0eb; color: #5d4037; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; text-align: center; }
-        .lightbox-back:active { background: #e8d5c4; }
+        .lightbox-back { display: block; width: calc(100% - 36px); margin: 0 18px 18px; padding: 10px; background: #6b3a2a; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; text-align: center; }
+        .lightbox-back:active { background: #4e2a1e; }
 
         /* 庫存狀態標籤 */
         .stock-container { margin-top: 8px; display: flex; justify-content: flex-end; width: 100%; }
@@ -616,7 +616,7 @@
                     </div>`;
 
                 // lightbox data
-                const lbData = `data-img="${imgUrl}" data-name="${name}" data-roast="${roast}" data-meta="${metaText}" data-tags="${tagsArray.join(',')}" data-price="${price}" data-pkg="${pkg}" data-stock="${stockText}" data-stockclass="${stockBadgeClass}"`;
+                const lbData = `data-uid="${p.uid}" data-img="${imgUrl}" data-name="${name}" data-roast="${roast}" data-meta="${metaText}" data-tags="${tagsArray.join(',')}" data-price="${price}" data-pkg="${pkg}" data-stock="${stockText}" data-stockclass="${stockBadgeClass}"`;
 
                 return `
                 <div class="modern-card">
@@ -645,8 +645,13 @@
         }
 
         // ── Lightbox ──
+        let lbCurrentUid = null;
+
         function openLightbox(el) {
             const lb = document.getElementById('lightbox');
+            const uid = el.dataset.uid;
+            lbCurrentUid = uid;
+
             document.getElementById('lb-img').src = el.dataset.img;
             document.getElementById('lb-title').innerHTML =
                 (el.dataset.roast ? `<span class="roast-badge ${getRoastClass(el.dataset.roast)}">${el.dataset.roast}</span>` : '') +
@@ -658,14 +663,41 @@
             document.getElementById('lb-price').innerHTML = `$${el.dataset.price}<span class="unit">/${el.dataset.pkg}</span>`;
             const sc = el.dataset.stockclass;
             const st = el.dataset.stock;
-            let scClass = sc === 's-normal' ? 'stock-normal' : sc === 's-warning' ? 'stock-warning' : 'stock-out';
+            let scClass = sc === 'badge-normal' ? 'stock-normal' : sc === 'badge-warning' ? 'stock-warning' : 'stock-out';
             document.getElementById('lb-stock').innerHTML = st ? `<span class="${scClass}">${st}</span>` : '';
+
+            // 同步數量
+            const isOut = el.dataset.stockclass === 'badge-out';
+            const currentQty = cart[uid] ? cart[uid].qty : 0;
+            const qtyInput = document.getElementById('lb-qty-input');
+            const minusBtn = document.getElementById('lb-qty-minus');
+            const plusBtn = document.getElementById('lb-qty-plus');
+            qtyInput.value = currentQty;
+            minusBtn.disabled = currentQty === 0;
+            plusBtn.disabled = isOut;
+
+            minusBtn.onclick = () => {
+                updateQty(uid, -1);
+                const newQty = cart[uid].qty;
+                qtyInput.value = newQty;
+                minusBtn.disabled = newQty === 0;
+                plusBtn.disabled = false;
+            };
+            plusBtn.onclick = () => {
+                if (isOut) return;
+                updateQty(uid, 1);
+                const newQty = cart[uid].qty;
+                qtyInput.value = newQty;
+                minusBtn.disabled = false;
+            };
+
             lb.classList.add('open');
             document.body.style.overflow = 'hidden';
         }
         function closeLightbox() {
             document.getElementById('lightbox').classList.remove('open');
             document.body.style.overflow = '';
+            lbCurrentUid = null;
         }
 
         function clearCart() {
@@ -907,6 +939,14 @@
                     <div class="lightbox-bottom">
                         <div id="lb-price" class="lightbox-price"></div>
                         <div id="lb-stock"></div>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding-top:12px; border-top:1px solid #f0f0f0;">
+                        <span style="font-size:13px; color:#888;">數量</span>
+                        <div class="modern-qty" id="lb-qty-ctrl">
+                            <button id="lb-qty-minus">−</button>
+                            <input type="text" id="lb-qty-input" value="0" readonly>
+                            <button id="lb-qty-plus">+</button>
+                        </div>
                     </div>
                 </div>
                 <button class="lightbox-back" onclick="closeLightbox()">← 回豆單</button>
