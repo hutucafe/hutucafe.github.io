@@ -140,35 +140,31 @@
         .modern-qty button:disabled { color: #ccc; cursor: not-allowed; }
         .modern-qty input { width: 32px; text-align: center; border: none; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; font-size: 14px; font-weight: bold; color: #333; background: transparent; padding: 0; }
 
-        /* 風格 C：有圖片 */
-        .card-style-c { flex-direction: column; }
-        .card-img-top { width: 100%; height: 140px; position: relative; border-radius: 10px; overflow: hidden; margin-bottom: 12px; background: #f5f0eb; cursor: pointer; }
-        .card-img-top img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s; }
-        .card-img-top:hover img { transform: scale(1.03); }
-        .card-img-top .float-roast { position: absolute; top: 8px; left: 8px; font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 20px; background: rgba(255,255,255,0.92); color: #5d4037; }
-        .card-img-top .float-stock { position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 20px; }
-        .float-stock.s-normal { background: rgba(46,125,50,0.88); color: #fff; }
-        .float-stock.s-warning { background: rgba(198,40,40,0.85); color: #fff; }
-        .float-stock.s-out { background: rgba(120,120,120,0.85); color: #fff; }
-        .card-c-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid #f0f0f0; }
-        /* 風格 B：無圖片（logo fallback）*/
-        .card-style-b { flex-direction: row !important; align-items: stretch; padding: 0 !important; overflow: hidden; }
-        .card-b-thumb { width: 100px; min-width: 100px; cursor: pointer; overflow: hidden; }
-        .card-b-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s; }
-        .card-b-thumb:hover img { transform: scale(1.05); }
-        .card-b-body { flex: 1; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between; }
-        .card-b-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+        /* 統一卡片樣式：左圖右文 */
+        .modern-card { flex-direction: row !important; align-items: stretch; padding: 0 !important; overflow: hidden; }
+        .card-thumb { width: 110px; min-width: 110px; flex-shrink: 0; cursor: pointer; overflow: hidden; background: #f5f0eb; }
+        .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.25s; }
+        .card-thumb:hover img { transform: scale(1.04); }
+        .card-body { flex: 1; padding: 10px 12px 10px 14px; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+        .card-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 3px; }
+        .card-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); line-height: 1.4; flex: 1; min-width: 0; }
+        .card-badges { display: flex; flex-direction: row; align-items: center; gap: 4px; flex-shrink: 0; }
+        .badge-roast { font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; background: #e8d5c4; color: #5d4037; white-space: nowrap; }
+        .badge-normal { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: #edf7ed; border: 0.5px solid #c8e6c9; color: #2e7d32; white-space: nowrap; }
+        .badge-warning { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: #ffebee; border: 0.5px solid #ffcdd2; color: #c62828; white-space: nowrap; }
+        .badge-out { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: #f5f5f5; border: 0.5px solid #ddd; color: #999; white-space: nowrap; }
+        .card-bottom { display: flex; align-items: center; justify-content: space-between; }
         /* Lightbox */
         .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }
         .lightbox.open { display: flex; }
         .lightbox-inner { background: #fff; border-radius: 16px; width: 100%; max-width: 420px; overflow: hidden; position: relative; max-height: 90vh; overflow-y: auto; }
-        .lightbox-img { width: 100%; max-height: 260px; object-fit: cover; display: block; }
+        .lightbox-img { width: 100%; max-height: 280px; object-fit: contain; background: #f5f0eb; display: block; }
         .lightbox-body { padding: 16px 18px 20px; }
-        .lightbox-title { font-size: 17px; font-weight: 800; color: #333; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .lightbox-title { font-size: 17px; font-weight: 500; color: #333; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
         .lightbox-meta { font-size: 13px; color: #777; margin-bottom: 10px; }
         .lightbox-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
         .lightbox-bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid #f0f0f0; }
-        .lightbox-price { font-size: 22px; font-weight: 900; color: #b77b3b; }
+        .lightbox-price { font-size: 22px; font-weight: 500; color: #b77b3b; }
         .lightbox-price .unit { font-size: 12px; color: #999; font-weight: normal; }
         .lightbox-close { position: absolute; top: 10px; right: 12px; background: rgba(0,0,0,0.45); color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
 
@@ -576,46 +572,40 @@
                 const roast = p['烘焙度'] || '';
                 const pkg = p['包裝'] || '';
                 const price = parseInt(p['售價'] || 0);
-                const rawStock = p['庫存'];
-                const parsedStock = parseInt(rawStock);
+                const parsedStock = parseInt(p['庫存']);
                 const isOutOfStock = parsedStock === 0;
                 const imgUrl = p['產品圖'] || '';
-                const isFallback = imgUrl.includes('logo2.jpg');
-                const hasRealImg = imgUrl && !isFallback;
 
-                // 庫存文字
+                // 庫存 badge
                 let stockText = '';
-                let stockFloatClass = '';
-                let stockTagHtml = '';
+                let stockBadgeClass = '';
                 let disableAddBtn = '';
                 if (isOutOfStock) {
-                    stockText = '售完'; stockFloatClass = 's-out';
-                    stockTagHtml = `<span class="stock-out">售完</span>`;
-                    disableAddBtn = 'disabled';
+                    stockText = '售完'; stockBadgeClass = 'badge-out'; disableAddBtn = 'disabled';
                 } else if (!isNaN(parsedStock)) {
                     if (parsedStock <= 10) {
-                        stockText = `剩餘 ${parsedStock}`; stockFloatClass = 's-warning';
-                        stockTagHtml = `<span class="stock-warning">剩餘 ${parsedStock}</span>`;
+                        stockText = `剩餘 ${parsedStock}`; stockBadgeClass = 'badge-warning';
                     } else {
-                        stockText = `庫存 ${parsedStock}`; stockFloatClass = 's-normal';
-                        stockTagHtml = `<span class="stock-normal">庫存 ${parsedStock}</span>`;
+                        stockText = `庫存 ${parsedStock}`; stockBadgeClass = 'badge-normal';
                     }
                 }
 
-                const roastHtml = roast ? `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span>` : '';
+                // meta
                 let metaArray = [];
                 if (p['產區'] && p['產區'] !== '-') metaArray.push(p['產區']);
                 if (p['品種'] && p['品種'] !== '-') metaArray.push(p['品種']);
                 if (p['處理法'] && p['處理法'] !== '-') metaArray.push(p['處理法']);
                 const metaText = metaArray.join('｜');
                 const metaHtml = metaText ? `<div class="card-meta"><span>${metaText}</span></div>` : '';
+
+                // tags
                 let tagsArray = [];
                 if (p['風味']) {
                     p['風味'].split(/[、,，\s]+/).forEach(f => { if(f.trim() && f !== '-') tagsArray.push(f.trim()); });
                 }
                 const tagsHtml = tagsArray.map(t => `<span class="modern-tag">${t}</span>`).join('');
 
-                // 加購區塊（共用）
+                // qty
                 const qtyHtml = `
                     <div class="modern-qty">
                         <button onclick="updateQty('${p.uid}', -1)" ${cart[p.uid].qty === 0 ? 'disabled' : ''}>−</button>
@@ -623,49 +613,32 @@
                         <button onclick="updateQty('${p.uid}', 1)" ${disableAddBtn}>+</button>
                     </div>`;
 
-                // lightbox 資料屬性
-                const lbData = `data-img="${imgUrl}" data-name="${name}" data-roast="${roast}" data-meta="${metaText}" data-tags="${tagsArray.join(',')}" data-price="${price}" data-pkg="${pkg}" data-stock="${stockText}" data-stockclass="${stockFloatClass}"`;
+                // lightbox data
+                const lbData = `data-img="${imgUrl}" data-name="${name}" data-roast="${roast}" data-meta="${metaText}" data-tags="${tagsArray.join(',')}" data-price="${price}" data-pkg="${pkg}" data-stock="${stockText}" data-stockclass="${stockBadgeClass}"`;
 
-                if (hasRealImg) {
-                    // ── 風格 C ──
-                    return `
-                    <div class="modern-card card-style-c">
-                        <div class="card-img-top" onclick="openLightbox(this)" ${lbData}>
-                            <img src="${imgUrl}" alt="${name}" loading="lazy">
-                            ${roast ? `<span class="float-roast">${roast}</span>` : ''}
-                            ${stockText ? `<span class="float-stock ${stockFloatClass}">${stockText}</span>` : ''}
-                        </div>
-                        <div class="card-left">
-                            <div class="card-title"><span>${name}</span></div>
+                return `
+                <div class="modern-card">
+                    <div class="card-thumb" onclick="openLightbox(this)" ${lbData}>
+                        <img src="${imgUrl}" alt="${name}" loading="lazy">
+                    </div>
+                    <div class="card-body">
+                        <div>
+                            <div class="card-top-row">
+                                <div class="card-name">${name}</div>
+                                <div class="card-badges">
+                                    ${roast ? `<span class="badge-roast">${roast}</span>` : ''}
+                                    ${stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
+                                </div>
+                            </div>
                             ${metaHtml}
                             <div class="card-tags">${tagsHtml}</div>
                         </div>
-                        <div class="card-c-bottom">
+                        <div class="card-bottom">
                             <div class="card-price">$${price}<span class="unit">/${pkg}</span></div>
                             ${qtyHtml}
                         </div>
-                    </div>`;
-                } else {
-                    // ── 風格 B（logo fallback）──
-                    return `
-                    <div class="modern-card card-style-b">
-                        <div class="card-b-thumb" onclick="openLightbox(this)" ${lbData}>
-                            <img src="${imgUrl}" alt="${name}" loading="lazy">
-                        </div>
-                        <div class="card-b-body">
-                            <div>
-                                <div class="card-title">${roastHtml}<span>${name}</span></div>
-                                ${metaHtml}
-                                <div class="card-tags">${tagsHtml}</div>
-                            </div>
-                            <div class="card-b-bottom">
-                                <div class="card-price">$${price}<span class="unit">/${pkg}</span></div>
-                                ${qtyHtml}
-                            </div>
-                            <div class="stock-container">${stockTagHtml}</div>
-                        </div>
-                    </div>`;
-                }
+                    </div>
+                </div>`;
             }).join('');
         }
 
