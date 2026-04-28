@@ -59,7 +59,7 @@
         .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
         /* 主導覽列 */
-        .main-nav { display: flex; justify-content: center; overflow-x: auto; gap: 10px; padding: 5px 0; scrollbar-width: none; }
+        .main-nav { display: flex; justify-content: flex-start; overflow-x: auto; gap: 10px; padding: 5px 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .main-nav::-webkit-scrollbar { display: none; }
 
         .nav-item { 
@@ -165,19 +165,19 @@
         /* Lightbox */
         .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; align-items: center; justify-content: center; padding: 30px; }
         .lightbox.open { display: flex; }
-        .lightbox-inner { background: #fff; border-radius: 16px; width: 100%; max-width: 400px; overflow: hidden; position: relative; max-height: 90vh; overflow-y: auto; }
-        @media (hover: hover) and (pointer: fine) { .lightbox-inner { max-width: 400px; } }
-        .lightbox-img { width: 100%; max-height: 390px; min-height: 240px; object-fit: contain; background: #f5f0eb; display: block; }
-        @media (hover: hover) and (pointer: fine) { .lightbox-img { max-height: 400px; } }
-        .lightbox-body { padding: 16px 18px 20px; }
-        .lightbox-title { font-size: 17px; font-weight: 500; color: #333; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-        .lightbox-meta { font-size: 13px; color: #777; margin-bottom: 10px; }
-        .lightbox-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+                .lightbox-inner { background: #fff; border-radius: 16px; width: 100%; max-width: 400px; overflow: hidden; position: relative; max-height: 92vh; overflow-y: auto; }
+        @media (hover: hover) and (pointer: fine) { .lightbox-inner { max-width: 360px; max-height: 88vh; } }
+                .lightbox-img { width: 100%; max-height: 42vw; min-height: 160px; object-fit: contain; background: #f5f0eb; display: block; }
+        @media (hover: hover) and (pointer: fine) { .lightbox-img { max-height: 260px; } }
+        .lightbox-body { padding: 12px 16px 14px; }
+        .lightbox-title { font-size: 15px; font-weight: 500; color: #333; margin-bottom: 4px; display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+        .lightbox-meta { font-size: 12px; color: #777; margin-bottom: 8px; }
+        .lightbox-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
         .lightbox-bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid #f0f0f0; }
-        .lightbox-price { font-size: 22px; font-weight: 500; color: #b77b3b; }
+        .lightbox-price { font-size: 20px; font-weight: 500; color: #b77b3b; }
         .lightbox-price .unit { font-size: 12px; color: #999; font-weight: normal; }
         .lightbox-close { position: absolute; top: 10px; right: 12px; background: rgba(0,0,0,0.45); color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
-        .lightbox-back { display: block; width: calc(100% - 36px); margin: 0 18px 18px; padding: 10px; background: #6b3a2a; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; text-align: center; }
+        .lightbox-back { display: block; width: calc(100% - 28px); margin: 0 14px 14px; padding: 9px; background: #6b3a2a; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; }
         .lightbox-back:active { background: #4e2a1e; }
 
         /* 庫存狀態標籤 */
