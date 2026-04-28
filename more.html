@@ -15,7 +15,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
         
-        /* 頁首設計 - 嚴格對齊 index.html 規格 */
+        /* 頁首設計 */
         header { 
             position: relative;
             background-image: url('bg.jpg'); 
@@ -56,7 +56,7 @@
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
         .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
-        /* 主導覽列 - 同步 index.html 的橫向捲動與左對齊 */
+        /* 主導覽列 - 保留修復後的橫向捲動與左對齊規格 */
         .main-nav { 
             display: flex; 
             justify-content: flex-start; 
@@ -83,21 +83,22 @@
             .nav-item { padding: 6px 12px; font-size: 12px; }
         }
 
-        /* 內容區塊樣式 */
-        .container { max-width: 600px; margin: 0 auto; padding: 0 15px; }
-        .section { background: #fff; border-radius: 16px; padding: 25px 20px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        /* 內容區塊 - 還原回原版的樣式設計 */
+        .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
+        .section { background: #fff; border-radius: 16px; padding: 25px 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
-        .intro-text { font-size: 14px; color: #666; margin-bottom: 20px; line-height: 1.7; text-align: justify; }
-
-        /* 沖煮建議圖片 */
-        .guide-img { width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: block; }
+        
+        /* 文字與圖片樣式 - 還原回原版 */
+        .intro-text { font-size: 15px; color: #555; margin-bottom: 10px; line-height: 1.7; text-align: justify; }
+        .guide-img { width: 100%; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: block; border: 1px solid #eee; }
         .guide-img:last-child { margin-bottom: 0; }
 
-        /* 處理法列表樣式 */
-        .process-list { list-style: none; display: flex; flex-direction: column; gap: 15px; }
-        .process-list li { background: #fafafa; padding: 15px; border-radius: 10px; border: 1px solid #eee; display: flex; align-items: flex-start; }
-        .process-list li strong { color: #8d6e63; display: block; margin-bottom: 4px; font-size: 15px; }
-        .process-list li div { font-size: 14px; color: #444; line-height: 1.6; }
+        /* 處理法條列式清單專屬樣式 (還原回原版緊緻版) */
+        .process-list { list-style: none; margin-top: 5px; margin-bottom: 15px; }
+        .process-list li { font-size: 15px; color: #555; padding: 6px 0; border-bottom: 1px dashed #eee; line-height: 1.5; display: flex; align-items: flex-start; }
+        .process-list li:last-child { border-bottom: none; padding-bottom: 0; }
+        .process-list li::before { content: '🔸'; margin-right: 8px; font-size: 13px; margin-top: 1px; }
+        .process-list strong { color: #d84315; font-weight: bold; }
 
         /* 底部導覽 */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
@@ -128,6 +129,7 @@
     </header>
 
     <div class="container">
+        
         <div class="section">
             <div class="section-title">☕ 糊塗咖啡沖煮建議</div>
             <p class="intro-text">
@@ -144,44 +146,21 @@
             </p>
             
             <ul class="process-list">
-                <li>
-                    <div>
-                        <strong>1. 目標性野生發酵 (Wild Targeted)</strong>
-                        強調風土條件，無人為添加菌種，讓自然環境中的微生物進行自然作用。
-                    </div>
-                </li>
-                <li>
-                    <div>
-                        <strong>2. 菌種接種 (Inoculated)</strong>
-                        人為加入特定菌種（如商業酵母），精準導引發酵方向並創造特定風味層次。
-                    </div>
-                </li>
-                <li>
-                    <div>
-                        <strong>3. 共同發酵 (Co-Fermented)</strong>
-                        將咖啡果實與水果、香料等外部天然材料放置於密閉容器中共同發酵，賦予獨特氣息。
-                    </div>
-                </li>
-                <li>
-                    <div>
-                        <strong>4. 營養補充 (Substrate Supplemented)</strong>
-                        發酵過程中額外添加糖分、果汁或基質，藉此增強微生物的活躍度與發酵強度。
-                    </div>
-                </li>
-                <li>
-                    <div>
-                        <strong>5. 窨漬處理 (Infused)</strong>
-                        將乾燥後的咖啡生豆浸泡於特殊風味液體中，讓咖啡豆像吸墨紙一樣吸收特定風味。
-                    </div>
-                </li>
-                <li>
-                    <div>
-                        <strong>6. 萃取後添加 (Post-Process Added)</strong>
-                        在熟豆包裝、研磨或萃取液中直接添加風味化合物。
-                    </div>
-                </li>
+                <li><div><strong>1. 目標性野生發酵：</strong>強調風土條件，無人為添加菌種，讓自然微生物自然作用。</div></li>
+                <li><div><strong>2. 菌種接種：</strong>人為加入特定菌種（如酵母），精準導向並創造特定風味。</div></li>
+                <li><div><strong>3. 共同發酵：</strong>將咖啡豆與水果、香料等外部材料放在一起共同發酵。</div></li>
+                <li><div><strong>4. 營養補充：</strong>添加糖、果汁等基質，藉此增強微生物的活躍度。</div></li>
+                <li><div><strong>5. 窨漬處理：</strong>將咖啡豆浸泡於特殊液體中，讓豆子直接吸取外部風味。</div></li>
+                <li><div><strong>6. 調味咖啡：</strong>直接在生豆或熟豆階段添加人工或天然香精。</div></li>
             </ul>
+
+            <p class="intro-text">
+                前四種方法專注於「<strong>微生物對咖啡果膠的影響</strong>」，後兩者則更偏向直接的「<strong>風味添加加工</strong>」。這套系統能協助業界與愛好者，建立探索風味的共通語言。
+            </p>
+            
+            <img src="post_process.jpg" alt="SCA 六大處理法分類" class="guide-img">
         </div>
+
     </div>
 
     <div class="bottom-bar">
