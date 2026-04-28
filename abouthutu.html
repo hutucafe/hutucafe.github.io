@@ -6,10 +6,11 @@
     <title>關於糊塗 | 糊塗咖啡 HUTU CAFE</title>
     <link rel="icon" href="logo2.jpg" type="image/jpeg">
     <style>
-        /* 基礎設定同步 index.html */
+        /* ✅ 完全同步 index.html 的基礎設定 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
-        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 120px; }
+        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 120px; overflow-x: hidden; }
         
+        /* ✅ 完全同步 index.html 的 header 結構與對齊方式 */
         header { 
             position: relative;
             background-image: url('bg.jpg');
@@ -24,6 +25,7 @@
             padding: 20px; 
             margin-bottom: 25px; 
             border-top: 6px solid #000; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
 
         header::before {
@@ -33,53 +35,71 @@
             background: linear-gradient(to bottom, rgba(0,0,0,0) 10%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 100%);
         }
         
+        /* ✅ index.html 的核心容器 */
         .header-inner { 
             width: 100%;
             max-width: 600px; 
             position: relative; 
-            text-align: center; 
             z-index: 1; 
+            text-align: center;
         }
 
         .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
         .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
-        /* ✅ 終極救援：讓導覽列無視父層置中，強制滿版靠左滑動 */
+        /* ✅ 完全比照 index.html 的導覽列設定 */
         .main-nav { 
-            display: flex !important; 
-            justify-content: flex-start !important; /* 強制靠左 */
-            overflow-x: auto !important;            /* 啟用橫向滑動 */
+            display: flex; 
+            justify-content: flex-start; /* 這是靠左的關鍵 */
+            overflow-x: auto; 
             gap: 10px; 
-            padding: 10px 20px !important;           /* 增加左右內距防止第一個字被螢幕切掉 */
-            margin: 0 -20px -5px !important;        /* 用負邊距把導覽列推到螢幕邊緣 */
+            padding: 5px 10px; 
             scrollbar-width: none; 
             -webkit-overflow-scrolling: touch; 
-            text-align: left !important;            /* 覆蓋父層 center 設定 */
-            width: calc(100% + 40px) !important;    /* 確保寬度撐開 */
+            width: 100%;
         }
         .main-nav::-webkit-scrollbar { display: none; }
 
         .nav-item { 
-            flex: none !important;                  /* 禁止壓縮，維持按鈕寬度 */
-            text-decoration: none; font-size: 13px; color: #fff; padding: 8px 16px; 
-            border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; 
-            background-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); 
-            -webkit-backdrop-filter: blur(8px); transition: 0.3s; 
-            white-space: nowrap !important;         /* 絕對不換行 */
+            flex: none; 
+            text-decoration: none; 
+            font-size: 13px; 
+            color: #fff; 
+            padding: 8px 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.5); 
+            border-radius: 20px; 
+            background-color: rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px); 
+            transition: 0.3s; 
+            white-space: nowrap;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
-        .nav-item.active { background-color: #fff; color: #4e342e; border-color: #fff; font-weight: bold; }
+
+        .nav-item.active { 
+            background-color: #fff; 
+            color: #4e342e; 
+            border-color: #fff; 
+            font-weight: bold;
+        }
 
         @media (max-width: 600px) {
             header { height: 280px; padding: 15px; }
+            .header-inner h1 { font-size: 24px; }
+            .header-inner p { font-size: 13px; margin-bottom: 15px; }
             .nav-item { padding: 6px 12px; font-size: 12px; }
         }
 
+        /* 關於頁面內容區塊樣式 */
         .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
         .section { background: #fff; border-radius: 16px; padding: 25px 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
         .about-text { font-size: 15px; color: #555; line-height: 1.8; text-align: justify; margin-bottom: 15px; }
+        .highlight { color: #d84315; font-weight: bold; }
+        .cert-img { width: 100%; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
-        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; display: flex; justify-content: center; z-index: 1000; }
+        /* 底部按鈕 */
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; display: flex; justify-content: center; z-index: 1000; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); }
         .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; width: 100%; max-width: 400px; text-align: center; }
     </style>
 </head>
@@ -103,8 +123,20 @@
     <div class="container">
         <div class="section">
             <div class="section-title">🌿 品牌精神</div>
-            <p class="about-text">糊塗咖啡 HUTU CAFE 由烘豆師牛頓王創立。</p>
-            <p class="about-text">我們透過數據烘焙，在 Coffee Review 評鑑屢獲 93、94 卓越高分。</p>
+            <p class="about-text">
+                糊塗咖啡 HUTU CAFE 由烘豆師<span class="highlight">牛頓王</span>創立。我們堅信咖啡烘焙是一門結合感官與數據的科學。
+            </p>
+            <p class="about-text">
+                透過 Roast of Rate (ROR) 的精確掌控與不斷的杯測修正，我們確保每一粒咖啡豆都能展現其產區最純粹、最極致的風味表現。
+            </p>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🎓 專業級認證</div>
+            <p class="about-text">
+                烘豆師已取得 <strong>SCA CSP Roasting Professional 專業級認證</strong>，這代表了對精品咖啡烘焙動力學、熱力學及高品質生產管理的頂尖認可。
+            </p>
+            <img src="sca_csp.jpg" alt="SCA CSP Roasting Professional" class="cert-img">
         </div>
     </div>
 
