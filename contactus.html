@@ -18,7 +18,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
         
-        /* 頁首設計 - 嚴格對齊 index.html 規格 */
+        /* 頁首設計 */
         header { 
             position: relative;
             background-image: url('bg.jpg'); 
@@ -59,7 +59,7 @@
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
         .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
-        /* 主導覽列 - 同步 index.html 的橫向捲動與左對齊 */
+        /* 主導覽列 - 保留正常靠左對齊與橫向捲動設定 */
         .main-nav { 
             display: flex; 
             justify-content: flex-start; 
@@ -86,25 +86,54 @@
             .nav-item { padding: 6px 12px; font-size: 12px; }
         }
 
-        /* 內容區塊樣式 */
-        .container { max-width: 600px; margin: 0 auto; padding: 0 15px; }
-        .section { background: #fff; border-radius: 16px; padding: 30px 20px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); text-align: center; }
-        .section-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #3e2723; }
-        .intro-text { font-size: 15px; color: #666; margin-bottom: 30px; line-height: 1.7; text-align: justify; }
+        /* 內容區塊 - 還原回原版的設計樣式 */
+        .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
+        .section { background: #fff; border-radius: 16px; padding: 25px 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
+        .about-text { font-size: 15px; color: #555; line-height: 1.8; text-align: justify; margin-bottom: 10px; }
 
-        /* 聯絡卡片樣式 */
-        .contact-list { display: flex; flex-direction: column; gap: 15px; }
-        .contact-card { display: flex; align-items: center; text-decoration: none; padding: 18px; border-radius: 12px; transition: 0.3s; background: #fafafa; border: 1px solid #f0f0f0; }
-        .contact-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); background: #fff; border-color: #d7ccc8; }
+        /* 聯絡卡片樣式 - 還原回原版的設計樣式 */
+        .contact-card { 
+            display: flex; 
+            align-items: center; 
+            padding: 16px 18px; 
+            border-radius: 12px; 
+            text-decoration: none; 
+            color: #333; 
+            margin-top: 15px; 
+            transition: 0.3s; 
+            border: 1px solid #eee; 
+            background: #fafafa; 
+        }
+        .contact-card:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06); 
+            border-color: #d7ccc8; 
+            background: #fff;
+        }
         
-        .icon-circle { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 18px; flex-shrink: 0; }
+        .icon-circle { 
+            width: 48px; 
+            height: 48px; 
+            border-radius: 50%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            margin-right: 15px; 
+            flex-shrink: 0; 
+            overflow: hidden; 
+        }
+        
         .line-icon-bg { background-color: #06C755; }
         .fb-icon-bg { background-color: #1877F2; }
-        .ig-icon-bg { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); }
-
-        .contact-info { text-align: left; }
-        .contact-label { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 2px; }
-        .contact-desc { font-size: 13px; color: #888; }
+        .ig-icon-bg { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+        
+        .contact-desc { flex: 1; }
+        .contact-desc h4 { font-size: 16px; font-weight: bold; margin-bottom: 2px; color: #3e2723; }
+        .contact-desc p { font-size: 13px; color: #888; }
+        
+        .arrow { color: #ccc; font-weight: bold; font-size: 20px; transition: 0.3s; }
+        .contact-card:hover .arrow { color: #6d4c41; transform: translateX(4px); }
 
         /* 底部按鈕 */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
@@ -135,44 +164,61 @@
     </header>
 
     <div class="container">
+        
         <div class="section">
-            <div class="section-title">與我們聯繫</div>
-            <p class="intro-text">
-                不論您是想詢問咖啡豆的風味建議、查詢訂單進度，或是對我們的烘焙有任何好奇，都歡迎透過以下社群平台與烘豆師連繫。我們將在看到訊息後儘快回覆您！
+            <div class="section-title">💬 LINE 官方帳號</div>
+            <p class="about-text">
+                想要追蹤訂單進度、獲取最新豆單資訊，或是需要一對一的咖啡豆挑選建議？歡迎點擊下方加入好友，由烘豆師親自為您解答。
             </p>
-
-            <div class="contact-list">
-                <a href="https://lin.ee/6oPqPhD" target="_blank" class="contact-card">
-                    <div class="icon-circle line-icon-bg">
-                        <svg viewBox="0 0 24 24" width="28" height="28" fill="#FFFFFF"><path d="M24 10.304c0-5.232-5.384-9.492-12-9.492s-12 4.26-12 9.492c0 4.69 4.27 8.623 10.04 9.357.391.084.923.258 1.058.59.121.302.079.776.038 1.083l-.164 1.025c-.046.295-.231 1.154 1.002.63 1.233-.524 6.64-3.911 9.056-6.697 1.637-1.785 2.969-3.79 2.969-5.988zm-14.73 3.633h-2.14a.37.37 0 0 1-.371-.371V9.22a.37.37 0 0 1 .371-.37h2.14c.205 0 .371.166.371.37v.37c0 .205-.166.371-.371.371H9.271v1.111h1.999c.205 0 .371.166.371.37v.37a.37.37 0 0 1-.371.371zM11.666 13.567a.37.37 0 0 1-.37-.371V9.22a.371.371 0 0 1 .37-.37h.37c.205 0 .371.166.371.37v4.347a.371.371 0 0 1-.371.371h-.37zm6.398 0h-2.14a.37.37 0 0 1-.371-.371V9.22a.371.371 0 0 1 .371-.37h2.14c.205 0 .371.166.371.37v.37c0 .205-.166.371-.371.371h-1.769v1.111h1.999c.205 0 .371.166.371.37v.37c0 .205-.166.371-.371.371h-1.999v1.111h1.999c.205 0 .371.166.371.37v.37a.37.37 0 0 1-.371.371zm-2.887 0a.371.371 0 0 1-.309-.164l-1.986-2.868v2.661a.371.371 0 0 1-.371.371h-.37a.371.371 0 0 1-.371-.371V9.22a.371.371 0 0 1 .31-.164h.369a.37.37 0 0 1 .31.164l1.985 2.868V9.22a.37.37 0 0 1 .37-.37h.371a.371.371 0 0 1 .37.37v4.347a.371.371 0 0 1-.37.371h-.369z"/></svg>
-                    </div>
-                    <div class="contact-info">
-                        <div class="contact-label">LINE 官方帳號</div>
-                        <div class="contact-desc">ID: @hutucafe (推薦使用)</div>
-                    </div>
-                </a>
-
-                <a href="https://www.facebook.com/hutucafe" target="_blank" class="contact-card">
-                    <div class="icon-circle fb-icon-bg">
-                        <svg viewBox="0 0 24 24" width="28" height="28" fill="#FFFFFF"><path d="M22.675 0H1.325C.593 0 0 .593 0 1.325v21.351C0 23.407.593 24 1.325 24H12.82v-9.294H9.692V11.08h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.625h-3.12V24h6.116c.73 0 1.323-.593 1.323-1.325V1.325C24 .593 23.407 0 22.675 0z"/></svg>
-                    </div>
-                    <div class="contact-info">
-                        <div class="contact-label">Facebook 粉絲專頁</div>
-                        <div class="contact-desc">糊塗咖啡 HUTU CAFE</div>
-                    </div>
-                </a>
-
-                <a href="https://www.instagram.com/hutu.cafe/" target="_blank" class="contact-card">
-                    <div class="icon-circle ig-icon-bg">
-                        <svg viewBox="0 0 24 24" width="28" height="28" fill="#FFFFFF"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.981 1.28.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.668-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-                    </div>
-                    <div class="contact-info">
-                        <div class="contact-label">Instagram</div>
-                        <div class="contact-desc">@hutu.cafe</div>
-                    </div>
-                </a>
-            </div>
+            
+            <a href="https://lin.ee/6oPqPhD" target="_blank" class="contact-card">
+                <div class="icon-circle line-icon-bg">
+                    <img src="line_logo.svg" alt="LINE" style="width: 100%; height: 100%;">
+                </div>
+                <div class="contact-desc">
+                    <h4>加入 LINE 好友</h4>
+                    <p>@hutucafe</p>
+                </div>
+                <div class="arrow">➔</div>
+            </a>
         </div>
+
+        <div class="section">
+            <div class="section-title">📘 Facebook 粉絲專頁</div>
+            <p class="about-text">
+                追蹤我們的 FB 粉絲專頁，了解烘豆師的日常紀實、第一手的咖啡知識分享，也歡迎留言與我們互動交流。
+            </p>
+            
+            <a href="https://www.facebook.com/profile.php?id=61567456744024" target="_blank" class="contact-card">
+                <div class="icon-circle fb-icon-bg">
+                    <svg viewBox="0 0 320 512" width="22" height="22" fill="#FFFFFF"><path d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"/></svg>
+                </div>
+                <div class="contact-desc">
+                    <h4>前往 Facebook</h4>
+                    <p>按讚並追蹤最新動態</p>
+                </div>
+                <div class="arrow">➔</div>
+            </a>
+        </div>
+
+        <div class="section">
+            <div class="section-title">📸 Instagram</div>
+            <p class="about-text">
+                透過精美的相片與限時動態，為您捕捉糊塗咖啡的視覺美學，感受精品咖啡與生活風格的完美結合。
+            </p>
+            
+            <a href="https://www.instagram.com/hutucafe/" target="_blank" class="contact-card">
+                <div class="icon-circle ig-icon-bg">
+                    <svg viewBox="0 0 448 512" width="24" height="24" fill="#FFFFFF"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>
+                </div>
+                <div class="contact-desc">
+                    <h4>追蹤 Instagram</h4>
+                    <p>@hutucafe</p>
+                </div>
+                <div class="arrow">➔</div>
+            </a>
+        </div>
+
     </div>
 
     <div class="bottom-bar">
