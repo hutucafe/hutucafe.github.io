@@ -149,9 +149,10 @@
 
         /* 統一卡片樣式：左圖右文 */
         .modern-card { flex-direction: row !important; align-items: stretch; padding: 0 !important; overflow: hidden; }
-        .card-thumb { width: 120px; min-width: 120px; flex-shrink: 0; cursor: pointer; overflow: hidden; background: #f5f0eb; display: flex; align-items: center; justify-content: center; }
-        .card-thumb img { width: 120px; height: 120px; object-fit: contain; display: block; }
+        .card-thumb { width: 120px; min-width: 120px; flex-shrink: 0; cursor: pointer; background: #f5f0eb; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 8px; }
+        .card-thumb img { width: 108px; height: 108px; object-fit: contain; display: block; flex-shrink: 0; }
         .card-thumb:hover img { opacity: 0.88; }
+        .card-thumb-badges { width: 100%; display: flex; align-items: center; justify-content: center; gap: 3px; padding: 5px 6px 7px; flex-wrap: wrap; }
         .card-body { flex: 1; padding: 10px 12px 10px 14px; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
         .card-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 3px; }
         .card-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); line-height: 1.4; flex: 1; min-width: 0; }
@@ -650,16 +651,14 @@
                 <div class="modern-card">
                     <div class="card-thumb" onclick="openLightbox(this)" ${lbData}>
                         <img src="${imgUrl}" alt="${name}" loading="lazy">
+                        <div class="card-thumb-badges">
+                            ${roast ? `<span class="badge-roast">${roast}</span>` : ''}
+                            ${stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
+                        </div>
                     </div>
                     <div class="card-body">
                         <div>
-                            <div class="card-top-row">
-                                <div class="card-name">${name}</div>
-                                <div class="card-badges">
-                                    ${roast ? `<span class="badge-roast">${roast}</span>` : ''}
-                                    ${stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
-                                </div>
-                            </div>
+                            <div class="card-name">${name}</div>
                             ${metaHtml}
                             <div class="card-tags">${tagsHtml}</div>
                         </div>
