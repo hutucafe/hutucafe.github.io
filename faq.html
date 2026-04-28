@@ -27,9 +27,8 @@
             background-color: #000; 
             height: 340px; 
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
+            align-items: flex-end; 
+            justify-content: center;
             padding: 20px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
             margin-bottom: 25px; 
@@ -53,13 +52,14 @@
         }
 
         .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
-        .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 0; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+        .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
         .line-link { color: inherit; text-decoration: none; transition: 0.3s; display: inline-block; }
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
         .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
-        .main-nav { display: flex; justify-content: flex-start; overflow-x: auto; gap: 10px; padding: 5px 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; width: 100%; }
+        /* 主導覽列 - 同步自 index.html */
+        .main-nav { display: flex; justify-content: flex-start; overflow-x: auto; gap: 10px; padding: 5px 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .main-nav::-webkit-scrollbar { display: none; }
 
         .nav-item { 
@@ -124,15 +124,15 @@
                     @hutucafe
                 </a>
             </p>
-        </div>
-
-<nav class="main-nav">
+            
+            <nav class="main-nav">
                 <a href="index.html" class="nav-item">訂購頁</a>
                 <a href="abouthutu.html" class="nav-item">關於糊塗</a>
                 <a href="contactus.html" class="nav-item">聯絡我們</a>
                 <a href="faq.html" class="nav-item active">常見問題</a>
                 <a href="more.html" class="nav-item">更多...</a>
             </nav>
+        </div>
     </header>
 
     <div class="container">
@@ -205,15 +205,9 @@
         // ★ 請將此處替換為您實際的 Google Apps Script 網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
 
-        // ==========================================
-        // 📋 動態載入折扣設定，更新 FAQ 說明文字
-        // ==========================================
-        // ⚠️ KEY 必須與 index.html 的 CONFIG_KEY 完全一致，才能共用快取
         const FAQ_CONFIG_KEY = 'hutucafe_config_v1';
 
         async function loadFaqConfig() {
-            // 先嘗試讀取 localStorage 快取（與訂購頁共用同一份）
-            // index.html 存的結構為 { data: { shopConfig, ... }, timestamp }
             try {
                 const cached = localStorage.getItem(FAQ_CONFIG_KEY);
                 if (cached) {
@@ -223,7 +217,6 @@
                 }
             } catch(e) {}
 
-            // 快取不存在：直接向 GAS 拉取
             try {
                 const res = await fetch(GAS_URL + '?action=config', { cache: 'no-store' });
                 const data = await res.json();
@@ -245,13 +238,11 @@
 
         document.addEventListener('DOMContentLoaded', loadFaqConfig);
 
-        // 複製單號並開啟 7-11 查詢網頁的函數
         function copyAndTrack(trackNum) {
             navigator.clipboard.writeText(trackNum).then(() => {
                 alert(`已將交貨便代碼：【 ${trackNum} 】複製到您的剪貼簿！\n\n按下確定後將開啟 7-11 查詢網頁，請直接「貼上」單號進行查詢。`);
                 window.open('https://eservice.7-11.com.tw/E-Tracking/search.aspx', '_blank');
             }).catch(err => {
-                // 若客人的瀏覽器不支援自動複製，提供備用方案
                 prompt('請手動複製下方的交貨便代碼，然後前往 7-11 網頁查詢：', trackNum);
                 window.open('https://eservice.7-11.com.tw/E-Tracking/search.aspx', '_blank');
             });
@@ -280,51 +271,4 @@
                     if (data.orders.length === 0) {
                         resBox.innerHTML = '<p style="text-align:center; color:#d84315; font-weight:bold;">查無此手機號碼的近期訂單記錄。</p>';
                     } else {
-                        let html = `<h4 style="margin-bottom:12px; color:#3e2723;">📞 ${phoneInput} 的近期訂單：</h4>`;
-                        
-                        data.orders.forEach(o => {
-                            // 根據狀態套用不同顏色的標籤
-                            let statusClass = '';
-                            if (o.status.includes('出貨') || o.status.includes('到達') || o.status.includes('店')) {
-                                statusClass = 'highlight'; // 橘色醒目
-                            } else if (o.status.includes('備貨')) {
-                                statusClass = 'prepare'; // 咖啡色
-                            }
-                            
-                            // 判斷是否有填寫交貨便單號，若有則顯示單號及按鈕
-                            let trackingUI = '';
-                            if (o.trackingNum) {
-                                trackingUI = `
-                                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc; display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size:14px; color:#555;">交貨便單號：<strong style="color:#3e2723; letter-spacing:1px;">${o.trackingNum}</strong></span>
-                                    <button onclick="copyAndTrack('${o.trackingNum}')" style="background:#e65100; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">追蹤物流 🚚</button>
-                                </div>`;
-                            }
-
-                            html += `
-                            <div class="order-item">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                    <span style="font-size:13px; color:#888;">📅 ${o.date}</span>
-                                    <span class="status-badge ${statusClass}">${o.status}</span>
-                                </div>
-                                <div style="font-size:14px; font-weight:bold; color:#3e2723; margin-bottom:4px;">🏠 門市：${o.store}</div>
-                                <div style="font-size:13px; color:#666; background:#f0f0f0; padding:8px; border-radius:6px; line-height:1.6;">${o.items}</div>
-                                <div style="font-size:15px; font-weight:bold; color:#d84315; text-align:right; margin-top:8px;">總計: $${o.total}</div>
-                                ${trackingUI}
-                            </div>`;
-                        });
-                        resBox.innerHTML = html;
-                    }
-                } else {
-                    resBox.innerHTML = '<p style="text-align:center; color:red;">伺服器錯誤，請稍後再試。</p>';
-                }
-            } catch (e) {
-                resBox.innerHTML = '<p style="text-align:center; color:red;">網路連線錯誤，請檢查您的網路狀態。</p>';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "立即查詢";
-            }
-        }
-    </script>
-</body>
-</html>
+                        let html = `<h4 style="margin-bottom:
