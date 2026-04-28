@@ -6,7 +6,7 @@
     <title>關於糊塗 | 糊塗咖啡 HUTU CAFE</title>
     <link rel="icon" href="logo2.jpg" type="image/jpeg">
     <style>
-        /* 基礎樣式比照 index.html */
+        /* ✅ 1. 基礎樣式完全比照 index.html */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
         
@@ -46,20 +46,20 @@
         .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
         .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
-        /* ✅ 完全比照 index.html 的導覽列 CSS */
+        /* ✅ 2. 核心修正：導覽列 CSS 完全同步 index.html */
         .main-nav { 
             display: flex; 
-            justify-content: flex-start; 
-            overflow-x: auto; 
+            justify-content: flex-start; /* 靠左排列 */
+            overflow-x: auto;            /* 開啟橫向捲動 */
             gap: 10px; 
-            padding: 5px 10px; 
+            padding: 5px 10px;           /* 與邊緣保持距離，避免被切到 */
             scrollbar-width: none; 
             -webkit-overflow-scrolling: touch; 
         }
         .main-nav::-webkit-scrollbar { display: none; }
 
         .nav-item { 
-            flex: none; 
+            flex: none; /* 防止項目被擠壓 */
             text-decoration: none; 
             font-size: 13px; 
             color: #fff; 
@@ -70,7 +70,7 @@
             backdrop-filter: blur(8px); 
             -webkit-backdrop-filter: blur(8px); 
             transition: 0.3s; 
-            white-space: nowrap; 
+            white-space: nowrap; /* 確保文字不換行 */
             text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
         .nav-item:hover, .nav-item.active { 
@@ -88,14 +88,30 @@
             .nav-item { padding: 6px 12px; font-size: 12px; }
         }
 
+        /* 內容樣式 */
         .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
         .section { background: #fff; border-radius: 16px; padding: 25px 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
-        
-        /* ...其餘內容樣式保持不變... */
+        .about-text { font-size: 15px; color: #555; line-height: 1.8; text-align: justify; margin-bottom: 15px; }
+        .highlight { color: #d84315; font-weight: bold; }
+
+        .cr-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .cr-card { background: #faf8f5; border: 1px solid #e8ddd4; border-left: 4px solid #8b5e3c; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; }
+        .cr-score .score-num { font-size: 30px; font-weight: 900; color: #7b3f1e; }
+        .cr-desc h4 { font-size: 14px; color: #3e2723; }
+        .cr-desc p { font-size: 12.5px; color: #7a6055; }
+
+        .cert-img { width: 100%; border-radius: 8px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; }
+        .award-list { list-style: none; margin-top: 10px; }
+        .award-list li { font-size: 15px; color: #444; padding: 10px 0; border-bottom: 1px dashed #eee; display: flex; align-items: center; }
+        .award-list li::before { content: '🏆'; margin-right: 10px; font-size: 18px; }
+
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
+        .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; transition: 0.3s; display: inline-block; width: 100%; max-width: 400px; text-align: center; }
     </style>
 </head>
 <body>
+
     <header>
         <div class="header-inner">
             <h1>糊塗咖啡 HUTU CAFE</h1>
@@ -112,6 +128,34 @@
     </header>
 
     <div class="container">
+        <div class="section">
+            <div class="section-title">🌿 品牌精神</div>
+            <p class="about-text">糊塗咖啡 HUTU CAFE 由烘豆師<span class="highlight">牛頓王</span>創立。</p>
+            <p class="about-text">我們透過數據分析，取得 <strong>SCA 國際精品咖啡協會專業級烘焙認證</strong>，並在 <strong>Coffee Review 評鑑屢獲 93、94 高分</strong>。</p>
         </div>
+
+        <div class="section">
+            <div class="section-title">🌟 CR 評鑑肯定</div>
+            <div class="cr-list">
+                <div class="cr-card">
+                    <div class="cr-score"><span class="score-num">94</span></div>
+                    <div class="cr-desc">
+                        <h4>Ethiopia Banko Gotiti</h4>
+                        <p>佛手柑與柑橘香氣，口感絲滑。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🎓 專業級認證</div>
+            <img src="sca_csp.jpg" alt="SCA CSP" class="cert-img">
+        </div>
+    </div>
+
+    <div class="bottom-bar">
+        <a href="index.html">🛒 前往線上訂購</a>
+    </div>
+
 </body>
 </html>
