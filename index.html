@@ -235,12 +235,11 @@
         .lightbox-price { font-size: 20px; font-weight: 500; color: #b77b3b; }
         .lightbox-price .unit { font-size: 12px; color: #999; font-weight: normal; }
         .lightbox-close { position: absolute; top: 10px; right: 12px; background: rgba(0,0,0,0.45); color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
-        .lightbox-nav { position: absolute; top: calc(50% + 35px); transform: translateY(-50%); background: rgba(0,0,0,0.35); color: #fff; border: none; border-radius: 50%; width: 34px; height: 34px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: background 0.2s; }
-        .lightbox-nav:hover { background: rgba(0,0,0,0.6); }
-        .lightbox-nav.prev { left: 10px; }
-        .lightbox-nav.next { right: 10px; }
-        .lightbox-nav:disabled { opacity: 0.2; cursor: default; }
-        .lightbox-back { display: block; width: calc(100% - 28px); margin: 0 14px 14px; padding: 9px; background: #6b3a2a; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; }
+                .lightbox-nav { background: #f0e8e0; color: #6b3a2a; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+        .lightbox-nav:hover { background: #e0d0c0; }
+        .lightbox-nav:disabled { opacity: 0.25; cursor: default; }
+        .lightbox-bottom-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px 14px; }
+        .lightbox-back { flex: 1; padding: 8px 10px; background: #6b3a2a; color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; }
         .lightbox-back:active { background: #4e2a1e; }
 
         /* 庫存狀態標籤 */
@@ -1115,8 +1114,7 @@
         <div id="lightbox" class="lightbox" onclick="if(event.target===this)closeLightbox()">
             <div class="lightbox-inner">
                 <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-                <button class="lightbox-nav prev" id="lb-prev" onclick="navigateLightbox(-1)">‹</button>
-                <button class="lightbox-nav next" id="lb-next" onclick="navigateLightbox(1)">›</button>
+
                 <img id="lb-img" class="lightbox-img" src="" alt="">
                 <div class="lightbox-body">
                     <div id="lb-title" class="lightbox-title"></div>
@@ -1135,7 +1133,11 @@
                         </div>
                     </div>
                 </div>
-                <button class="lightbox-back" onclick="closeLightbox()">← 回豆單</button>
+                <div class="lightbox-bottom-bar">
+                    <button class="lightbox-nav prev" id="lb-prev" onclick="navigateLightbox(-1)">‹</button>
+                    <button class="lightbox-back" onclick="closeLightbox()">回豆單</button>
+                    <button class="lightbox-nav next" id="lb-next" onclick="navigateLightbox(1)">›</button>
+                </div>
             </div>
         </div>
 
