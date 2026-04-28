@@ -17,7 +17,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
         
-        /* 頁首設計 - 嚴格對齊 index.html 規格 */
+        /* 頁首設計 */
         header { 
             position: relative;
             background-image: url('bg.jpg'); 
@@ -58,7 +58,7 @@
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
         .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
-        /* 主導覽列 - 同步 index.html 的橫向捲動與左對齊 */
+        /* 主導覽列 */
         .main-nav { 
             display: flex; 
             justify-content: flex-start; 
@@ -91,11 +91,33 @@
         .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
         .intro-text { font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.6; }
 
-        /* 訂單查詢表單 */
-        .track-form { display: flex; gap: 8px; margin-top: 10px; }
-        .track-input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fcfcfc; transition: 0.3s; }
+        /* 訂單查詢表單 - 方案二修正：防止溢出 */
+        .track-form { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+        .track-input { 
+            flex: 1; 
+            min-width: 0; /* 關鍵：允許 Flex 項目縮小到文字顯示寬度以下 */
+            padding: 12px 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 15px; 
+            background: #fcfcfc; 
+            transition: 0.3s; 
+        }
         .track-input:focus { outline: none; border-color: #8d6e63; background: #fff; }
-        .track-btn { background: #6d4c41; color: #fff; border: none; padding: 0 20px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+        .track-btn { 
+            flex-shrink: 0; /* 關鍵：防止按鈕在空間不足時被壓縮 */
+            background: #6d4c41; 
+            color: #fff; 
+            border: none; 
+            padding: 0 16px; /* 稍微縮小左右 padding 以騰出空間 */
+            height: 46px; /* 統一高度 */
+            border-radius: 8px; 
+            font-size: 15px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            white-space: nowrap; 
+        }
         .track-btn:hover { background: #4e342e; }
         .track-btn:disabled { background: #aaa; cursor: not-allowed; }
         
@@ -164,7 +186,7 @@
             <div class="faq-list">
                 <div class="faq-card">
                     <div class="faq-q"><span class="badge-q">Q</span>糊塗咖啡的烘豆及出貨時間？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>咖啡有現貨的部分會盡速寄出，沒有現貨的部分我們會利用週間收集訂單，週末統一烘豆及包裝！</div>
+                    <div class="faq-a"><span class="badge-a">A</span>咖啡有現貨的部分會盡速寄出，沒有現貨的部分我們會利用週間收集訂單，週末統一烘豆及包裝，盡快提供給大家好咖啡！</div>
                 </div>
 
                 <div class="faq-card">
@@ -174,17 +196,32 @@
 
                 <div class="faq-card">
                     <div class="faq-q"><span class="badge-q">Q</span>老闆可以幫我磨粉嗎？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>我們強烈建議不要磨粉喔，磨粉後風味消散得快！本店只販售原豆，建議現磨現沖風味最佳。</div>
+                    <div class="faq-a"><span class="badge-a">A</span>我們建議不要磨粉喔，磨粉後風味消散得快！本店只販售原豆，強烈建議您自行使用磨豆機「現磨現沖」，風味最佳！</div>
+                </div>
+
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>商品有問題，退換貨怎麼處理？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>收到商品如有任何問題，請透過 LINE 官方帳號與我們反映。確認後直接退款，不需退回貨物。</div>
                 </div>
 
                 <div class="faq-card">
                     <div class="faq-q"><span class="badge-q">Q</span>運費怎麼算？</div>
-                    <div class="faq-a"><span class="badge-a">A</span><span class="faq-a-text">7-ELEVEN 超商取貨運費為 $<span id="faq-shipping-fee">38</span>。目前官網指定品項享「<span id="faq-discount-name">優惠折扣</span>」，且結帳滿 $<span id="faq-free-threshold">1,000</span> 即可享免運費！</span></div>
+                    <div class="faq-a"><span class="badge-a">A</span><span class="faq-a-text">7-ELEVEN 超商取貨運費為 $<span id="faq-shipping-fee">38</span>。目前官網訂購指定品項享「<span id="faq-discount-name">優惠折扣</span>」，且結帳滿 $<span id="faq-free-threshold">1,000</span> 即可享免運費！</span></div>
+                </div>
+
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>我是咖啡新手，不知道該怎麼選豆？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>本店咖啡豆非常多元，歡迎加入官方 LINE 找老闆聊聊您喜歡的風味！</div>
                 </div>
 
                 <div class="faq-card">
                     <div class="faq-q"><span class="badge-q">Q</span>咖啡豆最佳賞味期間？要怎麼保存？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>最佳賞味期間是烘焙日後的 2 週 ~ 6 個月內。請放置於陰涼處，避免陽光直射與潮濕環境。</div>
+                    <div class="faq-a"><span class="badge-a">A</span>我們的咖啡豆最佳賞味期間是烘焙日後的 2 週 ~ 6 個月內，未開封狀態下可保存 6 個月，保存請放置於陰涼處，避免陽光直射與高溫潮濕環境。</div>
+                </div>
+
+                <div class="faq-card">
+                    <div class="faq-q"><span class="badge-q">Q</span>有建議的沖煮方式嗎？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>依照您自己的習慣沖煮即可。若不熟悉，請至「更多...」頁面參考糊塗咖啡的專屬手沖指南。</div>
                 </div>
             </div>
         </div>
@@ -232,10 +269,10 @@
 
         function copyAndTrack(trackNum) {
             navigator.clipboard.writeText(trackNum).then(() => {
-                alert(`已複製交貨便代碼：【 ${trackNum} 】！\n將開啟 7-11 查詢網頁，請貼上單號查詢。`);
+                alert(`已將交貨便代碼：【 ${trackNum} 】複製到您的剪貼簿！\n\n按下確定後將開啟 7-11 查詢網頁，請直接「貼上」單號進行查詢。`);
                 window.open('https://eservice.7-11.com.tw/E-Tracking/search.aspx', '_blank');
             }).catch(err => {
-                prompt('請手動複製代碼：', trackNum);
+                prompt('請手動複製下方的交貨便代碼：', trackNum);
                 window.open('https://eservice.7-11.com.tw/E-Tracking/search.aspx', '_blank');
             });
         }
@@ -253,7 +290,7 @@
             btn.disabled = true;
             btn.textContent = "查詢中...";
             resBox.style.display = "block";
-            resBox.innerHTML = '<p style="text-align:center; color:#888;">查詢中...</p>';
+            resBox.innerHTML = '<p style="text-align:center; color:#888;">連線資料庫查詢中...</p>';
 
             try {
                 const response = await fetch(GAS_URL + '?phone=' + phoneInput);
@@ -265,11 +302,11 @@
                     } else {
                         let html = `<h4 style="margin-bottom:12px;">📞 ${phoneInput} 的近期訂單：</h4>`;
                         data.orders.forEach(o => {
-                            let statusClass = o.status.includes('出貨') ? 'highlight' : o.status.includes('備貨') ? 'prepare' : '';
+                            let statusClass = (o.status.includes('出貨') || o.status.includes('到達')) ? 'highlight' : o.status.includes('備貨') ? 'prepare' : '';
                             let trackingUI = o.trackingNum ? `
                                 <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc; display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size:14px;">交貨便單號：<strong>${o.trackingNum}</strong></span>
-                                    <button onclick="copyAndTrack('${o.trackingNum}')" class="track-btn" style="padding:6px 12px;">追蹤物流 🚚</button>
+                                    <span style="font-size:14px;">代碼：<strong>${o.trackingNum}</strong></span>
+                                    <button onclick="copyAndTrack('${o.trackingNum}')" class="track-btn" style="height:34px; padding:0 10px; font-size:12px;">追蹤物流 🚚</button>
                                 </div>` : '';
 
                             html += `
