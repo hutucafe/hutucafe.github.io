@@ -58,7 +58,7 @@
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
         .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
-        /* 主導覽列 - 同步自 index.html */
+        /* 更新主導覽列：對齊首頁靠左且可滑動 */
         .main-nav { display: flex; justify-content: flex-start; overflow-x: auto; gap: 10px; padding: 5px 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .main-nav::-webkit-scrollbar { display: none; }
 
@@ -202,9 +202,7 @@
     </div>
 
     <script>
-        // ★ 請將此處替換為您實際的 Google Apps Script 網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
-
         const FAQ_CONFIG_KEY = 'hutucafe_config_v1';
 
         async function loadFaqConfig() {
@@ -271,4 +269,49 @@
                     if (data.orders.length === 0) {
                         resBox.innerHTML = '<p style="text-align:center; color:#d84315; font-weight:bold;">查無此手機號碼的近期訂單記錄。</p>';
                     } else {
-                        let html = `<h4 style="margin-bottom:
+                        let html = `<h4 style="margin-bottom:12px; color:#3e2723;">📞 ${phoneInput} 的近期訂單：</h4>`;
+                        
+                        data.orders.forEach(o => {
+                            let statusClass = '';
+                            if (o.status.includes('出貨') || o.status.includes('到達') || o.status.includes('店')) {
+                                statusClass = 'highlight'; 
+                            } else if (o.status.includes('備貨')) {
+                                statusClass = 'prepare'; 
+                            }
+                            
+                            let trackingUI = '';
+                            if (o.trackingNum) {
+                                trackingUI = `
+                                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size:14px; color:#555;">交貨便單號：<strong style="color:#3e2723; letter-spacing:1px;">${o.trackingNum}</strong></span>
+                                    <button onclick="copyAndTrack('${o.trackingNum}')" style="background:#e65100; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">追蹤物流 🚚</button>
+                                </div>`;
+                            }
+
+                            html += `
+                            <div class="order-item">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <span style="font-size:13px; color:#888;">📅 ${o.date}</span>
+                                    <span class="status-badge ${statusClass}">${o.status}</span>
+                                </div>
+                                <div style="font-size:14px; font-weight:bold; color:#3e2723; margin-bottom:4px;">🏠 門市：${o.store}</div>
+                                <div style="font-size:13px; color:#666; background:#f0f0f0; padding:8px; border-radius:6px; line-height:1.6;">${o.items}</div>
+                                <div style="font-size:15px; font-weight:bold; color:#d84315; text-align:right; margin-top:8px;">總計: $${o.total}</div>
+                                ${trackingUI}
+                            </div>`;
+                        });
+                        resBox.innerHTML = html;
+                    }
+                } else {
+                    resBox.innerHTML = '<p style="text-align:center; color:red;">伺服器錯誤，請稍後再試。</p>';
+                }
+            } catch (e) {
+                resBox.innerHTML = '<p style="text-align:center; color:red;">網路連線錯誤，請檢查您的網路狀態。</p>';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "立即查詢";
+            }
+        }
+    </script>
+</body>
+</html>
