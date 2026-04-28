@@ -2,16 +2,10 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>關於糊塗 | 糊塗咖啡 HUTU CAFE</title>
-    <meta property="og:title" content="關於糊塗 | 糊塗咖啡 HUTU CAFE">
-    <meta property="og:description" content="深入了解糊塗咖啡的品牌精神：數據烘焙與科學哲學。了解烘豆師牛頓王的 SCA CSP 專業級認證歷程及歷年獲獎獎項。">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://hutucafe.github.io/abouthutu.html">
-    <meta property="og:image" content="https://hutucafe.github.io/certificate.jpg">
     <link rel="icon" href="logo2.jpg" type="image/jpeg">
     <style>
-        /* 基礎重置 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; overflow-x: hidden; }
         
@@ -20,14 +14,12 @@
             background-image: url('bg.jpg');
             background-size: cover; 
             background-position: center; 
-            background-repeat: no-repeat;
             background-color: #000; 
             height: 340px; 
             display: flex;
             align-items: flex-end; 
             justify-content: center;
             padding: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
             margin-bottom: 25px; 
             border-top: 6px solid #000; 
         }
@@ -50,24 +42,26 @@
         .header-inner h1 { font-size: 28px; color: #fff; margin-bottom: 6px; letter-spacing: 2px; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
         .header-inner p { color: #f5f5f5; font-size: 15px; margin-bottom: 20px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 
-        /* ✅ 關鍵修正：比照 index.html 的橫向捲動設定 */
+        /* ✅ 核心修正：比照 index.html 的滿版滑動樣式 */
         .main-nav { 
             display: flex !important;
             justify-content: flex-start !important; 
             overflow-x: auto !important;
             overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
-            gap: 10px; 
-            padding: 10px 20px !important; /* 增加左右 padding 讓滑動有空間 */
-            margin: 0 -20px !important;    /* 抵消 header 的 padding，達到滿版感 */
+            
+            /* 讓滑動區域往左右推到底，解決「被切到」的問題 */
+            margin: 0 -20px !important; 
+            padding: 10px 20px !important; 
+            
+            gap: 12px; 
             scrollbar-width: none;
-            list-style: none;
+            width: calc(100% + 40px); /* 補償負 margin */
         }
         .main-nav::-webkit-scrollbar { display: none; }
 
         .nav-item { 
-            flex-shrink: 0 !important; /* 強制不縮小 */
-            flex-grow: 0 !important;
+            flex: 0 0 auto !important; /* 禁止壓縮 */
             text-decoration: none; 
             font-size: 13px; 
             color: #fff; 
@@ -78,36 +72,30 @@
             backdrop-filter: blur(8px); 
             -webkit-backdrop-filter: blur(8px); 
             transition: 0.3s; 
-            white-space: nowrap !important; /* 絕對不換行 */
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            white-space: nowrap !important;
         }
 
-        .nav-item.active { background-color: #fff; color: #4e342e; border-color: #fff; text-shadow: none; font-weight: bold; }
+        .nav-item.active { background-color: #fff; color: #4e342e; border-color: #fff; font-weight: bold; }
 
         @media (max-width: 600px) {
             header { height: 280px; }
             .header-inner h1 { font-size: 24px; }
-            .header-inner p { font-size: 13px; }
             .nav-item { padding: 6px 14px; font-size: 12px; }
         }
 
-        /* 內容容器 */
         .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
         .section { background: #fff; border-radius: 16px; padding: 25px 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
         .about-text { font-size: 15px; color: #555; line-height: 1.8; text-align: justify; margin-bottom: 15px; }
-        .highlight { color: #d84315; font-weight: bold; }
 
-        /* CR 卡片列表 */
         .cr-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
         .cr-card { background: #faf8f5; border: 1px solid #e8ddd4; border-left: 4px solid #8b5e3c; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; }
         .cr-score .score-num { font-size: 30px; font-weight: 900; color: #7b3f1e; }
-        .cr-desc h4 { font-size: 14px; color: #3e2723; margin-bottom: 2px; }
+        .cr-desc h4 { font-size: 14px; color: #3e2723; }
         .cr-desc p { font-size: 12.5px; color: #7a6055; }
 
-        .cert-img { width: 100%; border-radius: 8px; margin-top: 15px; }
+        .cert-img { width: 100%; border-radius: 8px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
-        /* 底部按鈕 */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; display: flex; justify-content: center; z-index: 1000; }
         .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; width: 100%; max-width: 400px; text-align: center; }
     </style>
@@ -132,37 +120,26 @@
     <div class="container">
         <div class="section">
             <div class="section-title">🌿 品牌精神</div>
-            <p class="about-text">
-                糊塗咖啡 HUTU CAFE 由烘豆師<span class="highlight">牛頓王</span>創立。我們將看似感性的咖啡烘焙，注入嚴謹客觀的科學精神。
-            </p>
-            <p class="about-text">
-                透過精準的數據分析，掌控每一批次生豆特性，並為高品質精品豆種量身打造專屬烘焙曲線。這份嚴謹讓我們取得 <strong>SCA 國際精品咖啡協會專業級烘焙認證</strong>。
-            </p>
+            <p class="about-text">糊塗咖啡 HUTU CAFE 由烘豆師牛頓王創立。我們將看似感性的咖啡烘焙，注入嚴謹客觀的科學精神。</p>
+            <p class="about-text">透過精準的數據分析，掌握生豆特性並打造專屬曲線。這份嚴謹讓我們榮獲 Coffee Review 94 高分肯定。</p>
         </div>
 
         <div class="section">
-            <div class="section-title">🌟 國際權威機構 CR 評鑑肯定</div>
+            <div class="section-title">🌟 CR 評鑑肯定</div>
             <div class="cr-list">
-                <a href="#" class="cr-card">
+                <div class="cr-card">
                     <div class="cr-score"><span class="score-num">94</span></div>
                     <div class="cr-desc">
                         <h4>Ethiopia Banko Gotiti</h4>
-                        <p>佛手柑與柑橘香氣，酸值明亮，口感絲滑。</p>
+                        <p>佛手柑與柑橘香氣，口感絲滑。</p>
                     </div>
-                </a>
-                <a href="#" class="cr-card">
-                    <div class="cr-score"><span class="score-num">93</span></div>
-                    <div class="cr-desc">
-                        <h4>Blossom Spring Blend</h4>
-                        <p>黑莓與香草優格香，帶有洛神花風味。</p>
-                    </div>
-                </a>
+                </div>
             </div>
         </div>
 
         <div class="section">
             <div class="section-title">🎓 專業級認證</div>
-            <img src="sca_csp.jpg" alt="SCA CSP Roasting Professional 證照" class="cert-img">
+            <img src="sca_csp.jpg" alt="SCA CSP" class="cert-img">
         </div>
     </div>
 
