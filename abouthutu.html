@@ -66,7 +66,7 @@
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
         .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
-        /* 主導覽列 (同步 index.html) */
+        /* 主導覽列 (靠左對齊樣式) */
         .main-nav { display: flex; justify-content: flex-start; overflow-x: auto; gap: 10px; padding: 5px 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .main-nav::-webkit-scrollbar { display: none; }
 
@@ -93,17 +93,30 @@
         .about-text { font-size: 15px; color: #555; line-height: 1.8; text-align: justify; margin-bottom: 15px; }
         .highlight { color: #d84315; font-weight: bold; }
 
-        /* CR 評分區塊樣式 */
+        /* ===== CR 評分區塊樣式 (同步 ori 的豪華設計) ===== */
         .cr-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+
         .cr-card-featured {
-            text-decoration: none; display: block; border-radius: 14px; overflow: hidden;
+            position: relative; text-decoration: none; color: inherit; display: block; border-radius: 14px; overflow: hidden;
             background: linear-gradient(135deg, #1a0a00 0%, #3b1a08 50%, #5c2d0e 100%);
             border: 1px solid rgba(212, 175, 55, 0.35); transition: 0.3s;
         }
         .cr-card-featured:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(139, 90, 43, 0.45); }
+        .cr-card-featured::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, #d4af37, #f5e27a, #d4af37, transparent);
+        }
         .cr-card-featured-inner { display: flex; align-items: center; padding: 18px 20px; gap: 16px; }
-        .score-num { font-size: 46px; font-weight: 900; line-height: 1; background: linear-gradient(180deg, #f5e27a 0%, #d4af37 45%, #a07830 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .cr-desc-featured h4 { font-size: 15px; color: #f5edd8; margin-bottom: 5px; }
+        .cr-score-featured { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+        .cr-score-featured .score-num {
+            font-size: 46px; font-weight: 900; line-height: 1; background: linear-gradient(180deg, #f5e27a 0%, #d4af37 45%, #a07830 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .cr-score-featured .score-pts { font-size: 10px; color: rgba(212, 175, 55, 0.7); margin-top: 1px; }
+        .cr-divider-featured { width: 1px; height: 54px; background: linear-gradient(to bottom, transparent, rgba(212, 175, 55, 0.5), transparent); }
+        .cr-desc-featured { flex: 1; }
+        .cr-badge { display: inline-block; font-size: 10px; font-weight: bold; color: #1a0a00; background: linear-gradient(90deg, #d4af37, #f5e27a); padding: 2px 8px; border-radius: 10px; margin-bottom: 6px; }
+        .cr-desc-featured h4 { font-size: 15px; color: #f5edd8; margin-bottom: 5px; font-weight: bold; }
         .cr-desc-featured p { font-size: 12.5px; color: rgba(245, 237, 216, 0.65); }
 
         .cr-card {
@@ -112,13 +125,18 @@
             text-decoration: none; color: inherit; transition: 0.2s;
         }
         .cr-card:hover { transform: translateY(-2px); border-color: #c89060; }
-        .cr-score .score-num { font-size: 30px; font-weight: 900; color: #7b3f1e; }
+        .cr-score { display: flex; flex-direction: column; align-items: center; min-width: 48px; }
+        .cr-score .score-num { font-size: 30px; font-weight: 900; color: #7b3f1e; line-height: 1; }
+        .cr-score .score-pts { font-size: 9px; color: #b08060; }
+        .cr-divider { width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, #d8c4b0, transparent); }
+        .cr-desc h4 { font-size: 14px; color: #3e2723; margin-bottom: 3px; font-weight: bold; }
+        .cr-desc p { font-size: 12.5px; color: #7a6055; }
 
         /* 圖片與列表 */
         .cert-img { width: 100%; border-radius: 8px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; }
         .award-list { list-style: none; margin-top: 10px; }
         .award-list li { font-size: 15px; color: #444; padding: 10px 0; border-bottom: 1px dashed #eee; display: flex; align-items: center; }
-        .award-list li::before { content: '🏆'; margin-right: 10px; }
+        .award-list li::before { content: '🏆'; margin-right: 10px; font-size: 18px; }
 
         /* 底部按鈕 */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
@@ -155,44 +173,94 @@
                 糊塗咖啡 HUTU CAFE 由烘豆師<span class="highlight">牛頓王</span>創立。我們將看似感性的咖啡烘焙，注入嚴謹客觀的科學精神。
             </p>
             <p class="about-text">
-                透過精準的數據分析，我們為精品豆種量身打造專屬烘焙曲線。這份嚴謹讓我們取得 <strong>SCA 專業級烘焙認證 (CSP Roasting Professional)</strong>，並在 <strong>Coffee Review 評鑑屢獲 93、94 高分</strong>。
+                透過精準的數據分析，掌握每一批次生豆的含水量、水活性與生豆密度，並為高海拔精品豆種量身打造專屬的烘焙曲線。這份對烘焙的嚴謹與熱忱，不僅讓烘豆師取得 <strong>SCA 國際精品咖啡協會專業級烘焙認證 (CSP Roasting Professional)</strong>，更在 <strong>Coffee Review 評鑑屢獲 93、94 卓越高分</strong>，並一舉奪得 <strong>2022 咖啡烘烘烘年末賽冠軍</strong>。我們堅持職人手作的極致，確保每一鍋咖啡豆都能完美釋放其獨特的風土潛力與純粹風味。
             </p>
         </div>
 
         <div class="section">
             <div class="section-title">🌟 國際權威機構 CR 評鑑肯定</div>
+            <p class="about-text">
+                糊塗咖啡秉持對品質的堅持，參與全球最具指標性的咖啡評鑑權威機構 <strong>Coffee Review</strong>，送測的 6 款咖啡皆榮獲卓越高分肯定。
+            </p>
+            
             <div class="cr-list">
                 <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card-featured">
                     <div class="cr-card-featured-inner">
-                        <div class="score-num">94</div>
+                        <div class="cr-score-featured">
+                            <span class="score-num">94</span>
+                            <span class="score-pts">POINTS</span>
+                        </div>
+                        <div class="cr-divider-featured"></div>
                         <div class="cr-desc-featured">
+                            <span class="cr-badge">✦ 最高評鑑</span>
                             <h4>Ethiopia Banko Gotiti</h4>
-                            <p>佛手柑與柑橘香氣，口感絲滑。</p>
+                            <p>佛手柑與柑橘香氣，伴隨檸檬草與可可，酸值明亮，口感絲滑。</p>
                         </div>
                     </div>
                 </a>
-                <a href="#" class="cr-card">
-                    <div class="cr-score"><span class="score-num">93</span></div>
+
+                <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
+                    <div class="cr-score"><span class="score-num">93</span><span class="score-pts">PTS</span></div>
+                    <div class="cr-divider"></div>
                     <div class="cr-desc">
                         <h4>Blossom Spring Blend</h4>
-                        <p>黑莓與香草優格香，酸度明亮多汁。</p>
+                        <p>黑莓與香草優格香，帶有洛神花風味，酸度明亮多汁。</p>
+                    </div>
+                </a>
+                <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
+                    <div class="cr-score"><span class="score-num">93</span><span class="score-pts">PTS</span></div>
+                    <div class="cr-divider"></div>
+                    <div class="cr-desc">
+                        <h4>Ethiopia Halo Hartume</h4>
+                        <p>明亮水仙花與杏桃香氣，點綴可可與檸檬皮，糖漿般滑順。</p>
+                    </div>
+                </a>
+                <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
+                    <div class="cr-score"><span class="score-num">93</span><span class="score-pts">PTS</span></div>
+                    <div class="cr-divider"></div>
+                    <div class="cr-desc">
+                        <h4>Kenya Rumukia FCS Maganjo</h4>
+                        <p>黑醋栗與紫羅蘭香氣，帶有檸檬馬鞭草，酸度活潑。</p>
+                    </div>
+                </a>
+                <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
+                    <div class="cr-score"><span class="score-num">93</span><span class="score-pts">PTS</span></div>
+                    <div class="cr-divider"></div>
+                    <div class="cr-desc">
+                        <h4>Autumn Forest</h4>
+                        <p>黑櫻桃與黑巧克力香，伴隨薰衣草與柑橘皮，口感飽滿。</p>
+                    </div>
+                </a>
+                <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
+                    <div class="cr-score"><span class="score-num">93</span><span class="score-pts">PTS</span></div>
+                    <div class="cr-divider"></div>
+                    <div class="cr-desc">
+                        <h4>Passion Paradise</h4>
+                        <p>覆盆子與水仙花香，結合黑巧克力與葡萄柚皮，尾韻細緻。</p>
                     </div>
                 </a>
             </div>
         </div>
 
         <div class="section">
-            <div class="section-title">🎓 SCA 專業級認證</div>
+            <div class="section-title">🎓 SCA 國際精品咖啡協會 專業級認證</div>
             <p class="about-text">
-                烘豆師已正式取得 <strong>SCA CSP Roasting Professional</strong> 證照，這是國際精品咖啡協會認證的最高烘焙等級。
+                糊塗咖啡烘豆師已正式取得 <strong>SCA CSP Roasting Professional（咖啡烘焙專業級）</strong>證照。這是國際精品咖啡協會（SCA）認證的最高烘焙等級。
             </p>
-            <img src="sca_csp.jpg" alt="SCA 證照" class="cert-img">
+            <p class="about-text">
+                該認證課程深入探討烘焙科學（如物理/化學變化、梅納反應與熱力學），透過嚴謹的理論與實作考驗，展現我們對高階烘豆知識與極致風味的專業掌握。
+            </p>
+            <img src="sca_csp.jpg" alt="SCA CSP Roasting Professional 證照" class="cert-img">
         </div>
 
         <div class="section">
             <div class="section-title">🏆 歷年賽事殊榮</div>
+            <p class="about-text">
+                糊塗咖啡的烘豆師透過科學化分析與敏銳的感官杯測，在激烈的咖啡烘焙賽事中屢創佳績。
+            </p>
             <ul class="award-list">
                 <li><strong>咖啡烘烘烘 2022 年末賽 —— 榮獲 冠軍</strong></li>
+                <li>咖啡烘烘烘 2022 10月例賽 —— 榮獲 第六名</li>
             </ul>
             <img src="certificate.jpg" alt="冠軍獎狀" class="cert-img">
         </div>

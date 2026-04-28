@@ -17,7 +17,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
         
-        /* 頁首設計 */
+        /* 頁首設計 - 嚴格對齊 index.html 規格 */
         header { 
             position: relative;
             background-image: url('bg.jpg'); 
@@ -58,7 +58,16 @@
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
         .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
-        .main-nav { display: flex; justify-content: center; overflow-x: auto; gap: 10px; padding: 5px 0; scrollbar-width: none; }
+        /* 主導覽列 - 同步 index.html 的橫向捲動與左對齊 */
+        .main-nav { 
+            display: flex; 
+            justify-content: flex-start; 
+            overflow-x: auto; 
+            gap: 10px; 
+            padding: 5px 10px; 
+            scrollbar-width: none; 
+            -webkit-overflow-scrolling: touch; 
+        }
         .main-nav::-webkit-scrollbar { display: none; }
 
         .nav-item { 
@@ -82,7 +91,7 @@
         .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
         .intro-text { font-size: 14px; color: #666; margin-bottom: 15px; line-height: 1.6; }
 
-        /* 訂單查詢表單與結果 */
+        /* 訂單查詢表單 */
         .track-form { display: flex; gap: 8px; margin-top: 10px; }
         .track-input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; background: #fcfcfc; transition: 0.3s; }
         .track-input:focus { outline: none; border-color: #8d6e63; background: #fff; }
@@ -98,6 +107,7 @@
         .status-badge.highlight { background: #e65100; color: #fff; } 
         .status-badge.prepare { background: #8d6e63; color: #fff; }
 
+        /* FAQ 列表 */
         .faq-list { display: flex; flex-direction: column; gap: 12px; }
         .faq-card { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 16px; transition: 0.3s; }
         .faq-card:hover { border-color: #d7ccc8; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -154,7 +164,7 @@
             <div class="faq-list">
                 <div class="faq-card">
                     <div class="faq-q"><span class="badge-q">Q</span>糊塗咖啡的烘豆及出貨時間？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>咖啡有現貨的部分會盡速寄出，沒有現貨的部分我們會利用週間收集訂單，週末統一烘豆及包裝，盡快提供給大家好咖啡!</div>
+                    <div class="faq-a"><span class="badge-a">A</span>咖啡有現貨的部分會盡速寄出，沒有現貨的部分我們會利用週間收集訂單，週末統一烘豆及包裝！</div>
                 </div>
 
                 <div class="faq-card">
@@ -164,32 +174,17 @@
 
                 <div class="faq-card">
                     <div class="faq-q"><span class="badge-q">Q</span>老闆可以幫我磨粉嗎？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>我們建議不要磨粉喔，磨粉後風味消散得快!。本店只販售原豆，強烈建議您自行使用磨豆機「現磨現沖」，風味最佳!</div>
-                </div>
-
-                <div class="faq-card">
-                    <div class="faq-q"><span class="badge-q">Q</span>商品有問題，退換貨怎麼處理？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>收到商品如有任何問題，請透過 LINE 官方帳號與我們反映。確認後直接退款，不需退回貨物。</div>
+                    <div class="faq-a"><span class="badge-a">A</span>我們強烈建議不要磨粉喔，磨粉後風味消散得快！本店只販售原豆，建議現磨現沖風味最佳。</div>
                 </div>
 
                 <div class="faq-card">
                     <div class="faq-q"><span class="badge-q">Q</span>運費怎麼算？</div>
-                    <div class="faq-a"><span class="badge-a">A</span><span class="faq-a-text">7-ELEVEN 超商取貨運費為 $<span id="faq-shipping-fee">38</span>。目前官網訂購指定品項享「<span id="faq-discount-name">優惠折扣</span>」，且結帳滿 $<span id="faq-free-threshold">1,000</span> 即可享免運費！</span></div>
+                    <div class="faq-a"><span class="badge-a">A</span><span class="faq-a-text">7-ELEVEN 超商取貨運費為 $<span id="faq-shipping-fee">38</span>。目前官網指定品項享「<span id="faq-discount-name">優惠折扣</span>」，且結帳滿 $<span id="faq-free-threshold">1,000</span> 即可享免運費！</span></div>
                 </div>
 
                 <div class="faq-card">
-                    <div class="faq-q"><span class="badge-q">Q</span>我是咖啡新手，不知道該怎麼選豆？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>本店咖啡豆非常多元，歡迎加入官方 LINE 找老闆聊聊您喜歡的風味!</div>
-                </div>
-
-                <div class="faq-card">
-                    <div class="faq-q"><span class="badge-q">Q</span>咖啡豆最佳賞味期間? 要怎麼保存？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>我們的咖啡豆最佳賞味期間是烘焙日後的 2 週 ~ 6 個月內，未開封狀態下可保存 6 個月，保存請放置於陰涼處，避免陽光直射與高溫潮濕環境。</div>
-                </div>
-
-                <div class="faq-card">
-                    <div class="faq-q"><span class="badge-q">Q</span>有建議的沖煮方式嗎？</div>
-                    <div class="faq-a"><span class="badge-a">A</span>依照您自己的習慣沖煮即可。若不熟悉，請至「更多...」頁面參考糊塗咖啡的專屬手沖指南。</div>
+                    <div class="faq-q"><span class="badge-q">Q</span>咖啡豆最佳賞味期間？要怎麼保存？</div>
+                    <div class="faq-a"><span class="badge-a">A</span>最佳賞味期間是烘焙日後的 2 週 ~ 6 個月內。請放置於陰涼處，避免陽光直射與潮濕環境。</div>
                 </div>
             </div>
         </div>
@@ -201,18 +196,10 @@
     </div>
 
     <script>
-        // ★ 請將此處替換為您實際的 Google Apps Script 網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
-
-        // ==========================================
-        // 📋 動態載入折扣設定，更新 FAQ 說明文字
-        // ==========================================
-        // ⚠️ KEY 必須與 index.html 的 CONFIG_KEY 完全一致，才能共用快取
         const FAQ_CONFIG_KEY = 'hutucafe_config_v1';
 
         async function loadFaqConfig() {
-            // 先嘗試讀取 localStorage 快取（與訂購頁共用同一份）
-            // index.html 存的結構為 { data: { shopConfig, ... }, timestamp }
             try {
                 const cached = localStorage.getItem(FAQ_CONFIG_KEY);
                 if (cached) {
@@ -222,13 +209,12 @@
                 }
             } catch(e) {}
 
-            // 快取不存在：直接向 GAS 拉取
             try {
                 const res = await fetch(GAS_URL + '?action=config', { cache: 'no-store' });
                 const data = await res.json();
                 applyFaqConfig(data.shopConfig);
             } catch(e) {
-                console.warn('折扣設定載入失敗，FAQ 顯示預設值。');
+                console.warn('折扣設定載入失敗。');
             }
         }
 
@@ -244,14 +230,12 @@
 
         document.addEventListener('DOMContentLoaded', loadFaqConfig);
 
-        // 複製單號並開啟 7-11 查詢網頁的函數
         function copyAndTrack(trackNum) {
             navigator.clipboard.writeText(trackNum).then(() => {
-                alert(`已將交貨便代碼：【 ${trackNum} 】複製到您的剪貼簿！\n\n按下確定後將開啟 7-11 查詢網頁，請直接「貼上」單號進行查詢。`);
+                alert(`已複製交貨便代碼：【 ${trackNum} 】！\n將開啟 7-11 查詢網頁，請貼上單號查詢。`);
                 window.open('https://eservice.7-11.com.tw/E-Tracking/search.aspx', '_blank');
             }).catch(err => {
-                // 若客人的瀏覽器不支援自動複製，提供備用方案
-                prompt('請手動複製下方的交貨便代碼，然後前往 7-11 網頁查詢：', trackNum);
+                prompt('請手動複製代碼：', trackNum);
                 window.open('https://eservice.7-11.com.tw/E-Tracking/search.aspx', '_blank');
             });
         }
@@ -262,14 +246,14 @@
             const resBox = document.getElementById('track-results');
             
             if (!/^09\d{8}$/.test(phoneInput)) {
-                alert('請輸入正確的手機號碼格式 (例如 0912345678)');
+                alert('請輸入正確的手機號碼格式');
                 return;
             }
 
             btn.disabled = true;
             btn.textContent = "查詢中...";
             resBox.style.display = "block";
-            resBox.innerHTML = '<p style="text-align:center; color:#888;">連線資料庫查詢中，請稍候...</p>';
+            resBox.innerHTML = '<p style="text-align:center; color:#888;">查詢中...</p>';
 
             try {
                 const response = await fetch(GAS_URL + '?phone=' + phoneInput);
@@ -277,28 +261,16 @@
 
                 if (data.result === 'success') {
                     if (data.orders.length === 0) {
-                        resBox.innerHTML = '<p style="text-align:center; color:#d84315; font-weight:bold;">查無此手機號碼的近期訂單記錄。</p>';
+                        resBox.innerHTML = '<p style="text-align:center; color:#d84315;">查無此手機號碼的近期訂單。</p>';
                     } else {
-                        let html = `<h4 style="margin-bottom:12px; color:#3e2723;">📞 ${phoneInput} 的近期訂單：</h4>`;
-                        
+                        let html = `<h4 style="margin-bottom:12px;">📞 ${phoneInput} 的近期訂單：</h4>`;
                         data.orders.forEach(o => {
-                            // 根據狀態套用不同顏色的標籤
-                            let statusClass = '';
-                            if (o.status.includes('出貨') || o.status.includes('到達') || o.status.includes('店')) {
-                                statusClass = 'highlight'; // 橘色醒目
-                            } else if (o.status.includes('備貨')) {
-                                statusClass = 'prepare'; // 咖啡色
-                            }
-                            
-                            // 判斷是否有填寫交貨便單號，若有則顯示單號及按鈕
-                            let trackingUI = '';
-                            if (o.trackingNum) {
-                                trackingUI = `
+                            let statusClass = o.status.includes('出貨') ? 'highlight' : o.status.includes('備貨') ? 'prepare' : '';
+                            let trackingUI = o.trackingNum ? `
                                 <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc; display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-size:14px; color:#555;">交貨便單號：<strong style="color:#3e2723; letter-spacing:1px;">${o.trackingNum}</strong></span>
-                                    <button onclick="copyAndTrack('${o.trackingNum}')" style="background:#e65100; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">追蹤物流 🚚</button>
-                                </div>`;
-                            }
+                                    <span style="font-size:14px;">交貨便單號：<strong>${o.trackingNum}</strong></span>
+                                    <button onclick="copyAndTrack('${o.trackingNum}')" class="track-btn" style="padding:6px 12px;">追蹤物流 🚚</button>
+                                </div>` : '';
 
                             html += `
                             <div class="order-item">
@@ -306,19 +278,17 @@
                                     <span style="font-size:13px; color:#888;">📅 ${o.date}</span>
                                     <span class="status-badge ${statusClass}">${o.status}</span>
                                 </div>
-                                <div style="font-size:14px; font-weight:bold; color:#3e2723; margin-bottom:4px;">🏠 門市：${o.store}</div>
-                                <div style="font-size:13px; color:#666; background:#f0f0f0; padding:8px; border-radius:6px; line-height:1.6;">${o.items}</div>
+                                <div style="font-size:14px; font-weight:bold;">🏠 門市：${o.store}</div>
+                                <div style="font-size:13px; color:#666; background:#f0f0f0; padding:8px; border-radius:6px;">${o.items}</div>
                                 <div style="font-size:15px; font-weight:bold; color:#d84315; text-align:right; margin-top:8px;">總計: $${o.total}</div>
                                 ${trackingUI}
                             </div>`;
                         });
                         resBox.innerHTML = html;
                     }
-                } else {
-                    resBox.innerHTML = '<p style="text-align:center; color:red;">伺服器錯誤，請稍後再試。</p>';
                 }
             } catch (e) {
-                resBox.innerHTML = '<p style="text-align:center; color:red;">網路連線錯誤，請檢查您的網路狀態。</p>';
+                resBox.innerHTML = '<p style="text-align:center; color:red;">連線錯誤。</p>';
             } finally {
                 btn.disabled = false;
                 btn.textContent = "立即查詢";
