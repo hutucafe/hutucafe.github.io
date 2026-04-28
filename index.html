@@ -166,7 +166,9 @@
         .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }
         .lightbox.open { display: flex; }
         .lightbox-inner { background: #fff; border-radius: 16px; width: 100%; max-width: 420px; overflow: hidden; position: relative; max-height: 90vh; overflow-y: auto; }
-        .lightbox-img { width: 100%; max-height: 380px; min-height: 240px; object-fit: contain; background: #f5f0eb; display: block; }
+        @media (hover: hover) and (pointer: fine) { .lightbox-inner { max-width: 380px; } }
+        .lightbox-img { width: 100%; max-height: 400px; min-height: 240px; object-fit: contain; background: #f5f0eb; display: block; }
+        @media (hover: hover) and (pointer: fine) { .lightbox-img { max-height: 380px; } }
         .lightbox-body { padding: 16px 18px 20px; }
         .lightbox-title { font-size: 17px; font-weight: 500; color: #333; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
         .lightbox-meta { font-size: 13px; color: #777; margin-bottom: 10px; }
