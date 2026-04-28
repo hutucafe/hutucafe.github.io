@@ -11,11 +11,10 @@
     <meta property="og:image" content="https://hutucafe.github.io/certificate.jpg">
     <link rel="icon" href="logo2.jpg" type="image/jpeg">
     <style>
-        /* 基礎樣式重置 */
+        /* 基礎樣式 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 100px; }
         
-        /* 頁首設計 */
         header { 
             position: relative;
             background-image: url('bg.jpg');
@@ -54,39 +53,50 @@
 
         .line-link { color: inherit; text-decoration: none; transition: 0.3s; display: inline-block; }
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
-        .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+        .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; }
 
-        /* ✅ 修正重點：主導覽列改為強制靠左滑動，比照 index.html */
+        /* ✅ 關鍵修正：比照 index.html 的導覽列樣式 */
         .main-nav { 
             display: flex !important; 
-            justify-content: flex-start !important; 
-            overflow-x: auto !important; 
+            justify-content: flex-start !important; /* 強制靠左 */
+            overflow-x: auto !important;            /* 開啟橫向滾動 */
             overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;      /* 讓 iOS 滑動更順暢 */
             gap: 10px; 
-            padding: 5px 15px; 
-            scrollbar-width: none; 
-            -webkit-overflow-scrolling: touch; 
+            padding: 10px 15px;                     /* 增加左右間距防止貼邊 */
+            scrollbar-width: none;                  /* Firefox 隱藏捲軸 */
             width: 100%;
+            box-sizing: border-box;
         }
+
+        /* 隱藏 Chrome, Safari 的捲軸 */
         .main-nav::-webkit-scrollbar { display: none; }
 
         .nav-item { 
-            flex: 0 0 auto !important; /* 強制不縮小，防止文字被切到 */
-            text-decoration: none; font-size: 13px; color: #fff; padding: 8px 16px; 
-            border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 20px; 
-            background-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); 
-            transition: 0.3s; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            flex: 0 0 auto !important;              /* 核心關鍵：禁止項目縮小，維持原寬度 */
+            text-decoration: none; 
+            font-size: 13px; 
+            color: #fff; 
+            padding: 8px 18px; 
+            border: 1px solid rgba(255, 255, 255, 0.5); 
+            border-radius: 20px; 
+            background-color: rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px); 
+            transition: 0.3s; 
+            white-space: nowrap !important;         /* 強制文字不換行 */
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
+
         .nav-item:hover, .nav-item.active { background-color: #fff; color: #4e342e; border-color: #fff; text-shadow: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
         @media (max-width: 600px) {
-            header { height: 280px; padding: 15px; background-size: cover; }
+            header { height: 280px; padding: 10px; background-size: cover; }
             .header-inner h1 { font-size: 24px; }
             .header-inner p { font-size: 13px; margin-bottom: 15px; }
-            .nav-item { padding: 6px 12px; font-size: 12px; }
+            .nav-item { padding: 6px 14px; font-size: 12px; }
         }
 
-        /* 內容容器 */
         .container { max-width: 600px; margin: 0 auto; padding: 0 12px; }
         .section { background: #fff; border-radius: 16px; padding: 25px 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         .section-title { font-size: 19px; font-weight: bold; border-left: 5px solid #6d4c41; padding-left: 12px; margin-bottom: 15px; color: #3e2723; }
@@ -94,40 +104,27 @@
         .about-text { font-size: 15px; color: #555; line-height: 1.8; text-align: justify; margin-bottom: 15px; }
         .highlight { color: #d84315; font-weight: bold; }
 
-        /* CR 評分區塊樣式 */
+        /* CR 評分清單 */
         .cr-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        .cr-card-featured { position: relative; text-decoration: none; color: inherit; display: block; border-radius: 14px; overflow: hidden; background: linear-gradient(135deg, #1a0a00 0%, #3b1a08 50%, #5c2d0e 100%); box-shadow: 0 6px 24px rgba(139, 90, 43, 0.35), 0 2px 8px rgba(0,0,0,0.2); transition: transform 0.25s ease, box-shadow 0.25s ease; border: 1px solid rgba(212, 175, 55, 0.35); }
-        .cr-card-featured:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(139, 90, 43, 0.45), 0 4px 12px rgba(0,0,0,0.25); }
-        .cr-card-featured::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #d4af37, #f5e27a, #d4af37, transparent); }
+        .cr-card-featured { position: relative; text-decoration: none; color: inherit; display: block; border-radius: 14px; overflow: hidden; background: linear-gradient(135deg, #1a0a00 0%, #3b1a08 50%, #5c2d0e 100%); border: 1px solid rgba(212, 175, 55, 0.35); }
         .cr-card-featured-inner { display: flex; align-items: center; padding: 18px 20px; gap: 16px; }
-        .cr-score-featured { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 64px; }
-        .cr-score-featured .score-num { font-size: 46px; font-weight: 900; line-height: 1; background: linear-gradient(180deg, #f5e27a 0%, #d4af37 45%, #a07830 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px; }
-        .cr-score-featured .score-pts { font-size: 10px; color: rgba(212, 175, 55, 0.7); letter-spacing: 1px; text-transform: uppercase; margin-top: 1px; }
-        .cr-divider-featured { width: 1px; height: 54px; background: linear-gradient(to bottom, transparent, rgba(212, 175, 55, 0.5), transparent); flex-shrink: 0; }
-        .cr-desc-featured { flex: 1; }
-        .cr-badge { display: inline-block; font-size: 10px; font-weight: bold; color: #1a0a00; background: linear-gradient(90deg, #d4af37, #f5e27a); padding: 2px 8px; border-radius: 10px; letter-spacing: 1px; margin-bottom: 6px; }
-        .cr-desc-featured h4 { font-size: 15px; color: #f5edd8; margin-bottom: 5px; font-weight: bold; line-height: 1.4; }
-        .cr-desc-featured p { font-size: 12.5px; color: rgba(245, 237, 216, 0.65); line-height: 1.55; }
-        
-        .cr-card { position: relative; background: #faf8f5; border: 1px solid #e8ddd4; border-left: 4px solid #8b5e3c; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; text-decoration: none; color: inherit; }
-        .cr-card:hover { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(0,0,0,0.08); border-color: #c89060; border-left-color: #6d4c41; }
-        .cr-score { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 48px; }
-        .cr-score .score-num { font-size: 30px; font-weight: 900; color: #7b3f1e; line-height: 1; letter-spacing: -0.5px; }
-        .cr-score .score-pts { font-size: 9px; color: #b08060; letter-spacing: 0.5px; margin-top: 1px; }
-        .cr-divider { width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, #d8c4b0, transparent); flex-shrink: 0; }
-        .cr-desc { flex: 1; }
-        .cr-desc h4 { font-size: 14px; color: #3e2723; margin-bottom: 3px; font-weight: bold; }
-        .cr-desc p { font-size: 12.5px; color: #7a6055; line-height: 1.5; }
+        .cr-score-featured { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+        .cr-score-featured .score-num { font-size: 46px; font-weight: 900; background: linear-gradient(180deg, #f5e27a 0%, #d4af37 45%, #a07830 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .cr-desc-featured h4 { font-size: 15px; color: #f5edd8; margin-bottom: 5px; }
+        .cr-desc-featured p { font-size: 12.5px; color: rgba(245, 237, 216, 0.65); }
 
-        .cert-img { width: 100%; border-radius: 8px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; }
+        .cr-card { background: #faf8f5; border: 1px solid #e8ddd4; border-left: 4px solid #8b5e3c; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; }
+        .cr-score .score-num { font-size: 30px; font-weight: 900; color: #7b3f1e; }
+        .cr-desc h4 { font-size: 14px; color: #3e2723; }
+        .cr-desc p { font-size: 12.5px; color: #7a6055; }
+
+        .cert-img { width: 100%; border-radius: 8px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .award-list { list-style: none; margin-top: 10px; }
         .award-list li { font-size: 15px; color: #444; padding: 10px 0; border-bottom: 1px dashed #eee; display: flex; align-items: center; }
-        .award-list li::before { content: '🏆'; margin-right: 10px; font-size: 18px; }
-        .award-list li:last-child { border-bottom: none; }
+        .award-list li::before { content: '🏆'; margin-right: 10px; }
 
-        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
-        .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; transition: 0.3s; display: inline-block; width: 100%; max-width: 400px; text-align: center; letter-spacing: 2px; }
-        .bottom-bar a:hover { background: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3); }
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; display: flex; justify-content: center; z-index: 1000; }
+        .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; width: 100%; max-width: 400px; text-align: center; }
     </style>
 </head>
 <body>
@@ -156,57 +153,27 @@
         
         <div class="section">
             <div class="section-title">🌿 品牌精神</div>
-            <p class="about-text">
-                糊塗咖啡 HUTU CAFE 由烘豆師<span class="highlight">牛頓王</span>創立。我們將看似感性的咖啡烘焙，注入嚴謹客觀的科學精神。
-            </p>
-            <p class="about-text">
-                透過精準的數據分析，掌握每一批次生豆的含水量、水活性與生豆密度，並為高海拔精品豆種量身打造專屬的烘焙曲線。這份對烘焙的嚴謹與熱忱，不僅讓烘豆師取得 <strong>SCA 國際精品咖啡協會專業級烘焙認證 (CSP Roasting Professional)</strong>，更在 <strong>Coffee Review 評鑑屢獲 93、94 卓越高分</strong>，並一舉奪得 <strong>2022 咖啡烘烘烘年末賽冠軍</strong>。我們堅持職人手作的極致，確保每一鍋咖啡豆都能完美釋放其獨特的風土潛力與純粹風味。
-            </p>
+            <p class="about-text">糊塗咖啡 HUTU CAFE 由烘豆師<span class="highlight">牛頓王</span>創立。我們將看似感性的咖啡烘焙，注入嚴謹客觀的科學精神。</p>
+            <p class="about-text">透過精準的數據分析，掌控每一批次生豆特性，並為高品質精品豆種量身打造專屬烘焙曲線。這份嚴謹讓我們取得 <strong>SCA 國際精品咖啡協會專業級烘焙認證</strong>，並在 <strong>Coffee Review 評鑑屢獲 93、94 卓越高分</strong>。</p>
         </div>
 
         <div class="section">
             <div class="section-title">🌟 國際權威機構 CR 評鑑肯定</div>
-            <p class="about-text">
-                糊塗咖啡秉持對品質的堅持，參與全球最具指標性的咖啡評鑑權威機構 <strong>Coffee Review</strong>，送測的 6 款咖啡皆榮獲卓越高分肯定。
-            </p>
-            
             <div class="cr-list">
                 <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card-featured">
                     <div class="cr-card-featured-inner">
-                        <div class="cr-score-featured">
-                            <span class="score-num">94</span>
-                            <span class="score-pts">POINTS</span>
-                        </div>
-                        <div class="cr-divider-featured"></div>
+                        <div class="cr-score-featured"><span class="score-num">94</span></div>
                         <div class="cr-desc-featured">
-                            <span class="cr-badge">✦ 最高評鑑</span>
                             <h4>Ethiopia Banko Gotiti</h4>
-                            <p>佛手柑與柑橘香氣，伴隨檸檬草與可可，酸值明亮，口感絲滑。</p>
+                            <p>佛手柑與柑橘香氣，伴隨檸檬草與可可，酸值明亮。</p>
                         </div>
                     </div>
                 </a>
-
                 <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
-                    <div class="cr-score">
-                        <span class="score-num">93</span>
-                        <span class="score-pts">PTS</span>
-                    </div>
-                    <div class="cr-divider"></div>
+                    <div class="cr-score"><span class="score-num">93</span></div>
                     <div class="cr-desc">
                         <h4>Blossom Spring Blend</h4>
-                        <p>黑莓與香草優格香，帶有洛神花風味，酸度明亮多汁，層次複雜。</p>
-                    </div>
-                </a>
-
-                <a href="https://www.coffeereview.com/all-reviews/?roaster_name=Hutu+Cafe+Roastery" target="_blank" class="cr-card">
-                    <div class="cr-score">
-                        <span class="score-num">93</span>
-                        <span class="score-pts">PTS</span>
-                    </div>
-                    <div class="cr-divider"></div>
-                    <div class="cr-desc">
-                        <h4>Ethiopia Halo Hartume</h4>
-                        <p>明亮水仙花與杏桃香氣，點綴可可與檸檬皮，酸甜平衡，糖漿般滑順。</p>
+                        <p>黑莓與香草優格香，帶有洛神花風味，層次複雜。</p>
                     </div>
                 </a>
             </div>
@@ -214,19 +181,16 @@
 
         <div class="section">
             <div class="section-title">🎓 SCA 國際精品咖啡協會 專業級認證</div>
-            <p class="about-text">
-                糊塗咖啡烘豆師已正式取得 <strong>SCA CSP Roasting Professional（咖啡烘焙專業級）</strong>證照。這是國際精品咖啡協會（SCA）認證的最高烘焙等級。
-            </p>
             <img src="sca_csp.jpg" alt="SCA CSP Roasting Professional 證照" class="cert-img">
         </div>
 
         <div class="section">
             <div class="section-title">🏆 歷年賽事殊榮</div>
             <ul class="award-list">
-                <li><strong>咖啡烘烘烘 2022 年末賽 —— 榮獲 冠軍</strong></li>
-                <li>咖啡烘烘烘 2022 10月例賽 —— 榮獲 第六名</li>
+                <li><strong>咖啡烘烘烘 2022 年末賽 —— 冠軍</strong></li>
+                <li>咖啡烘烘烘 2022 10月例賽 —— 第六名</li>
             </ul>
-            <img src="certificate.jpg" alt="咖啡烘烘烘 烘豆賽 冠軍獎狀" class="cert-img">
+            <img src="certificate.jpg" alt="冠軍獎狀" class="cert-img">
         </div>
 
     </div>
