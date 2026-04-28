@@ -58,8 +58,7 @@
         .line-link:hover { opacity: 0.75; transform: scale(1.02); }
         .line-img-icon { width: 22px; height: auto; vertical-align: middle; margin-right: 4px; position: relative; top: -2px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
 
-        /* 更新主導覽列：對齊首頁靠左且可滑動 */
-        .main-nav { display: flex; justify-content: flex-start; overflow-x: auto; gap: 10px; padding: 5px 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .main-nav { display: flex; justify-content: center; overflow-x: auto; gap: 10px; padding: 5px 0; scrollbar-width: none; }
         .main-nav::-webkit-scrollbar { display: none; }
 
         .nav-item { 
@@ -202,10 +201,18 @@
     </div>
 
     <script>
+        // ★ 請將此處替換為您實際的 Google Apps Script 網址
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
+
+        // ==========================================
+        // 📋 動態載入折扣設定，更新 FAQ 說明文字
+        // ==========================================
+        // ⚠️ KEY 必須與 index.html 的 CONFIG_KEY 完全一致，才能共用快取
         const FAQ_CONFIG_KEY = 'hutucafe_config_v1';
 
         async function loadFaqConfig() {
+            // 先嘗試讀取 localStorage 快取（與訂購頁共用同一份）
+            // index.html 存的結構為 { data: { shopConfig, ... }, timestamp }
             try {
                 const cached = localStorage.getItem(FAQ_CONFIG_KEY);
                 if (cached) {
@@ -215,6 +222,7 @@
                 }
             } catch(e) {}
 
+            // 快取不存在：直接向 GAS 拉取
             try {
                 const res = await fetch(GAS_URL + '?action=config', { cache: 'no-store' });
                 const data = await res.json();
@@ -236,11 +244,13 @@
 
         document.addEventListener('DOMContentLoaded', loadFaqConfig);
 
+        // 複製單號並開啟 7-11 查詢網頁的函數
         function copyAndTrack(trackNum) {
             navigator.clipboard.writeText(trackNum).then(() => {
                 alert(`已將交貨便代碼：【 ${trackNum} 】複製到您的剪貼簿！\n\n按下確定後將開啟 7-11 查詢網頁，請直接「貼上」單號進行查詢。`);
                 window.open('https://eservice.7-11.com.tw/E-Tracking/search.aspx', '_blank');
             }).catch(err => {
+                // 若客人的瀏覽器不支援自動複製，提供備用方案
                 prompt('請手動複製下方的交貨便代碼，然後前往 7-11 網頁查詢：', trackNum);
                 window.open('https://eservice.7-11.com.tw/E-Tracking/search.aspx', '_blank');
             });
@@ -272,13 +282,15 @@
                         let html = `<h4 style="margin-bottom:12px; color:#3e2723;">📞 ${phoneInput} 的近期訂單：</h4>`;
                         
                         data.orders.forEach(o => {
+                            // 根據狀態套用不同顏色的標籤
                             let statusClass = '';
                             if (o.status.includes('出貨') || o.status.includes('到達') || o.status.includes('店')) {
-                                statusClass = 'highlight'; 
+                                statusClass = 'highlight'; // 橘色醒目
                             } else if (o.status.includes('備貨')) {
-                                statusClass = 'prepare'; 
+                                statusClass = 'prepare'; // 咖啡色
                             }
                             
+                            // 判斷是否有填寫交貨便單號，若有則顯示單號及按鈕
                             let trackingUI = '';
                             if (o.trackingNum) {
                                 trackingUI = `
