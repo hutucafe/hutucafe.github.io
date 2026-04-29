@@ -310,6 +310,7 @@
 
         /* 自訂彈出視窗 */
         .custom-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
+        .custom-modal.open { display: flex; }
         .modal-content { background-color: #3e2723; color: #fcfcfc; border-radius: 12px; padding: 25px; width: 100%; max-width: 400px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         .modal-content h3 { color: #fff; margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 12px; text-align: center;}
         .modal-content pre { font-family: inherit; white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin-bottom: 20px; color: #f7f3f0; }
@@ -723,6 +724,20 @@
             const listEl = document.getElementById('product-list');
             const products = allProductsData[tabName] || [];
             lbProductList = products;
+            // 以「合併卡片」為單位建立導航清單，每組只取當前選中的規格 uid
+            const seen = new Set();
+            lbCardList = [];
+            products.forEach(p => {
+                const name = p['熟豆品項'] || '';
+                if (!seen.has(name)) {
+                    seen.add(name);
+                    // 取這組目前選中的 uid（或第一個有庫存的）
+                    const group = products.filter(x => x['熟豆品項'] === name);
+                    const activeUid = (window.selectedVariant && window.selectedVariant[name])
+                        || (group.find(v => parseInt(v['庫存']) !== 0) || group[0]).uid;
+                    lbCardList.push(activeUid);
+                }
+            });
 
             // ── 分組：相同品項名稱 → 合併成一張卡片 ──
             const groupMap = new Map(); // key: 品項名稱, value: [p, ...]
@@ -828,7 +843,8 @@
 
         // ── Lightbox ──
         let lbCurrentUid = null;
-        let lbProductList = []; // 當前頁籤的所有品項資料，供左右切換用
+        let lbProductList = []; // 所有原始品項，供規格查找用
+        let lbCardList = [];    // 以合併卡片為單位的導航清單（每組一個 uid）
 
         function openLightbox(el) {
             const lb = document.getElementById('lightbox');
@@ -928,15 +944,19 @@
         }
 
         function selectLbVariant(uid) {
-            // 同步卡片上的 selectedVariant
             const p = lbProductList.find(x => x.uid === uid);
             if (p) {
                 const name = p['熟豆品項'] || '';
                 if (!window.selectedVariant) window.selectedVariant = {};
                 window.selectedVariant[name] = uid;
+                // 同步更新 lbCardList 中這張卡片的代表 uid
+                const cardIdx = lbCardList.findIndex(cuid => {
+                    const cp = lbProductList.find(x => x.uid === cuid);
+                    return cp && cp['熟豆品項'] === name;
+                });
+                if (cardIdx !== -1) lbCardList[cardIdx] = uid;
             }
             _renderLightboxContent(uid);
-            // 卡片也同步更新
             renderProducts(currentTab);
         }
         function closeLightbox() {
@@ -955,20 +975,29 @@
 
         // 更新左右箭頭狀態
         function updateLightboxNavButtons() {
-            const idx = lbProductList.findIndex(p => p.uid === lbCurrentUid);
+            const idx = lbCardList.indexOf(lbCurrentUid);
+            // 如果 lbCurrentUid 是某規格 uid 但不在 lbCardList，找它所在卡片的代表 uid
+            const p = lbProductList.find(x => x.uid === lbCurrentUid);
+            const cardIdx = p ? lbCardList.findIndex(uid => {
+                const cu = lbProductList.find(x => x.uid === uid);
+                return cu && cu['熟豆品項'] === p['熟豆品項'];
+            }) : idx;
             const prevBtn = document.getElementById('lb-prev');
             const nextBtn = document.getElementById('lb-next');
-            if (prevBtn) prevBtn.disabled = idx <= 0;
-            if (nextBtn) nextBtn.disabled = idx >= lbProductList.length - 1;
+            if (prevBtn) prevBtn.disabled = cardIdx <= 0;
+            if (nextBtn) nextBtn.disabled = cardIdx >= lbCardList.length - 1;
         }
 
         // 左右切換品項
         function navigateLightbox(dir) {
-            const idx = lbProductList.findIndex(p => p.uid === lbCurrentUid);
-            const newIdx = idx + dir;
-            if (newIdx < 0 || newIdx >= lbProductList.length) return;
-            const p = lbProductList[newIdx];
-            _renderLightboxContent(p.uid);
+            const p = lbProductList.find(x => x.uid === lbCurrentUid);
+            const cardIdx = p ? lbCardList.findIndex(uid => {
+                const cu = lbProductList.find(x => x.uid === uid);
+                return cu && cu['熟豆品項'] === p['熟豆品項'];
+            }) : lbCardList.indexOf(lbCurrentUid);
+            const newIdx = cardIdx + dir;
+            if (newIdx < 0 || newIdx >= lbCardList.length) return;
+            _renderLightboxContent(lbCardList[newIdx]);
             updateLightboxNavButtons();
         }
 
