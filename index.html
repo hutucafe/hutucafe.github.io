@@ -248,6 +248,16 @@
         .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
         .stock-out { background: #eeeeee; color: #999; border-color: #ccc; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
 
+        /* 多規格選擇器 */
+        .variant-selector { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+        .variant-btn {
+            font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; cursor: pointer;
+            border: 1.5px solid #d4b896; background: #fff; color: #7a5230; transition: all 0.18s;
+        }
+        .variant-btn:hover:not(:disabled) { background: #fdf0e4; border-color: #b8860b; }
+        .variant-btn.active { background: #b8860b; border-color: #b8860b; color: #fff; }
+        .variant-btn:disabled { background: #f5f5f5; border-color: #ddd; color: #bbb; cursor: not-allowed; text-decoration: line-through; }
+
         /* 頁籤說明區塊 */
         .tab-note {
             background: linear-gradient(135deg, #fdf3e3 0%, #fde9c4 100%);
@@ -669,6 +679,12 @@
             renderProducts(tabName);
         }
 
+        function selectVariant(productName, uid) {
+            if (!window.selectedVariant) window.selectedVariant = {};
+            window.selectedVariant[productName] = uid;
+            renderProducts(currentTab);
+        }
+
         function getRoastClass(roastStr) {
             if (!roastStr) return 'roast-default';
             if (roastStr.includes('極淺')) return 'roast-1-el';
@@ -695,9 +711,31 @@
 
             const listEl = document.getElementById('product-list');
             const products = allProductsData[tabName] || [];
-            lbProductList = products; // 更新供 lightbox 左右切換使用
-            listEl.innerHTML = products.map(p => {
+            lbProductList = products;
+
+            // ── 分組：相同品項名稱 → 合併成一張卡片 ──
+            const groupMap = new Map(); // key: 品項名稱, value: [p, ...]
+            products.forEach(p => {
                 const name = p['熟豆品項'] || '未命名品項';
+                if (!groupMap.has(name)) groupMap.set(name, []);
+                groupMap.get(name).push(p);
+            });
+
+            // 記錄每張多規格卡目前選中的 uid（以品項名稱為 key）
+            if (!window.selectedVariant) window.selectedVariant = {};
+
+            listEl.innerHTML = Array.from(groupMap.entries()).map(([name, variants]) => {
+                const isMulti = variants.length > 1;
+
+                // 決定目前顯示的規格：優先用 selectedVariant，否則預設第一個有庫存的，再不然就第一個
+                let activeUid = window.selectedVariant[name];
+                if (!activeUid || !variants.find(v => v.uid === activeUid)) {
+                    const firstInStock = variants.find(v => parseInt(v['庫存']) !== 0);
+                    activeUid = (firstInStock || variants[0]).uid;
+                    window.selectedVariant[name] = activeUid;
+                }
+                const p = variants.find(v => v.uid === activeUid) || variants[0];
+
                 const roast = p['烘焙度'] || '';
                 const pkg = p['包裝'] || '';
                 const price = parseInt(p['售價'] || 0);
@@ -706,17 +744,12 @@
                 const imgUrl = p['產品圖'] || '';
 
                 // 庫存 badge
-                let stockText = '';
-                let stockBadgeClass = '';
-                let disableAddBtn = '';
+                let stockText = '', stockBadgeClass = '', disableAddBtn = '';
                 if (isOutOfStock) {
                     stockText = '售完'; stockBadgeClass = 'badge-out'; disableAddBtn = 'disabled';
                 } else if (!isNaN(parsedStock)) {
-                    if (parsedStock <= 10) {
-                        stockText = `剩餘 ${parsedStock}`; stockBadgeClass = 'badge-warning';
-                    } else {
-                        stockText = `庫存 ${parsedStock}`; stockBadgeClass = 'badge-normal';
-                    }
+                    stockText = parsedStock <= 10 ? `剩餘 ${parsedStock}` : `庫存 ${parsedStock}`;
+                    stockBadgeClass = parsedStock <= 10 ? 'badge-warning' : 'badge-normal';
                 }
 
                 // meta
@@ -729,10 +762,22 @@
 
                 // tags
                 let tagsArray = [];
-                if (p['風味']) {
-                    p['風味'].split(/[、,，\s]+/).forEach(f => { if(f.trim() && f !== '-') tagsArray.push(f.trim()); });
-                }
+                if (p['風味']) p['風味'].split(/[、,，\s]+/).forEach(f => { if(f.trim() && f !== '-') tagsArray.push(f.trim()); });
                 const tagsHtml = tagsArray.map(t => `<span class="modern-tag">${t}</span>`).join('');
+
+                // 規格選擇按鈕（多規格才顯示）
+                const variantHtml = isMulti ? `
+                    <div class="variant-selector">
+                        ${variants.map(v => {
+                            const vStock = parseInt(v['庫存']);
+                            const isSoldOut = vStock === 0;
+                            const isActive = v.uid === activeUid;
+                            return `<button class="variant-btn${isActive ? ' active' : ''}"
+                                ${isSoldOut ? 'disabled' : ''}
+                                onclick="selectVariant('${name}', '${v.uid}')"
+                            >${v['包裝']}${isSoldOut ? '（售完）' : ''}</button>`;
+                        }).join('')}
+                    </div>` : '';
 
                 // qty
                 const qtyHtml = `
@@ -751,18 +796,22 @@
                         <img src="${imgUrl}" alt="${name}" loading="lazy">
                         <div class="card-thumb-badges">
                             ${roast ? `<span class="badge-roast">${roast}</span>` : ''}
-                            ${stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
+                            ${!isMulti && stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
                         </div>
                     </div>
                     <div class="card-body">
                         <div>
                             <div class="card-name">${name}</div>
                             ${metaHtml}
+                            ${variantHtml}
                             <div class="card-tags">${tagsHtml}</div>
                         </div>
                         <div class="card-bottom">
                             <div class="card-price">$${price}<span class="unit">/${pkg}</span></div>
-                            ${qtyHtml}
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+                                ${isMulti && stockText ? `<span class="${stockBadgeClass}" style="font-size:10px;padding:2px 7px;border-radius:4px;white-space:nowrap;">${stockText}</span>` : ''}
+                                ${qtyHtml}
+                            </div>
                         </div>
                     </div>
                 </div>`;
