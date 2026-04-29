@@ -1035,16 +1035,54 @@
         function openCartSummary() {
             const items = Object.values(cart).filter(c => c.qty > 0);
             const listEl = document.getElementById('cart-summary-list');
-            listEl.innerHTML = items.map(c => {
+
+            let originalTotal = 0;
+            let discountSubtotal = 0;
+
+            const itemsHtml = items.map(c => {
                 const name = c.product['熟豆品項'] || '未知品項';
                 const pkg  = c.product['包裝'] || '';
                 const price = parseInt(c.product['售價'] || 0);
+                const subtotal = c.qty * price;
+                originalTotal += subtotal;
+
+                const rawName = (c.product['熟豆品項'] || '').toLowerCase();
+                const category = (c.product.category || '').toLowerCase();
+                let isDiscount = category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
+                                 rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛');
+                if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') ||
+                    rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) isDiscount = false;
+                if (isDiscount) discountSubtotal += subtotal;
+
                 return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f0ece6; font-size:13px; color:#333;">
                     <span style="flex:1; line-height:1.5;">${name}${pkg ? `<span style="color:#999; font-size:11px; margin-left:4px;">${pkg}</span>` : ''}</span>
                     <span style="margin-left:12px; white-space:nowrap; color:#888;">${c.qty} 份 × $${price}</span>
-                    <span style="margin-left:10px; font-weight:700; color:#b77b3b; white-space:nowrap;">$${c.qty * price}</span>
+                    <span style="margin-left:10px; font-weight:700; color:#b77b3b; white-space:nowrap;">$${subtotal}</span>
                 </div>`;
             }).join('');
+
+            const discountAmt = Math.ceil(Math.round(discountSubtotal * (1 - SHOP_CONFIG.discountRate) * 1e10) / 1e10);
+            const discountedTotal = originalTotal - discountAmt;
+            const shipping = discountedTotal >= SHOP_CONFIG.freeShippingThreshold ? 0 : SHOP_CONFIG.shippingFee;
+            const finalTotal = discountedTotal + shipping;
+
+            const summaryHtml = `
+                <div style="margin-top:12px; padding-top:10px; border-top:2px solid #f0ece6; font-size:13px;">
+                    <div style="display:flex; justify-content:space-between; color:#888; margin-bottom:6px;">
+                        <span>商品小計</span><span>$${originalTotal}</span>
+                    </div>
+                    ${discountAmt > 0 ? `<div style="display:flex; justify-content:space-between; color:#c62828; margin-bottom:6px;">
+                        <span>指定品項折扣（${SHOP_CONFIG.discountName}）</span><span>-$${discountAmt}</span>
+                    </div>` : ''}
+                    <div style="display:flex; justify-content:space-between; color:#888; margin-bottom:10px;">
+                        <span>運費</span><span>${shipping === 0 ? '免運費 🎉' : `$${shipping}`}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:700; color:#4a2c11; padding-top:8px; border-top:1px solid #e8ddd4;">
+                        <span>結帳總額</span><span style="color:#b8860b;">$${finalTotal}</span>
+                    </div>
+                </div>`;
+
+            listEl.innerHTML = itemsHtml + summaryHtml;
             document.getElementById('cart-summary-modal').classList.add('open');
         }
         function closeCartSummary() {
