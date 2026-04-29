@@ -826,23 +826,75 @@
             const lb = document.getElementById('lightbox');
             const uid = el.dataset.uid;
             lbCurrentUid = uid;
+            _renderLightboxContent(uid);
+            lb.classList.add('open');
+            document.body.style.overflow = 'hidden';
+            history.pushState({ lightbox: true }, '');
+            updateLightboxNavButtons();
+        }
 
-            document.getElementById('lb-img').src = el.dataset.img;
+        function _renderLightboxContent(uid) {
+            // 找到這個 uid 對應的 product
+            const p = lbProductList.find(x => x.uid === uid);
+            if (!p) return;
+            lbCurrentUid = uid;
+
+            const name = p['熟豆品項'] || '';
+            const roast = p['烘焙度'] || '';
+            const pkg = p['包裝'] || '';
+            const price = parseInt(p['售價'] || 0);
+            const imgUrl = p['產品圖'] || '';
+
+            // 找同名的所有規格
+            const variants = lbProductList.filter(x => x['熟豆品項'] === name);
+            const isMulti = variants.length > 1;
+
+            document.getElementById('lb-img').src = imgUrl;
             document.getElementById('lb-title').innerHTML =
-                (el.dataset.roast ? `<span class="roast-badge ${getRoastClass(el.dataset.roast)}">${el.dataset.roast}</span>` : '') +
-                `<span>${el.dataset.name}</span>`;
-            document.getElementById('lb-meta').textContent = el.dataset.meta;
-            document.getElementById('lb-tags').innerHTML = el.dataset.tags
-                ? el.dataset.tags.split(',').map(t => `<span class="modern-tag">${t}</span>`).join('')
-                : '';
-            document.getElementById('lb-price').innerHTML = `$${el.dataset.price}<span class="unit">/${el.dataset.pkg}</span>`;
-            const sc = el.dataset.stockclass;
-            const st = el.dataset.stock;
-            let scClass = sc === 'badge-normal' ? 'stock-normal' : sc === 'badge-warning' ? 'stock-warning' : 'stock-out';
-            document.getElementById('lb-stock').innerHTML = st ? `<span class="${scClass}">${st}</span>` : '';
+                (roast ? `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span>` : '') +
+                `<span>${name}</span>`;
+
+            let metaArray = [];
+            if (p['產區'] && p['產區'] !== '-') metaArray.push(p['產區']);
+            if (p['品種'] && p['品種'] !== '-') metaArray.push(p['品種']);
+            if (p['處理法'] && p['處理法'] !== '-') metaArray.push(p['處理法']);
+            document.getElementById('lb-meta').textContent = metaArray.join('｜');
+
+            // 規格選擇器
+            const variantEl = document.getElementById('lb-variants');
+            if (isMulti) {
+                variantEl.innerHTML = variants.map(v => {
+                    const vStock = parseInt(v['庫存']);
+                    const isSoldOut = vStock === 0;
+                    const isActive = v.uid === uid;
+                    return `<button class="variant-btn${isActive ? ' active' : ''}"
+                        ${isSoldOut ? 'disabled' : ''}
+                        onclick="selectLbVariant('${v.uid}')"
+                    >${v['包裝']}${isSoldOut ? '（售完）' : ''}</button>`;
+                }).join('');
+                variantEl.style.display = 'flex';
+            } else {
+                variantEl.innerHTML = '';
+                variantEl.style.display = 'none';
+            }
+
+            let tagsArray = [];
+            if (p['風味']) p['風味'].split(/[、,，\s]+/).forEach(f => { if(f.trim() && f !== '-') tagsArray.push(f.trim()); });
+            document.getElementById('lb-tags').innerHTML = tagsArray.map(t => `<span class="modern-tag">${t}</span>`).join('');
+
+            document.getElementById('lb-price').innerHTML = `$${price}<span class="unit">/${pkg}</span>`;
+
+            const parsedStock = parseInt(p['庫存']);
+            const isOut = parsedStock === 0;
+            let stockText = '', scClass = '';
+            if (isOut) { stockText = '售完'; scClass = 'stock-out'; }
+            else if (!isNaN(parsedStock)) {
+                if (parsedStock <= 10) { stockText = `剩餘 ${parsedStock}`; scClass = 'stock-warning'; }
+                else { stockText = `庫存 ${parsedStock}`; scClass = 'stock-normal'; }
+            }
+            document.getElementById('lb-stock').innerHTML = stockText ? `<span class="${scClass}">${stockText}</span>` : '';
 
             // 同步數量
-            const isOut = el.dataset.stockclass === 'badge-out';
             const currentQty = cart[uid] ? cart[uid].qty : 0;
             const qtyInput = document.getElementById('lb-qty-input');
             const minusBtn = document.getElementById('lb-qty-minus');
@@ -865,13 +917,19 @@
                 qtyInput.value = newQty;
                 minusBtn.disabled = false;
             };
+        }
 
-            lb.classList.add('open');
-            document.body.style.overflow = 'hidden';
-            // 推入一個假歷史狀態，讓手機上一頁能攔截
-            history.pushState({ lightbox: true }, '');
-            // 更新左右箭頭狀態
-            updateLightboxNavButtons();
+        function selectLbVariant(uid) {
+            // 同步卡片上的 selectedVariant
+            const p = lbProductList.find(x => x.uid === uid);
+            if (p) {
+                const name = p['熟豆品項'] || '';
+                if (!window.selectedVariant) window.selectedVariant = {};
+                window.selectedVariant[name] = uid;
+            }
+            _renderLightboxContent(uid);
+            // 卡片也同步更新
+            renderProducts(currentTab);
         }
         function closeLightbox() {
             document.getElementById('lightbox').classList.remove('open');
@@ -902,39 +960,8 @@
             const newIdx = idx + dir;
             if (newIdx < 0 || newIdx >= lbProductList.length) return;
             const p = lbProductList[newIdx];
-
-            // 重新組 lbData 資料並呼叫 openLightbox
-            const dummy = document.createElement('div');
-            dummy.dataset.uid        = p.uid;
-            dummy.dataset.img        = p['產品圖'] || '';
-            dummy.dataset.name       = p['熟豆品項'] || '';
-            dummy.dataset.roast      = p['烘焙度'] || '';
-
-            let metaArray = [];
-            if (p['產區'] && p['產區'] !== '-') metaArray.push(p['產區']);
-            if (p['品種'] && p['品種'] !== '-') metaArray.push(p['品種']);
-            if (p['處理法'] && p['處理法'] !== '-') metaArray.push(p['處理法']);
-            dummy.dataset.meta = metaArray.join('｜');
-
-            let tagsArray = [];
-            if (p['風味']) p['風味'].split(/[、,，\s]+/).forEach(f => { if(f.trim() && f !== '-') tagsArray.push(f.trim()); });
-            dummy.dataset.tags = tagsArray.join(',');
-
-            dummy.dataset.price = parseInt(p['售價'] || 0);
-            dummy.dataset.pkg   = p['包裝'] || '';
-
-            const parsedStock = parseInt(p['庫存']);
-            const isOut = parsedStock === 0;
-            let stockText = '', stockClass = '';
-            if (isOut) { stockText = '售完'; stockClass = 'badge-out'; }
-            else if (!isNaN(parsedStock)) {
-                if (parsedStock <= 10) { stockText = `剩餘 ${parsedStock}`; stockClass = 'badge-warning'; }
-                else { stockText = `庫存 ${parsedStock}`; stockClass = 'badge-normal'; }
-            }
-            dummy.dataset.stock      = stockText;
-            dummy.dataset.stockclass = stockClass;
-
-            openLightbox(dummy);
+            _renderLightboxContent(p.uid);
+            updateLightboxNavButtons();
         }
 
         // 支援鍵盤左右鍵切換
@@ -1201,6 +1228,7 @@
                 <div class="lightbox-body">
                     <div id="lb-title" class="lightbox-title"></div>
                     <div id="lb-meta" class="lightbox-meta"></div>
+                    <div id="lb-variants" class="variant-selector" style="margin-bottom:8px;"></div>
                     <div id="lb-tags" class="lightbox-tags"></div>
                     <div class="lightbox-bottom">
                         <div id="lb-price" class="lightbox-price"></div>
