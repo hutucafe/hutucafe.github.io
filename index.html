@@ -216,9 +216,9 @@
         .card-name { font-size: 15.5px; font-weight: 600; color: var(--color-text-primary); line-height: 1.4; flex: 1; min-width: 0; }
         .card-badges { display: flex; flex-direction: row; align-items: center; gap: 4px; flex-shrink: 0; }
         .badge-roast { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; background: #e8d5c4; color: #5d4037; white-space: nowrap; }
-        .badge-normal { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #edf7ed; border: 0.5px solid #c8e6c9; color: #2e7d32; white-space: nowrap; }
-        .badge-warning { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #ffebee; border: 0.5px solid #ffcdd2; color: #c62828; white-space: nowrap; }
-        .badge-out { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #f5f5f5; border: 0.5px solid #ddd; color: #999; white-space: nowrap; }
+        .badge-normal { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #edf7ed; border: 0.5px solid #c8e6c9; color: #2e7d32; white-space: nowrap; }
+        .badge-warning { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #ffebee; border: 0.5px solid #ffcdd2; color: #c62828; white-space: nowrap; }
+        .badge-out { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #f5f5f5; border: 0.5px solid #ddd; color: #999; white-space: nowrap; }
         .card-bottom { display: flex; align-items: center; justify-content: space-between; }
         /* Lightbox */
         .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; align-items: center; justify-content: center; padding: 30px; }
@@ -821,7 +821,7 @@
                     <div class="card-thumb" onclick="openLightbox(this)" ${lbData}>
                         <img src="${imgUrl}" alt="${name}" loading="lazy">
                         <div class="card-thumb-badges">
-                            ${roast ? `<span class="badge-roast">${roast}</span>` : ''}
+                            ${roast ? `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span>` : ''}
                             ${stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
                         </div>
                     </div>
