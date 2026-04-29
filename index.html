@@ -248,6 +248,22 @@
         .stock-warning { background: #ffebee; border-color: #ffcdd2; color: #c62828; font-weight: bold; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
         .stock-out { background: #eeeeee; color: #999; border-color: #ccc; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
 
+        /* 頁籤說明區塊 */
+        .tab-note {
+            background: linear-gradient(135deg, #fdf8f2 0%, #fef3e2 100%);
+            border: 1px solid #e8d5b7;
+            border-left: 4px solid #b8860b;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 13.5px;
+            color: #5a3e1b;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            display: none; /* 預設隱藏，有內容才顯示 */
+        }
+        .tab-note.visible { display: block; }
+
         /* 載入動畫 */
         .loader-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; color: #8d6e63; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3e5f5; border-top: 4px solid #8d6e63; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
@@ -326,6 +342,7 @@
                 <div id="tabs-container" class="tabs-container"></div>
                 <button class="tabs-arrow right" id="tabs-arrow-right" onclick="scrollTabs(1)">›</button>
             </div>
+            <div id="tab-note" class="tab-note"></div>
             <div id="product-list">
                 <div class="loader-container">
                     <div class="spinner"></div>
@@ -442,6 +459,7 @@
         const STORES_TTL         = 24 * 60 * 60 * 1000; 
 
         let allProductsData = {};
+        let allTabNotes = {};
         let currentTab = '';
         let cart = {};
         let currentFinalTotal = 0;
@@ -563,6 +581,7 @@
 
         function renderFromData(data) {
             allProductsData = data.products || data;
+            allTabNotes = data.tabNotes || {};
             let idCounter = 1;
             for (let tab in allProductsData) {
                 allProductsData[tab].forEach(p => {
@@ -661,6 +680,17 @@
         }
 
         function renderProducts(tabName) {
+            // ✅ 顯示頁籤說明
+            const noteEl = document.getElementById('tab-note');
+            const noteText = allTabNotes[tabName] || '';
+            if (noteText) {
+                noteEl.textContent = noteText;
+                noteEl.classList.add('visible');
+            } else {
+                noteEl.textContent = '';
+                noteEl.classList.remove('visible');
+            }
+
             const listEl = document.getElementById('product-list');
             const products = allProductsData[tabName] || [];
             lbProductList = products; // 更新供 lightbox 左右切換使用
