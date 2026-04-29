@@ -796,7 +796,7 @@
                         <img src="${imgUrl}" alt="${name}" loading="lazy">
                         <div class="card-thumb-badges">
                             ${roast ? `<span class="badge-roast">${roast}</span>` : ''}
-                            ${!isMulti && stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
+                            ${stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
                         </div>
                     </div>
                     <div class="card-body">
@@ -808,10 +808,7 @@
                         </div>
                         <div class="card-bottom">
                             <div class="card-price">$${price}<span class="unit">/${pkg}</span></div>
-                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-                                ${isMulti && stockText ? `<span class="${stockBadgeClass}" style="font-size:10px;padding:2px 7px;border-radius:4px;white-space:nowrap;">${stockText}</span>` : ''}
-                                ${qtyHtml}
-                            </div>
+                            ${qtyHtml}
                         </div>
                     </div>
                 </div>`;
