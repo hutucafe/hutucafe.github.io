@@ -405,6 +405,9 @@
 
     <div class="bottom-bar">
         <div class="total-info">
+            <div id="cart-summary-link" style="display:none; margin-bottom:6px;">
+                <span onclick="openCartSummary()" style="font-size:12px; color:#b8860b; text-decoration:underline; cursor:pointer;">📋 查看已選購品項</span>
+            </div>
             <div class="calc-row"><span class="label">商品小計</span><span id="display-original">$0</span></div>
             <div class="calc-row text-red"><span class="label">指定品項折扣 (<span id="ui-bottom-discount"></span>)</span><span id="display-discount">-$0</span></div>
             <div class="calc-row"><span class="label">運費 (滿千免運)</span><span id="display-shipping">$0</span></div>
@@ -416,6 +419,14 @@
         <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
             <button id="submit-btn" onclick="submitOrder()">確認送出</button>
             <button id="clear-cart-btn" onclick="clearCart()" style="background:transparent; color:#aaa; border:none; font-size:12px; cursor:pointer; padding:2px 0; text-decoration:underline; display:none;">🗑 清空購物車</button>
+        </div>
+    </div>
+
+    <div id="cart-summary-modal" class="custom-modal">
+        <div class="modal-content" style="max-height:80vh; overflow-y:auto; padding:20px 18px 16px;">
+            <h3 style="margin:0 0 14px; font-size:16px; color:#4a2c11;">📋 已選購品項</h3>
+            <div id="cart-summary-list"></div>
+            <button onclick="closeCartSummary()" style="margin-top:14px; width:100%; padding:10px; background:#b8860b; color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">關閉</button>
         </div>
     </div>
 
@@ -974,13 +985,16 @@
         (function() {
             let touchStartX = 0;
             let touchEndX   = 0;
-            const lb = document.getElementById('lightbox') || document.body;
+            let swipeBlocked = false;
             document.addEventListener('touchstart', e => {
                 if (!document.getElementById('lightbox').classList.contains('open')) return;
+                // 如果觸碰點在規格按鈕上，封鎖這次滑動
+                swipeBlocked = !!e.target.closest('.variant-btn');
                 touchStartX = e.changedTouches[0].screenX;
             }, { passive: true });
             document.addEventListener('touchend', e => {
                 if (!document.getElementById('lightbox').classList.contains('open')) return;
+                if (swipeBlocked) { swipeBlocked = false; return; }
                 touchEndX = e.changedTouches[0].screenX;
                 const diff = touchStartX - touchEndX;
                 if (Math.abs(diff) > 50) {
@@ -988,6 +1002,25 @@
                 }
             }, { passive: true });
         })();
+
+        function openCartSummary() {
+            const items = Object.values(cart).filter(c => c.qty > 0);
+            const listEl = document.getElementById('cart-summary-list');
+            listEl.innerHTML = items.map(c => {
+                const name = c.product['熟豆品項'] || '未知品項';
+                const pkg  = c.product['包裝'] || '';
+                const price = parseInt(c.product['售價'] || 0);
+                return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f0ece6; font-size:13px; color:#333;">
+                    <span style="flex:1; line-height:1.5;">${name}${pkg ? `<span style="color:#999; font-size:11px; margin-left:4px;">${pkg}</span>` : ''}</span>
+                    <span style="margin-left:12px; white-space:nowrap; color:#888;">${c.qty} 份 × $${price}</span>
+                    <span style="margin-left:10px; font-weight:700; color:#b77b3b; white-space:nowrap;">$${c.qty * price}</span>
+                </div>`;
+            }).join('');
+            document.getElementById('cart-summary-modal').classList.add('open');
+        }
+        function closeCartSummary() {
+            document.getElementById('cart-summary-modal').classList.remove('open');
+        }
 
         function clearCart() {
             const hasItems = Object.values(cart).some(c => c.qty > 0);
@@ -1060,6 +1093,8 @@
             document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
             const clearBtn = document.getElementById('clear-cart-btn');
             if (clearBtn) clearBtn.style.display = totalItems > 0 ? 'block' : 'none';
+            const summaryLink = document.getElementById('cart-summary-link');
+            if (summaryLink) summaryLink.style.display = totalItems > 0 ? 'block' : 'none';
         }
 
         let storesData = [];
