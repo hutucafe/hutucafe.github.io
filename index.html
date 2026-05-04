@@ -728,20 +728,6 @@
             const listEl = document.getElementById('product-list');
             const products = allProductsData[tabName] || [];
             lbProductList = products;
-            // 以「合併卡片」為單位建立導航清單，每組只取當前選中的規格 uid
-            const seen = new Set();
-            lbCardList = [];
-            products.forEach(p => {
-                const name = p['熟豆品項'] || '';
-                if (!seen.has(name)) {
-                    seen.add(name);
-                    // 取這組目前選中的 uid（或第一個有庫存的）
-                    const group = products.filter(x => x['熟豆品項'] === name);
-                    const activeUid = (window.selectedVariant && window.selectedVariant[name])
-                        || (group.find(v => parseInt(v['庫存']) !== 0) || group[0]).uid;
-                    lbCardList.push(activeUid);
-                }
-            });
 
             // ── 分組：相同品項名稱 → 合併成一張卡片 ──
             const groupMap = new Map(); // key: 品項名稱, value: [p, ...]
@@ -754,7 +740,22 @@
             // 記錄每張多規格卡目前選中的 uid（以品項名稱為 key）
             if (!window.selectedVariant) window.selectedVariant = {};
 
-            listEl.innerHTML = Array.from(groupMap.entries()).map(([name, variants]) => {
+            // 排序：全部規格都售完的卡片移到最下面，其餘維持試算表原順序
+            const entries = Array.from(groupMap.entries()).sort(([, aVars], [, bVars]) => {
+                const aAllOut = aVars.every(v => parseInt(v['庫存']) === 0);
+                const bAllOut = bVars.every(v => parseInt(v['庫存']) === 0);
+                if (aAllOut === bAllOut) return 0;
+                return aAllOut ? 1 : -1;
+            });
+
+            // 以「合併卡片排序後」為單位建立 lightbox 導航清單
+            lbCardList = entries.map(([name, variants]) => {
+                const activeUid = (window.selectedVariant && window.selectedVariant[name])
+                    || (variants.find(v => parseInt(v['庫存']) !== 0) || variants[0]).uid;
+                return activeUid;
+            });
+
+            listEl.innerHTML = entries.map(([name, variants]) => {
                 const isMulti = variants.length > 1;
 
                 // 決定目前顯示的規格：優先用 selectedVariant，否則預設第一個有庫存的，再不然就第一個
