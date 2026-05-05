@@ -277,24 +277,35 @@
             white-space: nowrap;
         }
         .ranking-time-btn.active { background: #b8860b; border-color: #b8860b; color: #fff; }
-        .ranking-cols { display: flex; gap: 8px; }
-        .ranking-col { flex: 1; min-width: 0; }
+.ranking-cols { display: flex; gap: 8px; }
+        /* ✅ 調整欄位寬度比例：熟豆給 4 等份，濾掛給 5.5 等份 */
+        .ranking-col:first-child { flex: 4; min-width: 0; }
+        .ranking-col:last-child { flex: 5.5; min-width: 0; }
+        
         .ranking-col-title {
             font-size: 13px; font-weight: 700; color: #888;
             margin-bottom: 5px; letter-spacing: 0.5px;
         }
         .ranking-list { display: flex; flex-direction: column; gap: 4px; }
         .ranking-item {
-            display: flex; align-items: center; gap: 6px;
+            display: flex; align-items: center; gap: 5px; /* 稍微縮小內部間距以爭取空間 */
             background: #fff; border: 1px solid #ede8e2;
-            border-radius: 7px; padding: 6px 8px; font-size: 13px;
+            border-radius: 7px; padding: 6px; /* 縮小左右內距 */
         }
-        .ranking-medal { font-size: 15px; min-width: 20px; text-align: center; }
+        .ranking-medal { font-size: 14px; min-width: 18px; text-align: center; }
         .ranking-num {
-            font-size: 13px; font-weight: 700; min-width: 20px;
+            font-size: 12px; font-weight: 700; min-width: 18px;
             text-align: center; color: #bbb;
         }
-        .ranking-name { flex: 1; color: #333; font-weight: 500; line-height: 1.3; }
+        .ranking-name { 
+            flex: 1; 
+            color: #333; 
+            font-weight: 500; 
+            line-height: 1.3; 
+            /* ✅ 使用 clamp 讓字體依據螢幕寬度微調，最小 11px，最大 13px */
+            font-size: clamp(11px, 3.2vw, 13px);
+            word-break: break-word; /* 確保超長字串能正常換行不撐破版面 */
+        }
         .ranking-empty { font-size: 13px; color: #bbb; padding: 6px 0; }
 
         /* 頁籤說明區塊 */
