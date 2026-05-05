@@ -541,7 +541,9 @@
         const CONFIG_TTL         = 5 * 60 * 1000;
         const STORES_KEY         = 'hutucafe_stores_v1';
         const STORES_VERSION_KEY = 'hutucafe_stores_version';
-        const STORES_TTL         = 24 * 60 * 60 * 1000; 
+        const STORES_TTL         = 24 * 60 * 60 * 1000;
+        const RANKING_VERSION_KEY = 'hutucafe_ranking_version';
+        const RANKING_CACHE_TTL   = 60 * 60 * 1000; // 本地快取 1 小時
 
         let allProductsData = {};
         let allTabNotes = {};
@@ -1382,22 +1384,77 @@
             loadRanking(30); // 預設顯示近 30 天
         });
 
-        let currentRankingDays = 7;
+        let currentRankingDays = 30;
 
         async function loadRanking(days) {
             currentRankingDays = days;
+            const localKey = `ranking_d${days}`;
+
+            // 1. 先從 localStorage 讀快取，有的話立即顯示
             try {
-                const res = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=${days}`, { cache: 'no-store' });
-                const data = await res.json();
+                const cached = localStorage.getItem(localKey);
+                if (cached) {
+                    const { data, ts, ver } = JSON.parse(cached);
+                    const age = Date.now() - ts;
+                    const localVer = localStorage.getItem(RANKING_VERSION_KEY) || '';
+                    // 版本號一致且未過期 → 直接顯示，不再 fetch
+                    if (age < RANKING_CACHE_TTL && ver === localVer && localVer !== '') {
+                        renderRankingData(data);
+                        return;
+                    }
+                    // 版本號不符或過期 → 先顯示舊資料，背景更新
+                    renderRankingData(data);
+                }
+            } catch(e) {}
 
-                renderRankingList('ranking-roasted', data.roasted || []);
-                renderRankingList('ranking-drip',    data.drip    || []);
+            // 2. 取得最新版本號
+            try {
+                const verRes = await fetch(GAS_URL + '?action=version', { cache: 'no-store' });
+                const verJson = await verRes.json();
+                const serverVer = verJson.cache_version || '';
+                const localVer  = localStorage.getItem(RANKING_VERSION_KEY) || '';
 
-                const hasData = (data.roasted && data.roasted.length) || (data.drip && data.drip.length);
-                document.getElementById('ranking-section').style.display = hasData ? 'block' : 'none';
+                const localKey2 = `ranking_d${days}`;
+                let needFetch = true;
+
+                if (serverVer && serverVer === localVer) {
+                    // 版本一致，檢查時效
+                    try {
+                        const cached = localStorage.getItem(localKey2);
+                        if (cached) {
+                            const { data, ts } = JSON.parse(cached);
+                            if (Date.now() - ts < RANKING_CACHE_TTL) {
+                                renderRankingData(data);
+                                needFetch = false;
+                            }
+                        }
+                    } catch(e) {}
+                } else {
+                    // 版本不一致，清除所有排行榜快取
+                    [0, 7, 30, 90].forEach(d => {
+                        try { localStorage.removeItem(`ranking_d${d}`); } catch(e) {}
+                    });
+                    localStorage.setItem(RANKING_VERSION_KEY, serverVer);
+                }
+
+                if (needFetch) {
+                    const res = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=${days}`, { cache: 'no-store' });
+                    const data = await res.json();
+                    renderRankingData(data);
+                    try {
+                        localStorage.setItem(localKey2, JSON.stringify({ data, ts: Date.now(), ver: serverVer }));
+                    } catch(e) {}
+                }
             } catch(e) {
                 console.warn('排行榜載入失敗', e);
             }
+        }
+
+        function renderRankingData(data) {
+            renderRankingList('ranking-roasted', data.roasted || []);
+            renderRankingList('ranking-drip',    data.drip    || []);
+            const hasData = (data.roasted && data.roasted.length) || (data.drip && data.drip.length);
+            document.getElementById('ranking-section').style.display = hasData ? 'block' : 'none';
         }
 
         function renderRankingList(elId, items) {
