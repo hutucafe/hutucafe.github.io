@@ -253,14 +253,15 @@
         .stock-out { background: #eeeeee; color: #999; border-color: #ccc; font-size: 11px; padding: 3px 8px; border-radius: 4px; border-width: 1px; border-style: solid; white-space: nowrap; display: inline-block;}
 
         /* 多規格選擇器 */
-        .variant-selector { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+        .variant-selector { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin: 6px 0 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .variant-selector::-webkit-scrollbar { display: none; }
         .variant-btn {
-            font-size: 13px; font-weight: 700; padding: 5px 13px; border-radius: 20px; cursor: pointer;
+            flex-shrink: 0; font-size: 13px; font-weight: 700; padding: 5px 13px; border-radius: 20px; cursor: pointer;
             border: 2px solid #c9a96e; background: #fff; color: #7a5230; transition: all 0.18s;
         }
         .variant-btn:hover:not(:disabled) { background: #fdf0e4; border-color: #b8860b; }
         .variant-btn.active { background: #b8860b; border-color: #b8860b; color: #fff; }
-        .variant-btn:disabled { background: #f5f5f5; border-color: #ddd; color: #bbb; cursor: not-allowed; text-decoration: line-through; }
+        .variant-btn:disabled { background: #f9f9f9; border-color: #eee; color: #ccc; cursor: not-allowed; text-decoration: line-through; opacity: 0.6; }
 
         /* 熱賣排行榜 */
         .ranking-section { margin-bottom: 14px; }
@@ -876,7 +877,7 @@
                             return `<button class="variant-btn${isActive ? ' active' : ''}"
                                 ${isSoldOut ? 'disabled' : ''}
                                 onclick="selectVariant('${name}', '${v.uid}')"
-                            >${v['包裝']}${isSoldOut ? '（售完）' : ''}</button>`;
+                            >${v['包裝']}</button>`;
                         }).join('')}
                     </div>` : '';
 
@@ -969,7 +970,7 @@
                     return `<button class="variant-btn${isActive ? ' active' : ''}"
                         ${isSoldOut ? 'disabled' : ''}
                         onclick="selectLbVariant('${v.uid}')"
-                    >${v['包裝']}${isSoldOut ? '（售完）' : ''}</button>`;
+                    >${v['包裝']}</button>`;
                 }).join('');
                 variantEl.style.display = 'flex';
             } else {
