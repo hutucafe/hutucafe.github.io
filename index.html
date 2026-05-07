@@ -310,21 +310,21 @@
         .ranking-empty { font-size: 13px; color: #bbb; padding: 6px 0; }
 
         /* 售完卡片樣式 */
-        .modern-card.is-sold-out { opacity: 0.88; }
-        .modern-card.is-sold-out .card-thumb img { filter: grayscale(60%); }
-        .modern-card.is-sold-out .card-name { color: #999; }
+        .modern-card.is-sold-out { opacity: 0.92; }
+        .modern-card.is-sold-out .card-thumb img { filter: grayscale(30%); }
+        .modern-card.is-sold-out .card-name { color: #aaa; }
         .modern-card.is-sold-out .card-price { color: #bbb; }
         .sold-out-overlay {
             position: absolute; inset: 0;
-            background: rgba(0,0,0,0.18);
+            background: rgba(0,0,0,0.08);
             display: flex; align-items: center; justify-content: center;
             border-radius: 8px 8px 0 0;
         }
         .sold-out-overlay span {
-            background: rgba(0,0,0,0.42);
-            color: #fff; font-size: 12px; font-weight: 600;
-            padding: 3px 11px; border-radius: 20px;
-            letter-spacing: 1.5px;
+            background: rgba(90,60,30,0.75);
+            color: #fff; font-size: 11.5px; font-weight: 700;
+            padding: 4px 12px; border-radius: 20px;
+            letter-spacing: 1.5px; backdrop-filter: blur(2px);
         }
         .card-thumb { position: relative; }
 
@@ -919,7 +919,7 @@
                 <div class="modern-card${isAllOutOfStock ? ' is-sold-out' : ''}">
                     <div class="card-thumb" onclick="openLightbox(this)" ${lbData}>
                         <img src="${imgUrl}" alt="${name}" loading="lazy">
-                        ${isAllOutOfStock ? `<div class="sold-out-overlay"><span>已售完</span></div>` : ''}
+                        ${isAllOutOfStock ? `<div class="sold-out-overlay"><span>售完待補</span></div>` : ''}
                         <div class="card-thumb-badges">
                             ${roast ? `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span>` : ''}
                             ${!isOutOfStock && stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
