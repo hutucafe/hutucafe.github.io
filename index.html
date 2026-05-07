@@ -309,6 +309,25 @@
         }
         .ranking-empty { font-size: 13px; color: #bbb; padding: 6px 0; }
 
+        /* 售完卡片樣式 */
+        .modern-card.is-sold-out { opacity: 0.75; }
+        .modern-card.is-sold-out .card-thumb img { filter: grayscale(100%); }
+        .modern-card.is-sold-out .card-name { color: #999; }
+        .modern-card.is-sold-out .card-price { color: #bbb; }
+        .sold-out-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.32);
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .sold-out-overlay span {
+            background: rgba(0,0,0,0.55);
+            color: #fff; font-size: 13px; font-weight: 700;
+            padding: 4px 12px; border-radius: 20px;
+            letter-spacing: 1px;
+        }
+        .card-thumb { position: relative; }
+
         /* 頁籤說明區塊 */
         .tab-note {
             background: linear-gradient(135deg, #fdf3e3 0%, #fde9c4 100%);
@@ -843,6 +862,10 @@
                 const price = parseInt(p['售價'] || 0);
                 const parsedStock = parseInt(p['庫存']);
                 const isOutOfStock = parsedStock === 0;
+                // 多規格：全部規格都售完才套用售完樣式；單規格直接用 isOutOfStock
+                const isAllOutOfStock = isMulti
+                    ? variants.every(v => parseInt(v['庫存']) === 0)
+                    : isOutOfStock;
                 const imgUrl = p['產品圖'] || '';
 
                 // 庫存 badge
@@ -893,12 +916,13 @@
                 const lbData = `data-uid="${p.uid}" data-img="${imgUrl}" data-name="${name}" data-roast="${roast}" data-meta="${metaText}" data-tags="${tagsArray.join(',')}" data-price="${price}" data-pkg="${pkg}" data-stock="${stockText}" data-stockclass="${stockBadgeClass}"`;
 
                 return `
-                <div class="modern-card">
+                <div class="modern-card${isAllOutOfStock ? ' is-sold-out' : ''}">
                     <div class="card-thumb" onclick="openLightbox(this)" ${lbData}>
                         <img src="${imgUrl}" alt="${name}" loading="lazy">
+                        ${isAllOutOfStock ? `<div class="sold-out-overlay"><span>已售完</span></div>` : ''}
                         <div class="card-thumb-badges">
                             ${roast ? `<span class="roast-badge ${getRoastClass(roast)}">${roast}</span>` : ''}
-                            ${stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
+                            ${!isOutOfStock && stockText ? `<span class="${stockBadgeClass}">${stockText}</span>` : ''}
                         </div>
                     </div>
                     <div class="card-body">
