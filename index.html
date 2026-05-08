@@ -783,6 +783,9 @@
             currentTab = tabName;
             renderTabs(Object.keys(allProductsData));
             renderProducts(tabName);
+            // 切換頁籤時捲回品項列表頂部
+            const listEl = document.getElementById('product-list');
+            if (listEl) listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function selectVariant(productName, uid) {
@@ -1113,21 +1116,41 @@
         // 支援手機左右滑動切換
         (function() {
             let touchStartX = 0;
+            let touchStartY = 0;
             let touchEndX   = 0;
             let swipeBlocked = false;
+            let isLightboxOpen = () => document.getElementById('lightbox').classList.contains('open');
+
             document.addEventListener('touchstart', e => {
-                if (!document.getElementById('lightbox').classList.contains('open')) return;
-                // 如果觸碰點在規格按鈕上，封鎖這次滑動
-                swipeBlocked = !!e.target.closest('.variant-btn');
+                // 如果觸碰點在規格按鈕或加購按鈕上，封鎖這次滑動
+                swipeBlocked = !!e.target.closest('.variant-btn, .modern-qty button, .ranking-time-btn');
                 touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
             }, { passive: true });
+
             document.addEventListener('touchend', e => {
-                if (!document.getElementById('lightbox').classList.contains('open')) return;
                 if (swipeBlocked) { swipeBlocked = false; return; }
                 touchEndX = e.changedTouches[0].screenX;
-                const diff = touchStartX - touchEndX;
-                if (Math.abs(diff) > 50) {
-                    navigateLightbox(diff > 0 ? 1 : -1);
+                const diffX = touchStartX - touchEndX;
+                const diffY = Math.abs(e.changedTouches[0].screenY - touchStartY);
+
+                // 水平滑動距離要大於 50px，且垂直距離小於水平距離（避免上下捲動誤觸）
+                if (Math.abs(diffX) < 60 || diffY > Math.abs(diffX) * 0.6) return;
+
+                if (isLightboxOpen()) {
+                    // Lightbox 開啟時：切換品項
+                    navigateLightbox(diffX > 0 ? 1 : -1);
+                } else {
+                    // 豆單頁面：切換頁籤
+                    const tabs = Object.keys(allProductsData);
+                    if (!tabs.length) return;
+                    const currentIdx = tabs.indexOf(currentTab);
+                    const newIdx = currentIdx + (diffX > 0 ? 1 : -1);
+                    if (newIdx < 0 || newIdx >= tabs.length) return;
+                    switchTab(tabs[newIdx]);
+                    // 讓頁籤列自動捲到選中的頁籤
+                    const activeBtn = document.querySelector('.tab-btn.active');
+                    if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
             }, { passive: true });
         })();
