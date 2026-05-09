@@ -783,9 +783,6 @@
             currentTab = tabName;
             renderTabs(Object.keys(allProductsData));
             renderProducts(tabName);
-            // 切換頁籤時捲回品項列表頂部
-            const listEl = document.getElementById('product-list');
-            if (listEl) listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function selectVariant(productName, uid) {
@@ -1148,9 +1145,6 @@
                     const newIdx = currentIdx + (diffX > 0 ? 1 : -1);
                     if (newIdx < 0 || newIdx >= tabs.length) return;
                     switchTab(tabs[newIdx]);
-                    // 讓頁籤列自動捲到選中的頁籤
-                    const activeBtn = document.querySelector('.tab-btn.active');
-                    if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
             }, { passive: true });
         })();
