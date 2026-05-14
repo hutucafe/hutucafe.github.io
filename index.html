@@ -1501,7 +1501,19 @@
             try {
                 const res = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=${days}`, { cache: 'no-store' });
                 const data = await res.json();
-                renderRankingData(data);
+
+                // 如果指定期間沒有資料，自動改抓全部
+                const hasRoasted = data.roasted && data.roasted.length;
+                const hasDrip    = data.drip    && data.drip.length;
+                if (!hasRoasted && !hasDrip && days !== 0) {
+                    const resAll = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=0`, { cache: 'no-store' });
+                    const dataAll = await resAll.json();
+                    dataAll._fallback = true; // 標記為 fallback，不覆蓋指定期間快取
+                    renderRankingData(dataAll, days);
+                    return;
+                }
+
+                renderRankingData(data, days);
                 const serverVer = localStorage.getItem(RANKING_VERSION_KEY) || '';
                 try {
                     localStorage.setItem(`ranking_d${days}`, JSON.stringify({ data, ts: Date.now(), ver: serverVer }));
@@ -1511,14 +1523,15 @@
             }
         }
 
-        function renderRankingData(data) {
-            renderRankingList('ranking-roasted', data.roasted || []);
-            renderRankingList('ranking-drip',    data.drip    || []);
+        function renderRankingData(data, days) {
+            const isFallback = data._fallback;
+            renderRankingList('ranking-roasted', data.roasted || [], isFallback);
+            renderRankingList('ranking-drip',    data.drip    || [], isFallback);
             const hasData = (data.roasted && data.roasted.length) || (data.drip && data.drip.length);
             document.getElementById('ranking-section').style.display = hasData ? 'block' : 'none';
         }
 
-        function renderRankingList(elId, items) {
+        function renderRankingList(elId, items, isFallback) {
             const el = document.getElementById(elId);
             if (!items.length) {
                 el.innerHTML = `<div class="ranking-empty">暫無資料</div>`;
