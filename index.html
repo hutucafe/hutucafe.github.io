@@ -1513,15 +1513,18 @@
                 const hasDrip    = data.drip    && data.drip.length;
                 console.log('hasRoasted=' + hasRoasted + ' hasDrip=' + hasDrip);
 
-                if (!hasRoasted && !hasDrip && days !== 0) {
-                    // 無資料且不是全部 → fallback 抓全部，把全部結果存進該期間快取
+                if ((!hasRoasted || !hasDrip) && days !== 0) {
+                    // 任一類別沒資料 → 抓全部補齊空的那個
                     const resAll = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=0`, { cache: 'no-store' });
                     const dataAll = await resAll.json();
-                    renderRankingData(dataAll, true);
-                    // 存入快取（標記為 fallback），下次切換瞬間顯示
+                    const merged = {
+                        roasted: hasRoasted ? data.roasted : dataAll.roasted,
+                        drip:    hasDrip    ? data.drip    : dataAll.drip
+                    };
+                    renderRankingData(merged, false);
                     const serverVer = localStorage.getItem(RANKING_VERSION_KEY) || '';
                     try {
-                        localStorage.setItem(`ranking_d${days}`, JSON.stringify({ data: dataAll, ts: Date.now(), ver: serverVer, fallback: true }));
+                        localStorage.setItem(`ranking_d${days}`, JSON.stringify({ data: merged, ts: Date.now(), ver: serverVer, fallback: true }));
                     } catch(e) {}
                     return;
                 }
