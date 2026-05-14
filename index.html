@@ -870,11 +870,19 @@
 
                 // 庫存 badge
                 let stockText = '', stockBadgeClass = '', disableAddBtn = '';
+                const parsedLimit = parseInt(p['限購']);
+                const effectiveMax = (!isNaN(parsedLimit) && parsedLimit > 0)
+                    ? Math.min(parsedStock, parsedLimit)
+                    : parsedStock;
+
                 if (isOutOfStock) {
-                    stockText = '售完'; stockBadgeClass = 'badge-out'; disableAddBtn = 'disabled';
+                    stockText = '售完待補'; stockBadgeClass = 'badge-out'; disableAddBtn = 'disabled';
                 } else if (!isNaN(parsedStock)) {
                     stockText = parsedStock <= 10 ? `剩餘 ${parsedStock}` : `庫存 ${parsedStock}`;
                     stockBadgeClass = parsedStock <= 10 ? 'badge-warning' : 'badge-normal';
+                }
+                if (!isOutOfStock) {
+                    disableAddBtn = cart[p.uid].qty >= effectiveMax ? 'disabled' : '';
                 }
 
                 // meta
@@ -1219,6 +1227,11 @@
             const p = cart[uid].product;
             const parsedStock = parseInt(p['庫存']);
             const maxStock = isNaN(parsedStock) ? 9999 : parsedStock;
+            const parsedLimit = parseInt(p['限購']);
+            const maxQty = (!isNaN(parsedLimit) && parsedLimit > 0)
+                ? Math.min(maxStock, parsedLimit)
+                : maxStock;
+
             if (maxStock === 0) {
                 if (cart[uid].qty > 0) {
                     cart[uid].qty = 0;
@@ -1229,13 +1242,17 @@
             }
             let newVal = cart[uid].qty + change;
             if (newVal < 0) newVal = 0;
-            if (newVal > maxStock) {
-                alert(`抱歉，【${p['熟豆品項']}】目前庫存僅剩 ${maxStock}`);
-                newVal = maxStock;
+            if (newVal > maxQty) {
+                if (!isNaN(parsedLimit) && parsedLimit > 0 && newVal > parsedLimit) {
+                    alert(`抱歉，【${p['熟豆品項']}】每人限購 ${parsedLimit} 份`);
+                } else {
+                    alert(`抱歉，【${p['熟豆品項']}】目前庫存僅剩 ${maxStock}`);
+                }
+                newVal = maxQty;
             }
             cart[uid].qty = newVal;
             calculateTotal();
-            renderProducts(currentTab); 
+            renderProducts(currentTab);
         }
 
         function calculateTotal() {
