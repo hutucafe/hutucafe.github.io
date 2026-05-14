@@ -1513,14 +1513,21 @@
                 const hasDrip    = data.drip    && data.drip.length;
                 console.log('hasRoasted=' + hasRoasted + ' hasDrip=' + hasDrip);
 
-                if ((!hasRoasted || !hasDrip) && days !== 0) {
-                    // 任一類別沒資料 → 抓全部補齊空的那個
-                    const resAll = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=0`, { cache: 'no-store' });
-                    const dataAll = await resAll.json();
-                    const merged = {
-                        roasted: hasRoasted ? data.roasted : dataAll.roasted,
-                        drip:    hasDrip    ? data.drip    : dataAll.drip
-                    };
+                // 各自獨立判斷，依序 fallback：7天→30天→90天→全部
+                const fallbackChain = [7, 30, 90, 0].filter(d => d !== days);
+                let roastedResult = hasRoasted ? data.roasted : null;
+                let dripResult    = hasDrip    ? data.drip    : null;
+
+                if ((!roastedResult || !dripResult) && days !== 0) {
+                    for (const fallbackDays of fallbackChain) {
+                        if (fallbackDays === days) continue; // 跳過自己
+                        if (roastedResult && dripResult) break; // 兩個都有了就停
+                        const resFb = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=${fallbackDays}`, { cache: 'no-store' });
+                        const dataFb = await resFb.json();
+                        if (!roastedResult && dataFb.roasted && dataFb.roasted.length) roastedResult = dataFb.roasted;
+                        if (!dripResult    && dataFb.drip    && dataFb.drip.length)    dripResult    = dataFb.drip;
+                    }
+                    const merged = { roasted: roastedResult || [], drip: dripResult || [] };
                     renderRankingData(merged, false);
                     const serverVer = localStorage.getItem(RANKING_VERSION_KEY) || '';
                     try {
