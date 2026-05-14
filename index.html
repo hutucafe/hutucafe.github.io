@@ -1464,15 +1464,14 @@
             try {
                 const cached = localStorage.getItem(localKey);
                 if (cached) {
-                    const { data } = JSON.parse(cached);
+                    const { data, fallback } = JSON.parse(cached);
                     const hasRoasted = data.roasted && data.roasted.length;
                     const hasDrip    = data.drip    && data.drip.length;
-                    // 快取是空的且不是「全部」→ 不用快取，直接 fetch 走 fallback
                     if (!hasRoasted && !hasDrip && days !== 0) {
                         fetchRanking(days);
                         return;
                     }
-                    renderRankingData(data, days);
+                    renderRankingData(data, !!fallback);
                     return;
                 }
             } catch(e) {}
@@ -1509,29 +1508,40 @@
                 const res = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=${days}`, { cache: 'no-store' });
                 const data = await res.json();
 
-                // 如果指定期間沒有資料，自動改抓全部
                 const hasRoasted = data.roasted && data.roasted.length;
                 const hasDrip    = data.drip    && data.drip.length;
+
                 if (!hasRoasted && !hasDrip && days !== 0) {
+                    // 無資料且不是全部 → fallback 抓全部，把全部結果存進該期間快取
                     const resAll = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=0`, { cache: 'no-store' });
                     const dataAll = await resAll.json();
-                    dataAll._fallback = true; // 標記為 fallback，不覆蓋指定期間快取
-                    renderRankingData(dataAll, days);
+                    renderRankingData(dataAll, true);
+                    // 存入快取（標記為 fallback），下次切換瞬間顯示
+                    const serverVer = localStorage.getItem(RANKING_VERSION_KEY) || '';
+                    try {
+                        localStorage.setItem(`ranking_d${days}`, JSON.stringify({ data: dataAll, ts: Date.now(), ver: serverVer, fallback: true }));
+                    } catch(e) {}
                     return;
                 }
 
-                renderRankingData(data, days);
-                const serverVer = localStorage.getItem(RANKING_VERSION_KEY) || '';
-                try {
-                    localStorage.setItem(`ranking_d${days}`, JSON.stringify({ data, ts: Date.now(), ver: serverVer }));
-                } catch(e) {}
+                renderRankingData(data, false);
+
+                // 只有有資料才存快取
+                if (hasRoasted || hasDrip) {
+                    const serverVer = localStorage.getItem(RANKING_VERSION_KEY) || '';
+                    try {
+                        localStorage.setItem(`ranking_d${days}`, JSON.stringify({ data, ts: Date.now(), ver: serverVer }));
+                    } catch(e) {}
+                } else {
+                    // 全部區間也沒資料，清掉快取避免存空值
+                    try { localStorage.removeItem(`ranking_d${days}`); } catch(e) {}
+                }
             } catch(e) {
                 console.warn('排行榜載入失敗', e);
             }
         }
 
-        function renderRankingData(data, days) {
-            const isFallback = data._fallback;
+        function renderRankingData(data, isFallback) {
             renderRankingList('ranking-roasted', data.roasted || [], isFallback);
             renderRankingList('ranking-drip',    data.drip    || [], isFallback);
             const hasData = (data.roasted && data.roasted.length) || (data.drip && data.drip.length);
