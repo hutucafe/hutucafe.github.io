@@ -190,7 +190,7 @@
 
         /* 第二列：產區｜品種｜處理法 */
         .card-meta { 
-            font-size: 13px; color: #777; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; 
+            font-size: clamp(11px, 3.2vw, 13px); color: #777; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; 
             display: flex; align-items: center; flex-wrap: wrap; gap: 8px; 
         }
 
@@ -217,7 +217,7 @@
         .card-thumb-badges { width: 100%; display: flex; align-items: center; justify-content: center; gap: 3px; padding: 5px 6px 7px; flex-wrap: wrap; }
         .card-body { flex: 1; padding: 12px 14px 12px 16px; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
         .card-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 3px; }
-        .card-name { font-size: 15.5px; font-weight: 600; color: var(--color-text-primary); line-height: 1.4; flex: 1; min-width: 0; }
+        .card-name { font-size: clamp(13px, 4vw, 15.5px); font-weight: 600; color: var(--color-text-primary); line-height: 1.4; flex: 1; min-width: 0; }
         .card-badges { display: flex; flex-direction: row; align-items: center; gap: 4px; flex-shrink: 0; }
         .badge-roast { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; background: #e8d5c4; color: #5d4037; white-space: nowrap; }
         .badge-normal { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #edf7ed; border: 0.5px solid #c8e6c9; color: #2e7d32; white-space: nowrap; }
@@ -365,13 +365,13 @@
         /* 底部結帳列 */
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 12px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: flex-end; z-index: 1000; }
         .bottom-bar .total-info { flex: 1; margin-right: 15px; }
-        .calc-row { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 3px; }
+        .calc-row { display: flex; justify-content: space-between; font-size: clamp(10px, 3.2vw, 13px); color: #666; margin-bottom: 3px; }
         .calc-row.text-red { color: #d84315; }
         .calc-row.total-row { border-top: 1px solid #eee; margin-top: 5px; padding-top: 10px; align-items: center; }
-        .total-label { font-size: 15px; font-weight: bold; color: #333; }
-        .total-amt { font-size: 24px; font-weight: bold; color: #d84315; }
+        .total-label { font-size: clamp(12px, 3.5vw, 15px); font-weight: bold; color: #333; }
+        .total-amt { font-size: clamp(16px, 5.5vw, 24px); font-weight: bold; color: #d84315; }
         
-        .bottom-bar button { background: #3e2723; color: #fff; border: none; padding: 14px 28px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; height: 50px; }
+        .bottom-bar button { background: #3e2723; color: #fff; border: none; padding: 14px 28px; border-radius: 25px; font-size: clamp(12px, 3.8vw, 16px); font-weight: bold; cursor: pointer; transition: 0.3s; height: 50px; }
         .bottom-bar button:disabled { background: #aaa; cursor: not-allowed; }
         
         #store-status { font-size: 12px; margin-top: 6px; display: block; color: #888; }
