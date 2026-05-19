@@ -371,7 +371,7 @@
         .total-label { font-size: clamp(12px, 3.5vw, 15px); font-weight: bold; color: #333; }
         .total-amt { font-size: clamp(16px, 5.5vw, 24px); font-weight: bold; color: #d84315; }
         
-        .bottom-bar button { background: #3e2723; color: #fff; border: none; padding: 14px 28px; border-radius: 25px; font-size: clamp(12px, 3.8vw, 16px); font-weight: bold; cursor: pointer; transition: 0.3s; height: 50px; }
+        .bottom-bar button { background: #3e2723; color: #fff; border: none; padding: 11px 22px; border-radius: 25px; font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; cursor: pointer; transition: 0.3s; height: 44px; }
         .bottom-bar button:disabled { background: #aaa; cursor: not-allowed; }
         
         #store-status { font-size: 12px; margin-top: 6px; display: block; color: #888; }
@@ -500,7 +500,7 @@
             <div id="cart-summary-link" style="display:none; margin-bottom:6px;">
                 <span onclick="openCartSummary()" style="font-size:12px; color:#b8860b; text-decoration:underline; cursor:pointer;">📋 查看已選購品項</span>
             </div>
-            <div class="calc-row"><span class="label">商品小計</span><span><span id="display-qty" style="font-size:clamp(9px,2.8vw,11px);color:#aaa;margin-right:6px;"></span><span id="display-original">$0</span></span></div>
+            <div class="calc-row"><span class="label">商品小計</span><span style="display:flex;align-items:baseline;gap:10px;"><span id="display-qty" style="font-size:clamp(9px,2.8vw,11px);color:#aaa;"></span><span id="display-original">$0</span></span></div>
             <div class="calc-row text-red"><span class="label">指定品項折扣 (<span id="ui-bottom-discount"></span>)</span><span id="display-discount">-$0</span></div>
             <div class="calc-row"><span class="label">運費 (滿千免運)</span><span id="display-shipping">$0</span></div>
             <div class="calc-row total-row">
@@ -1289,7 +1289,7 @@
             currentFinalTotal = discountedTotal + shipping;
             document.getElementById('display-original').textContent = `$${originalTotal}`;
             const qtyEl = document.getElementById('display-qty');
-            if (qtyEl) qtyEl.textContent = totalItems > 0 ? `共 ${totalItems} 包` : '';
+            if (qtyEl) qtyEl.textContent = totalItems > 0 ? `(共 ${totalItems} 包)` : '';
             document.getElementById('display-discount').textContent = `-$${discountAmt}`;
             document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
             document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
