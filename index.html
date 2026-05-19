@@ -957,7 +957,8 @@
                         <div class="card-bottom">
                             <div>
                                 ${discountedPrice
-                                    ? `<div class="card-price-discounted">$${discountedPrice}<span class="unit">/${pkg}</span><span class="card-price-tag">${SHOP_CONFIG.discountName}</span><span class="card-price-original" style="margin-left:6px;font-size:clamp(10px,2.8vw,11px);color:#bbb;text-decoration:line-through;">$${price}</span></div>`
+                                    ? `<div style="font-size:clamp(10px,2.8vw,12px);color:#bbb;text-decoration:line-through;line-height:1.3;">$${price}<span style="font-size:10px;">/${pkg}</span></div>
+                                       <div class="card-price-discounted">$${discountedPrice}<span class="unit">/${pkg}</span><span class="card-price-tag">${SHOP_CONFIG.discountName}</span></div>`
                                     : `<div class="card-price">$${price}<span class="unit">/${pkg}</span></div>`
                                 }
                             </div>
