@@ -200,8 +200,12 @@
         
         /* 右側價格與控制鈕 */
         .card-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 90px; }
-        .card-price { font-size: clamp(16px, 5vw, 20px); font-weight: 900; color: #b77b3b; display: flex; align-items: baseline; gap: 2px; margin-bottom: 6px; flex-wrap: wrap; }
+        .card-price { font-size: clamp(16px, 5vw, 20px); font-weight: 900; color: #b77b3b; display: flex; align-items: baseline; gap: 2px; margin-bottom: 2px; flex-wrap: wrap; }
         .card-price .unit { font-size: clamp(10px, 3vw, 11px); color: #999; font-weight: normal; }
+        .card-price-original { font-size: clamp(11px, 3vw, 12px); color: #bbb; text-decoration: line-through; margin-bottom: 4px; }
+        .card-price-discounted { font-size: clamp(16px, 5vw, 20px); font-weight: 900; color: #c62828; display: flex; align-items: baseline; gap: 2px; margin-bottom: 2px; flex-wrap: wrap; }
+        .card-price-discounted .unit { font-size: clamp(10px, 3vw, 11px); color: #e57373; font-weight: normal; }
+        .card-price-tag { font-size: 10px; background: #ffebee; color: #c62828; border-radius: 4px; padding: 1px 5px; font-weight: 700; margin-left: 4px; vertical-align: middle; white-space: nowrap; }
         
         .modern-qty { display: flex; border: 1px solid #e0e0e0; border-radius: 20px; overflow: hidden; height: clamp(28px, 8vw, 34px); width: clamp(80px, 22vw, 96px); background: #fff; flex-shrink: 0; }
         .modern-qty button { flex: 1; background: transparent; border: none; font-size: clamp(15px, 4.5vw, 18px); color: #777; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -867,6 +871,17 @@
                     : isOutOfStock;
                 const imgUrl = p['產品圖'] || '';
 
+                // 判斷是否為折扣品項
+                const cat = (p.category || '');
+                const isDiscountProduct = (
+                    cat.includes('現貨') || cat.includes('熟豆') || cat.includes('濾掛')
+                ) && !(
+                    cat.includes('特賣') || cat.includes('大包裝') || cat.includes('生豆')
+                );
+                const discountedPrice = isDiscountProduct
+                    ? Math.ceil(price * SHOP_CONFIG.discountRate)
+                    : null;
+
                 // 庫存 badge
                 let stockText = '', stockBadgeClass = '', disableAddBtn = '';
                 const parsedLimit = parseInt(p['限購']);
@@ -940,7 +955,13 @@
                             <div class="card-tags">${tagsHtml}</div>
                         </div>
                         <div class="card-bottom">
-                            <div class="card-price">$${price}<span class="unit">/${pkg}</span></div>
+                            <div>
+                                ${discountedPrice
+                                    ? `<div class="card-price-original">原價 $${price}<span style="font-size:10px;">/${pkg}</span></div>
+                                       <div class="card-price-discounted">$${discountedPrice}<span class="unit">/${pkg}</span><span class="card-price-tag">${SHOP_CONFIG.discountName}</span></div>`
+                                    : `<div class="card-price">$${price}<span class="unit">/${pkg}</span></div>`
+                                }
+                            </div>
                             ${qtyHtml}
                         </div>
                     </div>
