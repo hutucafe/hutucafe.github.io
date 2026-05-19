@@ -76,7 +76,7 @@
     <link rel="icon" href="logo2.jpg" type="image/jpeg">
     <style>
         /* 基礎樣式重置 */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; -webkit-text-size-adjust: none; text-size-adjust: none; }
         body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 160px; }
         
         /* 頁首設計 */
@@ -200,22 +200,22 @@
         
         /* 右側價格與控制鈕 */
         .card-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 90px; }
-        .card-price { font-size: 20px; font-weight: 900; color: #b77b3b; display: flex; align-items: baseline; gap: 2px; margin-bottom: 8px; }
-        .card-price .unit { font-size: 11px; color: #999; font-weight: normal; }
+        .card-price { font-size: clamp(16px, 5vw, 20px); font-weight: 900; color: #b77b3b; display: flex; align-items: baseline; gap: 2px; margin-bottom: 6px; flex-wrap: wrap; }
+        .card-price .unit { font-size: clamp(10px, 3vw, 11px); color: #999; font-weight: normal; }
         
-        .modern-qty { display: flex; border: 1px solid #e0e0e0; border-radius: 20px; overflow: hidden; height: 32px; width: 90px; background: #fff; }
-        .modern-qty button { flex: 1; background: transparent; border: none; font-size: 18px; color: #777; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .modern-qty { display: flex; border: 1px solid #e0e0e0; border-radius: 20px; overflow: hidden; height: clamp(28px, 8vw, 34px); width: clamp(80px, 22vw, 96px); background: #fff; flex-shrink: 0; }
+        .modern-qty button { flex: 1; background: transparent; border: none; font-size: clamp(15px, 4.5vw, 18px); color: #777; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
         .modern-qty button:hover:not(:disabled) { background: #f5f5f5; color: #333; }
         .modern-qty button:disabled { color: #ccc; cursor: not-allowed; }
-        .modern-qty input { width: 32px; text-align: center; border: none; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; font-size: 14px; font-weight: bold; color: #333; background: transparent; padding: 0; }
+        .modern-qty input { width: clamp(26px, 7vw, 32px); text-align: center; border: none; border-left: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; font-size: clamp(12px, 3.5vw, 14px); font-weight: bold; color: #333; background: transparent; padding: 0; }
 
         /* 統一卡片樣式：左圖右文 */
         .modern-card { flex-direction: row !important; align-items: stretch; padding: 0 !important; overflow: hidden; }
-        .card-thumb { width: 120px; min-width: 120px; flex-shrink: 0; align-self: stretch; cursor: pointer; background: #f5f0eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 5px; }
-        .card-thumb img { width: 108px; height: 108px; object-fit: contain; display: block; flex-shrink: 0; border-radius: 8px; }
+        .card-thumb { width: clamp(100px, 28vw, 130px); min-width: clamp(100px, 28vw, 130px); flex-shrink: 0; align-self: stretch; cursor: pointer; background: #f5f0eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 5px; }
+        .card-thumb img { width: clamp(88px, 24vw, 112px); height: clamp(88px, 24vw, 112px); object-fit: contain; display: block; flex-shrink: 0; border-radius: 8px; }
         .card-thumb:hover img { opacity: 0.88; }
         .card-thumb-badges { width: 100%; display: flex; align-items: center; justify-content: center; gap: 3px; padding: 5px 6px 7px; flex-wrap: wrap; }
-        .card-body { flex: 1; padding: 12px 14px 12px 16px; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; }
+        .card-body { flex: 1; padding: 10px 12px 10px 14px; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; overflow: hidden; }
         .card-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 3px; }
         .card-name { font-size: clamp(13px, 4vw, 15.5px); font-weight: 600; color: var(--color-text-primary); line-height: 1.4; flex: 1; min-width: 0; }
         .card-badges { display: flex; flex-direction: row; align-items: center; gap: 4px; flex-shrink: 0; }
