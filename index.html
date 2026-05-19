@@ -190,13 +190,13 @@
 
         /* 第二列：產區｜品種｜處理法 */
         .card-meta { 
-            font-size: clamp(11px, 3.2vw, 13px); color: #777; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.5px; 
-            display: flex; align-items: center; flex-wrap: wrap; gap: 8px; 
+            font-size: clamp(10px, 2.8vw, 12px); color: #777; font-weight: 500; margin-bottom: 6px; letter-spacing: 0.3px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
         /* 第三列：風味標籤 */
-        .card-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-        .modern-tag { font-size: 12px; padding: 3px 9px; border-radius: 4px; background: #fdfbf8; border: 1px solid #efe6de; color: #8a6341; }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-height: 58px; overflow: hidden; }
+        .modern-tag { font-size: clamp(10px, 2.8vw, 12px); padding: 2px 7px; border-radius: 4px; background: #fdfbf8; border: 1px solid #efe6de; color: #8a6341; white-space: nowrap; }
         
         /* 右側價格與控制鈕 */
         .card-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 90px; }
@@ -217,12 +217,13 @@
         .card-thumb-badges { width: 100%; display: flex; align-items: center; justify-content: center; gap: 3px; padding: 5px 6px 7px; flex-wrap: wrap; }
         .card-body { flex: 1; padding: 10px 12px 10px 14px; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; overflow: hidden; }
         .card-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 3px; }
-        .card-name { font-size: clamp(13px, 4vw, 15.5px); font-weight: 600; color: var(--color-text-primary); line-height: 1.4; flex: 1; min-width: 0; }
+        .card-name { font-size: clamp(13px, 3.8vw, 15.5px); font-weight: 600; color: var(--color-text-primary); line-height: 1.35; margin-bottom: 4px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .card-badges { display: flex; flex-direction: row; align-items: center; gap: 4px; flex-shrink: 0; }
-        .badge-roast { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; background: #e8d5c4; color: #5d4037; white-space: nowrap; }
-        .badge-normal { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #edf7ed; border: 0.5px solid #c8e6c9; color: #2e7d32; white-space: nowrap; }
-        .badge-warning { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #ffebee; border: 0.5px solid #ffcdd2; color: #c62828; white-space: nowrap; }
-        .badge-out { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #f5f5f5; border: 0.5px solid #ddd; color: #999; white-space: nowrap; }
+        .badge-roast { font-size: clamp(9px, 2.5vw, 11px); padding: 3px 8px; border-radius: 4px; font-weight: 600; background: #e8d5c4; color: #5d4037; white-space: nowrap; }
+        .badge-normal { font-size: clamp(9px, 2.5vw, 11px); font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #edf7ed; border: 0.5px solid #c8e6c9; color: #2e7d32; white-space: nowrap; }
+        .badge-warning { font-size: clamp(9px, 2.5vw, 11px); font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #ffebee; border: 0.5px solid #ffcdd2; color: #c62828; white-space: nowrap; }
+        .badge-out { font-size: clamp(9px, 2.5vw, 11px); font-weight: 700; padding: 3px 8px; border-radius: 4px; background: #f5f5f5; border: 0.5px solid #ddd; color: #999; white-space: nowrap; }
         .card-bottom { display: flex; align-items: center; justify-content: space-between; }
         /* Lightbox */
         .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; align-items: center; justify-content: center; padding: 30px; }
@@ -256,8 +257,8 @@
         .variant-selector { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin: 6px 0 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .variant-selector::-webkit-scrollbar { display: none; }
         .variant-btn {
-            flex-shrink: 0; font-size: 13px; font-weight: 700; padding: 5px 13px; border-radius: 20px; cursor: pointer;
-            border: 2px solid #c9a96e; background: #fff; color: #7a5230; transition: all 0.18s;
+            flex-shrink: 0; font-size: clamp(11px, 3vw, 13px); font-weight: 700; padding: 4px 10px; border-radius: 20px; cursor: pointer;
+            border: 2px solid #c9a96e; background: #fff; color: #7a5230; transition: all 0.18s; white-space: nowrap;
         }
         .variant-btn:hover:not(:disabled) { background: #fdf0e4; border-color: #b8860b; }
         .variant-btn.active { background: #b8860b; border-color: #b8860b; color: #fff; }
