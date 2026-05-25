@@ -547,7 +547,7 @@
             document.getElementById('ui-banner-discount').textContent = SHOP_CONFIG.discountName;
             document.getElementById('ui-banner-fee').textContent = SHOP_CONFIG.shippingFee;
             document.getElementById('ui-banner-free').textContent = Number(SHOP_CONFIG.freeShippingThreshold).toLocaleString();
-            document.getElementById('ui-bottom-discount').textContent = activeDiscountName;
+            document.getElementById('ui-bottom-discount').textContent = SHOP_CONFIG._vipName || SHOP_CONFIG.discountName;
         }
 
         function applyRemoteConfig(shopConfig) {
