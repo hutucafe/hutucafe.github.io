@@ -660,6 +660,7 @@
                 }
                 localStorage.setItem(CONFIG_KEY, JSON.stringify({ data, timestamp: Date.now() }));
                 applyRemoteConfig(data.shopConfig);
+                applyVipList(data.vipList);
             } catch(e) {
                 console.error('折扣設定載入失敗:', e);
             }
