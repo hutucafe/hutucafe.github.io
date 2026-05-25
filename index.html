@@ -479,7 +479,7 @@
             </div>
             <div class="form-group">
                 <label>手機 <span style="color:red">*</span></label>
-                <input type="tel" id="buyer-phone" placeholder="例如: 0912345678" maxlength="10">
+                <input type="tel" id="buyer-phone" placeholder="例如: 0912345678" maxlength="10" oninput="onPhoneInput()">
             </div>
             <div class="form-group">
                 <label>Email (接收訂單通知) <span style="color:red">*</span></label>
@@ -563,15 +563,25 @@
         // VIP 清單
         let vipList = [];
         function applyVipList(list) { vipList = list || []; }
-        function lookupVip(name) {
+        function lookupVip(name, phone) {
             if (!name || !vipList.length) return null;
-            return vipList.find(v => v.name === name) || null;
+            const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+            return vipList.find(v => {
+                if (v.name !== name) return false;
+                // 有設定電話就要比對，否則只比名字
+                if (v.phone) return v.phone === cleanPhone;
+                return true;
+            }) || null;
         }
 
-        // 姓名輸入時即時比對 VIP
-        function onNameInput() {
-            const name = document.getElementById('buyer-name').value.trim();
-            const vip = lookupVip(name);
+        // 姓名或電話輸入時即時比對 VIP
+        function onNameInput() { _checkVip(); }
+        function onPhoneInput() { _checkVip(); }
+
+        function _checkVip() {
+            const name  = document.getElementById('buyer-name').value.trim();
+            const phone = document.getElementById('buyer-phone').value.trim();
+            const vip   = lookupVip(name, phone);
             const vipEl = document.getElementById('vip-badge');
             const discountLabelEl = document.getElementById('ui-bottom-discount');
             if (vip) {
