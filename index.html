@@ -474,7 +474,8 @@
             <div class="section-title">📬 收件資訊</div>
             <div class="form-group">
                 <label>姓名 <span style="color:red">*</span></label>
-                <input type="text" id="buyer-name" placeholder="請輸入真實姓名 (取件核對用)">
+                <input type="text" id="buyer-name" placeholder="請輸入真實姓名 (取件核對用)" oninput="onNameInput()">
+                <span id="vip-badge" style="display:none; margin-top:4px; font-size:12px; font-weight:700; color:#2e7d32; background:#e8f5e9; border-radius:12px; padding:2px 10px;"></span>
             </div>
             <div class="form-group">
                 <label>手機 <span style="color:red">*</span></label>
@@ -536,8 +537,8 @@
         // ⚙️ 糊塗咖啡 商店核心設定區
         // ==========================================
         let SHOP_CONFIG = {
-            discountRate: 0.9,
-            discountName: "9 折",
+            discountRate: 0.85,
+            discountName: "85 折",
             freeShippingThreshold: 1000,
             shippingFee: 38
         };
@@ -546,7 +547,7 @@
             document.getElementById('ui-banner-discount').textContent = SHOP_CONFIG.discountName;
             document.getElementById('ui-banner-fee').textContent = SHOP_CONFIG.shippingFee;
             document.getElementById('ui-banner-free').textContent = Number(SHOP_CONFIG.freeShippingThreshold).toLocaleString();
-            document.getElementById('ui-bottom-discount').textContent = SHOP_CONFIG.discountName;
+            document.getElementById('ui-bottom-discount').textContent = activeDiscountName;
         }
 
         function applyRemoteConfig(shopConfig) {
@@ -557,6 +558,35 @@
             if (shopConfig['運費'])         SHOP_CONFIG.shippingFee           = parseInt(shopConfig['運費']);
             applyShopConfig();
             calculateTotal(); 
+        }
+
+        // VIP 清單
+        let vipList = [];
+        function applyVipList(list) { vipList = list || []; }
+        function lookupVip(name) {
+            if (!name || !vipList.length) return null;
+            return vipList.find(v => v.name === name) || null;
+        }
+
+        // 姓名輸入時即時比對 VIP
+        function onNameInput() {
+            const name = document.getElementById('buyer-name').value.trim();
+            const vip = lookupVip(name);
+            const vipEl = document.getElementById('vip-badge');
+            const discountLabelEl = document.getElementById('ui-bottom-discount');
+            if (vip) {
+                const label = vip.displayName || ('VIP ' + Math.round(vip.rate * 10) + '折');
+                if (vipEl) { vipEl.textContent = '🎖️ ' + label; vipEl.style.display = 'inline-block'; }
+                if (discountLabelEl) discountLabelEl.textContent = label;
+                SHOP_CONFIG._vipRate = vip.rate;
+                SHOP_CONFIG._vipName = label;
+            } else {
+                if (vipEl) vipEl.style.display = 'none';
+                if (discountLabelEl) discountLabelEl.textContent = SHOP_CONFIG.discountName;
+                SHOP_CONFIG._vipRate = null;
+                SHOP_CONFIG._vipName = null;
+            }
+            calculateTotal();
         }
 
         applyShopConfig();
@@ -592,7 +622,7 @@
                 const cached = localStorage.getItem(CONFIG_KEY);
                 if (cached) {
                     const { data, timestamp } = JSON.parse(cached);
-                    applyRemoteConfig(data.shopConfig); // 立即套用，不等版本檢查
+                    applyRemoteConfig(data.shopConfig); applyVipList(data.vipList); // 立即套用，不等版本檢查
                     checkConfigVersion(Date.now() - timestamp); // 背景靜默比對
                     return;
                 }
@@ -1280,7 +1310,10 @@
                     if (isDiscount) discountSubtotal += subtotal;
                 }
             }
-            const discountAmt = Math.ceil(Math.round(discountSubtotal * (1 - SHOP_CONFIG.discountRate) * 1e10) / 1e10);
+            const activeRate = (SHOP_CONFIG._vipRate !== null && SHOP_CONFIG._vipRate !== undefined)
+                ? SHOP_CONFIG._vipRate : SHOP_CONFIG.discountRate;
+            const activeDiscountName = SHOP_CONFIG._vipName || SHOP_CONFIG.discountName;
+            const discountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
             let discountedTotal = originalTotal - discountAmt;
             let shipping = 0;
             if (totalItems > 0) {
@@ -1432,17 +1465,21 @@
                     if (isDiscount) { discountedText += itemLine; discountedOrderItems.push(itemObj); discountSubtotal += subtotal; } else { nonDiscountedText += itemLine; nonDiscountedOrderItems.push(itemObj); }
                 }
             }
-            const totalDiscountAmt = Math.ceil(Math.round(discountSubtotal * (1 - SHOP_CONFIG.discountRate) * 1e10) / 1e10);
+            const activeRate = (SHOP_CONFIG._vipRate !== null && SHOP_CONFIG._vipRate !== undefined)
+                ? SHOP_CONFIG._vipRate : SHOP_CONFIG.discountRate;
+            const activeDiscountName = SHOP_CONFIG._vipName || SHOP_CONFIG.discountName;
+            const totalDiscountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
             let alertItemsText = '';
-            if (discountedText) { alertItemsText += `【指定品項 (享 ${SHOP_CONFIG.discountName})】\n${discountedText}  👉 折扣金額：-$${totalDiscountAmt}\n\n`; }
+            if (discountedText) { alertItemsText += `【指定品項 (享 ${activeDiscountName})】\n${discountedText}  👉 折扣金額：-$${totalDiscountAmt}\n\n`; }
             if (nonDiscountedText) { alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`; }
-            const payload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: SHOP_CONFIG.discountName };
+            const payload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: activeDiscountName };
             try {
                 const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
                 const result = await response.json();
                 if (result.result === 'success') {
                     localStorage.removeItem(CACHE_KEY); _submitToken = null;
-                    let successMsg = `------------------------------\n【訂購人姓名】${name}\n【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr}\n【結帳總額】$${currentFinalTotal}\n\n※ 訂單明細已同步寄送至您的 Email。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
+                    let vipLine = SHOP_CONFIG._vipName ? `【VIP 折扣】${SHOP_CONFIG._vipName}\n` : '';
+                    let successMsg = `------------------------------\n【訂購人姓名】${name}\n${vipLine}【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr}\n【結帳總額】$${currentFinalTotal}\n\n※ 訂單明細已同步寄送至您的 Email。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
                     document.getElementById('modal-msg').textContent = successMsg;
                     document.getElementById('success-modal').style.display = 'flex';
                 } else { alert("資料庫寫入失敗！錯誤訊息：\n" + result.error); btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false; }
