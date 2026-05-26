@@ -1515,7 +1515,7 @@
             const activeDiscountName = _getActiveDiscountName();
             const totalDiscountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
             let alertItemsText = '';
-            if (discountedText) { alertItemsText += `【指定品項 (享 ${activeDiscountName})】\n${discountedText}  👉 折扣金額：-$${totalDiscountAmt}\n\n`; }
+            if (discountedText) { alertItemsText += `【指定品項 (${activeDiscountName})】\n${discountedText}  👉 折扣金額：-$${totalDiscountAmt}\n\n`; }
             if (nonDiscountedText) { alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`; }
             const payload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: activeDiscountName, globalDiscountRate: SHOP_CONFIG.discountRate };
             try {
@@ -1524,8 +1524,7 @@
                 if (result.result === 'success') {
                     localStorage.removeItem(CACHE_KEY); _submitToken = null;
                     const isVipApplied = vipEnabled && SHOP_CONFIG._vipRate !== null && SHOP_CONFIG._vipRate !== undefined && SHOP_CONFIG._vipRate < SHOP_CONFIG.discountRate;
-                    let vipLine = isVipApplied ? `【VIP 享${SHOP_CONFIG._vipName}】\n` : '';
-                    let successMsg = `------------------------------\n【訂購人姓名】${name}\n${vipLine}【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr}\n【結帳總額】$${currentFinalTotal}\n\n※ 訂單明細已同步寄送至您的 Email。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
+                    let successMsg = `------------------------------\n【訂購人姓名】${name}\n【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr}\n【結帳總額】$${currentFinalTotal}\n\n※ 訂單明細已同步寄送至您的 Email。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
                     document.getElementById('modal-msg').textContent = successMsg;
                     document.getElementById('success-modal').style.display = 'flex';
                 } else { alert("資料庫寫入失敗！錯誤訊息：\n" + result.error); btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false; }
