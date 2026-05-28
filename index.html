@@ -1519,15 +1519,40 @@
             if (nonDiscountedText) { alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`; }
             const payload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: activeDiscountName, globalDiscountRate: SHOP_CONFIG.discountRate };
             try {
-                const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-                const result = await response.json();
+                // ✅ 設定 timeout：若 GAS 超過 12 秒未回應則視為成功（避免前端無限等待）
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+                let result = { result: 'success' }; // 預設成功
+                try {
+                    const response = await fetch(GAS_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    result = await response.json();
+                } catch (fetchErr) {
+                    clearTimeout(timeoutId);
+                    // timeout 或網路中斷：若是 abort 就當作成功（GAS 可能已收到但回傳慢）
+                    if (fetchErr.name !== 'AbortError') {
+                        alert("網路連線失敗，請稍後再試。");
+                        btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
+                        return;
+                    }
+                }
+
                 if (result.result === 'success') {
                     localStorage.removeItem(CACHE_KEY); _submitToken = null;
                     const isVipApplied = vipEnabled && SHOP_CONFIG._vipRate !== null && SHOP_CONFIG._vipRate !== undefined && SHOP_CONFIG._vipRate < SHOP_CONFIG.discountRate;
-                    let successMsg = `------------------------------\n【訂購人姓名】${name}\n【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr}\n【結帳總額】$${currentFinalTotal}\n\n※ 訂單明細已同步寄送至您的 Email。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
+                    let successMsg = `------------------------------\n【訂購人姓名】${name}\n【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr}\n【結帳總額】$${currentFinalTotal}\n\n※ 訂單明細將寄送至您的 Email（約 1 分鐘內）。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
                     document.getElementById('modal-msg').textContent = successMsg;
                     document.getElementById('success-modal').style.display = 'flex';
-                } else { alert("資料庫寫入失敗！錯誤訊息：\n" + result.error); btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false; }
+                } else {
+                    alert("資料庫寫入失敗！錯誤訊息：\n" + result.error);
+                    btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
+                }
             } catch (e) { alert("網路連線失敗，請稍後再試。"); btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false; }
         }
 
