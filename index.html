@@ -1479,7 +1479,7 @@
             }
             btn.textContent = '定位中...';
             btn.disabled = true;
-            status.textContent = '📍 正在取得位置...';
+            status.textContent = '📍 正在取得位置，請稍候...';
 
             function doLocate(isRetry) {
                 navigator.geolocation.getCurrentPosition(
@@ -1537,7 +1537,7 @@
                         btn.disabled = false;
                     },
                     // 第一次給長 timeout 等授權，重試時用短 timeout
-                    { timeout: isRetry ? 8000 : 10000, maximumAge: 60000, enableHighAccuracy: false }
+                    { timeout: isRetry ? 15000 : 30000, maximumAge: 300000, enableHighAccuracy: false }
                 );
             }
             doLocate(false);
