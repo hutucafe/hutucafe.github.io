@@ -481,18 +481,29 @@
 
         <div class="section">
             <div class="section-title">🏪 7-ELEVEN 取貨門市</div>
-            <div class="form-group">
-                <label>搜尋門市 (門市名稱 或 店號 或 地址) <span style="color:red">*</span></label>
-                <div style="display:flex; gap:8px; align-items:flex-start;">
-                    <input type="text" id="store-search" placeholder="例如: 集寶 (門市、店號、地址擇一即可)" autocomplete="off" style="flex:1;">
-                    <button type="button" id="nearby-btn" onclick="findNearbyStores()" style="flex-shrink:0; padding:10px 12px; background:#f5f0eb; color:#5d4037; border:1px solid #d4b896; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">📍 附近門市</button>
+
+            <!-- 搜尋列 -->
+            <div class="form-group" style="margin-bottom:6px;">
+                <label>門市搜尋 <span style="color:red">*</span>
+                    <span style="font-size:11px; color:#aaa; font-weight:400; margin-left:4px;">輸入門市名稱、店號或地址</span>
+                </label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="text" id="store-search" placeholder="🔍  例：集寶、142917、台北市中正區..." autocomplete="off" style="flex:1;">
+                    <button type="button" id="nearby-btn" onclick="findNearbyStores()"
+                        style="flex-shrink:0; padding:9px 12px; background:#fff8f0; color:#b8860b;
+                               border:1.5px solid #e8c97a; border-radius:10px; font-size:12px;
+                               font-weight:700; cursor:pointer; white-space:nowrap; line-height:1.3;">
+                        📍<br>附近
+                    </button>
                 </div>
-                <span id="store-status">載入門市資料中...</span>
+                <span id="store-status" style="font-size:11px;"></span>
                 <ul id="store-suggestions" class="suggestions-list"></ul>
             </div>
-            <div class="form-group">
-                <label>已選門市資訊</label>
-                <input type="text" id="store-info" readonly placeholder="請先從上方搜尋並選擇門市">
+
+            <!-- 已選門市 -->
+            <div class="form-group" style="margin-top:4px;">
+                <input type="text" id="store-info" readonly placeholder="👆 請從上方搜尋並點選門市"
+                    style="background:#fafafa; color:#555; font-size:13px; border:1.5px dashed #ddd; border-radius:10px; padding:10px 14px;">
                 <input type="hidden" id="selected-store-id">
             </div>
         </div>
@@ -1577,6 +1588,8 @@
                 li.onclick = () => {
                     document.getElementById('store-search').value = s['名稱'];
                     document.getElementById('store-info').value = `店號：${s['店號']} | ${s['名稱']} | ${s['地址']}`;
+                    document.getElementById('store-info').style.border = '1.5px solid #b8860b';
+                    document.getElementById('store-info').style.color = '#3e2723';
                     document.getElementById('selected-store-id').value = s['店號'];
                     suggestions.style.display = 'none';
                     status.textContent = `✅ 已選擇：${s['名稱']}`;
@@ -1645,7 +1658,7 @@
             const status = document.getElementById('store-status');
             if (status) {
                 if (stores.length > 0) {
-                    status.textContent = `門市資料載入完成 ✓（共 ${stores.length.toLocaleString()} 間）`;
+                    status.textContent = `✓ 共 ${stores.length.toLocaleString()} 間門市，輸入關鍵字搜尋`;
                     status.style.color = '#2e7d32';
                 } else {
                     status.textContent = '門市資料為空，請聯絡管理員';
@@ -1669,6 +1682,8 @@
                     li.onclick = () => {
                         sInput.value = s.名稱;
                         document.getElementById('store-info').value = `店號：${s.店號} | ${s.名稱} | ${s.地址}`;
+                        document.getElementById('store-info').style.border = '1.5px solid #b8860b';
+                        document.getElementById('store-info').style.color = '#3e2723';
                         document.getElementById('selected-store-id').value = s.店號;
                         sList.style.display = 'none';
                     };
