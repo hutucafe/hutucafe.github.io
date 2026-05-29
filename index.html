@@ -493,7 +493,7 @@
                         style="flex-shrink:0; padding:9px 12px; background:#fff8f0; color:#b8860b;
                                border:1.5px solid #e8c97a; border-radius:10px; font-size:12px;
                                font-weight:700; cursor:pointer; white-space:nowrap; line-height:1.3;">
-                        📍 常用/附近
+                        ⭐常用<br>📍附近
                     </button>
                 </div>
                 <span id="store-status" style="font-size:11px;"></span>
@@ -1613,7 +1613,7 @@
                         status.textContent = '📍 重新嘗試定位中...';
                         startWatch(true);
                     } else {
-                        if (!silentAppend) { btn.innerHTML = '📍 常用/附近'; btn.disabled = false; }
+                        if (!silentAppend) { btn.innerHTML = '⭐常用<br>📍附近'; btn.disabled = false; }
                         status.textContent = silentAppend ? '' : '⚠️ 定位失敗，請手動搜尋門市';
                     }
                 }, 15000);
@@ -1635,7 +1635,7 @@
                             else if (err.code === 2) status.textContent = '此裝置無法定位，請手動搜尋門市';
                             else if (!isRetry) { status.textContent = '📍 重新嘗試定位中...'; startWatch(true); return; }
                             else status.textContent = '⚠️ 定位失敗，請手動搜尋門市';
-                            btn.innerHTML = '📍 常用/附近'; btn.disabled = false;
+                            btn.innerHTML = '⭐常用<br>📍附近'; btn.disabled = false;
                         }
                     },
                     { maximumAge: 300000, enableHighAccuracy: false }
@@ -1694,7 +1694,7 @@
             const suggestions = document.getElementById('store-suggestions');
             if (withDist.length === 0) {
                 status.textContent = '找不到附近門市，請手動搜尋';
-                btn.innerHTML = '📍<br>附近'; btn.disabled = false;
+                btn.innerHTML = '⭐常用<br>📍附近'; btn.disabled = false;
                 return;
             }
             status.textContent = `📍 附近 ${withDist.length} 間門市（可下滑查看更多）`;
@@ -1722,7 +1722,7 @@
             hint.style.cssText = 'font-size:11px; color:#bbb; text-align:center; padding:8px 4px; cursor:default; border-top:1px solid #f0ece6; pointer-events:none;';
             hint.textContent = '沒看到想要的門市？再按一次「📍 附近」重新定位';
             suggestions.appendChild(hint);
-            btn.innerHTML = '📍<br>附近'; btn.disabled = false;
+            btn.innerHTML = '⭐常用<br>📍附近'; btn.disabled = false;
         }
         async function loadStores() {
             try {
