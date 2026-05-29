@@ -1489,8 +1489,8 @@
                     watchId = null;
                 }
                 btn.textContent = '📍 附近門市'; btn.disabled = false;
-                status.textContent = '定位失敗，請手動搜尋門市';
-            }, 15000);
+                status.textContent = '⚠️ 定位較慢，請再按一次「附近門市」';
+            }, 25000);
 
             watchId = navigator.geolocation.watchPosition(
                 pos => {
