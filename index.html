@@ -1656,7 +1656,9 @@
                 });
             } else { sList.style.display = 'none'; }
         });
-        document.addEventListener('click', (e) => { if (e.target !== sInput) sList.style.display = 'none'; });
+        document.addEventListener('click', (e) => { 
+            if (e.target !== sInput && !e.target.closest('#nearby-btn')) sList.style.display = 'none'; 
+        });
 
         let _submitToken = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         let _isSubmitting = false;
