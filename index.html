@@ -1443,6 +1443,9 @@
             }
             currentFinalTotal = discountedTotal + shipping;
             document.getElementById('display-original').textContent = `$${originalTotal}`;
+            document.getElementById('display-discount').textContent = `-$${discountAmt}`;
+            document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
+            document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
             const qtyEl = document.getElementById('display-qty-label');
             if (qtyEl) qtyEl.textContent = totalItems;
             const clearBtn = document.getElementById('clear-cart-btn');
