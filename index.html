@@ -489,11 +489,11 @@
                 </label>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <input type="text" id="store-search" placeholder="🔍  例：集寶、142917、台北市中正區..." autocomplete="off" style="flex:1;">
-                    <button type="button" id="nearby-btn" onclick="findNearbyStores()"
+                    <button type="button" id="nearby-btn" onclick="showFavAndNearby()"
                         style="flex-shrink:0; padding:9px 12px; background:#fff8f0; color:#b8860b;
                                border:1.5px solid #e8c97a; border-radius:10px; font-size:12px;
                                font-weight:700; cursor:pointer; white-space:nowrap; line-height:1.3;">
-                        📍<br>附近
+                        📍<br>門市
                     </button>
                 </div>
                 <span id="store-status" style="font-size:11px;"></span>
@@ -1481,30 +1481,120 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        function findNearbyStores() {
+        function selectStoreEntry(id, name, addr) {
+            document.getElementById('store-search').value = name;
+            document.getElementById('store-info').value = `店號：${id} | ${name} | ${addr}`;
+            document.getElementById('store-info').style.border = '1.5px solid #b8860b';
+            document.getElementById('store-info').style.color = '#3e2723';
+            document.getElementById('selected-store-id').value = id;
+            document.getElementById('store-suggestions').style.display = 'none';
+            document.getElementById('store-status').textContent = `✅ 已選擇：${name}`;
+        }
+
+        function showFavAndNearby() {
+            const btn = document.getElementById('nearby-btn');
+            const status = document.getElementById('store-status');
+            const suggestions = document.getElementById('store-suggestions');
+
+            suggestions.innerHTML = '';
+            suggestions.style.maxHeight = '260px';
+            suggestions.style.overflowY = 'auto';
+
+            // 常用門市區塊
+            try {
+                const favs = JSON.parse(localStorage.getItem('_favStores') || '[]');
+                if (favs.length > 0) {
+                    const favHeader = document.createElement('li');
+                    favHeader.style.cssText = 'font-size:11px; color:#b8860b; font-weight:700; padding:8px 12px 4px; background:#fffdf5; pointer-events:none; border-bottom:1px solid #f0ece6;';
+                    favHeader.textContent = '⭐ 常用門市';
+                    suggestions.appendChild(favHeader);
+                    favs.forEach(s => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>${s.name}</strong><span style="color:#bbb; font-size:11px; margin-left:6px;">店號 ${s.id}</span><br><small style="color:#888;">${s.addr}</small>`;
+                        li.onclick = () => selectStoreEntry(s.id, s.name, s.addr);
+                        suggestions.appendChild(li);
+                    });
+                }
+            } catch(e) {}
+
+            // 附近門市區塊
+            const cachedPos = localStorage.getItem('_userPos');
+            if (cachedPos) {
+                try {
+                    const { lat, lng } = JSON.parse(cachedPos);
+                    const withDist = storesData
+                        .filter(s => s.lat && s.lng)
+                        .map(s => ({ ...s, dist: haversine(lat, lng, s.lat, s.lng) }))
+                        .sort((a, b) => a.dist - b.dist)
+                        .slice(0, 8);
+
+                    if (withDist.length > 0) {
+                        const nearbyHeader = document.createElement('li');
+                        nearbyHeader.style.cssText = 'font-size:11px; color:#5d4037; font-weight:700; padding:8px 12px 4px; background:#fdf8f2; pointer-events:none; border-bottom:1px solid #f0ece6; border-top:1px solid #f0ece6;';
+                        nearbyHeader.textContent = '📍 附近門市';
+                        suggestions.appendChild(nearbyHeader);
+                        withDist.forEach(s => {
+                            const distStr = s.dist < 1 ? Math.round(s.dist * 1000) + 'm' : s.dist.toFixed(1) + 'km';
+                            const li = document.createElement('li');
+                            li.innerHTML = `<strong>${s['名稱']}</strong><span style="color:#b8860b; font-size:11px; margin-left:6px;">📍 ${distStr}</span><br><small style="color:#888;">${s['地址']}</small>`;
+                            li.onclick = () => selectStoreEntry(s['店號'], s['名稱'], s['地址']);
+                            suggestions.appendChild(li);
+                        });
+                        // 底部提示
+                        const hint = document.createElement('li');
+                        hint.style.cssText = 'font-size:11px; color:#bbb; text-align:center; padding:8px 4px; pointer-events:none; border-top:1px solid #f0ece6;';
+                        hint.textContent = '位置不對？再按一次「📍 門市」重新定位';
+                        suggestions.appendChild(hint);
+                        suggestions.style.display = 'block';
+                        status.textContent = '✓ 共 7,362 間門市，輸入關鍵字搜尋';
+                        // 背景靜默更新位置
+                        navigator.geolocation.getCurrentPosition(pos => {
+                            const newLat = pos.coords.latitude, newLng = pos.coords.longitude;
+                            localStorage.setItem('_userPos', JSON.stringify({ lat: newLat, lng: newLng, ts: Date.now() }));
+                        }, () => {}, { maximumAge: 0, enableHighAccuracy: false });
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            // 沒有位置快取 → 觸發定位
+            const favs = JSON.parse(localStorage.getItem('_favStores') || '[]');
+            if (favs.length > 0) {
+                // 有常用門市就先顯示，同時背景定位
+                suggestions.style.display = 'block';
+                status.textContent = '📍 正在取得附近門市...';
+                findNearbyStores(true);
+            } else {
+                suggestions.style.display = 'none';
+                findNearbyStores(false);
+            }
+        }
+
+        function findNearbyStores(silentAppend) {
             const btn = document.getElementById('nearby-btn');
             const status = document.getElementById('store-status');
             if (!navigator.geolocation) {
-                alert('您的瀏覽器不支援定位功能');
+                if (!silentAppend) alert('您的瀏覽器不支援定位功能');
                 return;
             }
 
-            // 有快取就瞬間顯示，背景靜默更新位置，完成後自動刷新清單
+            // 有快取就瞬間顯示，背景靜默更新位置
             try {
                 const cached = localStorage.getItem('_userPos');
                 if (cached) {
                     const { lat, lng } = JSON.parse(cached);
-                    showNearbyFromCoords(lat, lng, btn, status);
+                    if (silentAppend) appendNearbyToList(lat, lng, status);
+                    else showNearbyFromCoords(lat, lng, btn, status);
                     // 背景靜默重新定位
                     navigator.geolocation.getCurrentPosition(
                         pos => {
                             const newLat = pos.coords.latitude, newLng = pos.coords.longitude;
                             localStorage.setItem('_userPos', JSON.stringify({ lat: newLat, lng: newLng, ts: Date.now() }));
-                            // 清單還開著且位置有變化（>500m）才靜默刷新
                             const suggestions = document.getElementById('store-suggestions');
                             const dist = haversine(lat, lng, newLat, newLng);
                             if (suggestions.style.display !== 'none' && dist > 0.5) {
-                                showNearbyFromCoords(newLat, newLng, btn, status);
+                                if (silentAppend) appendNearbyToList(newLat, newLng, status);
+                                else showNearbyFromCoords(newLat, newLng, btn, status);
                             }
                         }, () => {}, { maximumAge: 0, enableHighAccuracy: false }
                     );
@@ -1512,8 +1602,7 @@
                 }
             } catch(e) {}
 
-            btn.innerHTML = '定位中...';
-            btn.disabled = true;
+            if (!silentAppend) { btn.innerHTML = '定位中...'; btn.disabled = true; }
             status.textContent = '📍 正在取得位置...';
 
             function startWatch(isRetry) {
@@ -1524,8 +1613,8 @@
                         status.textContent = '📍 重新嘗試定位中...';
                         startWatch(true);
                     } else {
-                        btn.innerHTML = '📍<br>附近'; btn.disabled = false;
-                        status.textContent = '⚠️ 定位失敗，請手動搜尋門市';
+                        if (!silentAppend) { btn.innerHTML = '📍<br>門市'; btn.disabled = false; }
+                        status.textContent = silentAppend ? '' : '⚠️ 定位失敗，請手動搜尋門市';
                     }
                 }, 15000);
 
@@ -1535,30 +1624,61 @@
                         navigator.geolocation.clearWatch(watchId); watchId = null;
                         const lat = pos.coords.latitude, lng = pos.coords.longitude;
                         try { localStorage.setItem('_userPos', JSON.stringify({ lat, lng, ts: Date.now() })); } catch(e) {}
-                        window._cachedPosition = pos;
-                        showNearbyFromCoords(lat, lng, btn, status);
+                        if (silentAppend) appendNearbyToList(lat, lng, status);
+                        else showNearbyFromCoords(lat, lng, btn, status);
                     },
                     err => {
                         clearTimeout(giveUpTimer);
                         if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-                        if (err.code === 1) {
-                            status.textContent = '定位權限未開啟，請手動搜尋門市';
-                            btn.innerHTML = '📍<br>附近'; btn.disabled = false;
-                        } else if (err.code === 2) {
-                            status.textContent = '此裝置無法定位，請手動搜尋門市';
-                            btn.innerHTML = '📍<br>附近'; btn.disabled = false;
-                        } else if (!isRetry) {
-                            status.textContent = '📍 重新嘗試定位中...';
-                            startWatch(true);
-                        } else {
-                            status.textContent = '⚠️ 定位失敗，請手動搜尋門市';
-                            btn.innerHTML = '📍<br>附近'; btn.disabled = false;
+                        if (!silentAppend) {
+                            if (err.code === 1) status.textContent = '定位權限未開啟，請手動搜尋門市';
+                            else if (err.code === 2) status.textContent = '此裝置無法定位，請手動搜尋門市';
+                            else if (!isRetry) { status.textContent = '📍 重新嘗試定位中...'; startWatch(true); return; }
+                            else status.textContent = '⚠️ 定位失敗，請手動搜尋門市';
+                            btn.innerHTML = '📍<br>門市'; btn.disabled = false;
                         }
                     },
                     { maximumAge: 300000, enableHighAccuracy: false }
                 );
             }
             startWatch(false);
+        }
+
+        // 附近門市附加到現有清單（不清空）
+        function appendNearbyToList(lat, lng, status) {
+            const suggestions = document.getElementById('store-suggestions');
+            // 移除舊的附近門市區塊（如果有）
+            const oldNearby = suggestions.querySelectorAll('.nearby-item');
+            oldNearby.forEach(el => el.remove());
+
+            const withDist = storesData
+                .filter(s => s.lat && s.lng)
+                .map(s => ({ ...s, dist: haversine(lat, lng, s.lat, s.lng) }))
+                .sort((a, b) => a.dist - b.dist)
+                .slice(0, 8);
+            if (withDist.length === 0) return;
+
+            const header = document.createElement('li');
+            header.className = 'nearby-item';
+            header.style.cssText = 'font-size:11px; color:#5d4037; font-weight:700; padding:8px 12px 4px; background:#fdf8f2; pointer-events:none; border-top:1px solid #f0ece6;';
+            header.textContent = '📍 附近門市';
+            suggestions.appendChild(header);
+
+            withDist.forEach(s => {
+                const distStr = s.dist < 1 ? Math.round(s.dist * 1000) + 'm' : s.dist.toFixed(1) + 'km';
+                const li = document.createElement('li');
+                li.className = 'nearby-item';
+                li.innerHTML = `<strong>${s['名稱']}</strong><span style="color:#b8860b; font-size:11px; margin-left:6px;">📍 ${distStr}</span><br><small style="color:#888;">${s['地址']}</small>`;
+                li.onclick = () => selectStoreEntry(s['店號'], s['名稱'], s['地址']);
+                suggestions.appendChild(li);
+            });
+
+            const hint = document.createElement('li');
+            hint.className = 'nearby-item';
+            hint.style.cssText = 'font-size:11px; color:#bbb; text-align:center; padding:8px 4px; pointer-events:none; border-top:1px solid #f0ece6;';
+            hint.textContent = '位置不對？再按一次「📍 門市」重新定位';
+            suggestions.appendChild(hint);
+            suggestions.style.display = 'block';
         }
 
         function showNearbyFromPos(pos, btn, status) {
@@ -1814,6 +1934,22 @@
 
                 if (result.result === 'success') {
                     localStorage.removeItem(CACHE_KEY); _submitToken = null;
+                    // 儲存收件資訊
+                    try {
+                        localStorage.setItem('_userInfo', JSON.stringify({
+                            name: payload.name, phone: String(payload.phone).replace(/^'/, ''), email: payload.email
+                        }));
+                    } catch(e) {}
+                    // 儲存常用門市（最多3間，依使用次數）
+                    try {
+                        const favKey = '_favStores';
+                        let favs = JSON.parse(localStorage.getItem(favKey) || '[]');
+                        const storeEntry = { id: payload.storeId, name: payload.storeName, addr: payload.storeAddress, count: 1 };
+                        const existing = favs.find(f => f.id === payload.storeId);
+                        if (existing) { existing.count++; } else { favs.unshift(storeEntry); }
+                        favs = favs.sort((a,b) => b.count - a.count).slice(0, 3);
+                        localStorage.setItem(favKey, JSON.stringify(favs));
+                    } catch(e) {}
                     const shippingStr2 = payload.shipping === 0 ? '免運費' : `$${payload.shipping}`;
                     let successMsg = `------------------------------\n【訂購人姓名】${payload.name}\n【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr2}\n【結帳總額】$${payload.totalPrice}\n\n※ 訂單明細將寄送至您的 Email（約 1 分鐘內）。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
                     document.getElementById('modal-msg').textContent = successMsg;
@@ -1829,6 +1965,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadProducts();
             loadRanking(30);
+            // 自動填入上次的收件資訊
+            try {
+                const saved = JSON.parse(localStorage.getItem('_userInfo') || '{}');
+                if (saved.name)  document.getElementById('buyer-name').value  = saved.name;
+                if (saved.phone) document.getElementById('buyer-phone').value = saved.phone;
+                if (saved.email) document.getElementById('buyer-email').value = saved.email;
+                if (saved.name || saved.phone) _checkVip();
+            } catch(e) {}
         });
 
         let currentRankingDays = 30;
