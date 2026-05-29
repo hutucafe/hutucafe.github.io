@@ -483,7 +483,10 @@
             <div class="section-title">🏪 7-ELEVEN 取貨門市</div>
             <div class="form-group">
                 <label>搜尋門市 (門市名稱 或 店號 或 地址) <span style="color:red">*</span></label>
-                <input type="text" id="store-search" placeholder="例如: 集寶 (門市、店號、地址擇一即可)" autocomplete="off">
+                <div style="display:flex; gap:8px; align-items:flex-start;">
+                    <input type="text" id="store-search" placeholder="例如: 集寶 (門市、店號、地址擇一即可)" autocomplete="off" style="flex:1;">
+                    <button type="button" id="nearby-btn" onclick="findNearbyStores()" style="flex-shrink:0; padding:10px 12px; background:#f5f0eb; color:#5d4037; border:1px solid #d4b896; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;">📍 附近門市</button>
+                </div>
                 <span id="store-status">載入門市資料中...</span>
                 <ul id="store-suggestions" class="suggestions-list"></ul>
             </div>
@@ -1455,6 +1458,67 @@
         }
 
         let storesData = [];
+
+        // Haversine 公式計算兩點距離（公里）
+        function haversine(lat1, lng1, lat2, lng2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function findNearbyStores() {
+            const btn = document.getElementById('nearby-btn');
+            const status = document.getElementById('store-status');
+            if (!navigator.geolocation) {
+                alert('您的瀏覽器不支援定位功能');
+                return;
+            }
+            btn.textContent = '定位中...';
+            btn.disabled = true;
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    const { latitude, longitude } = pos.coords;
+                    // 過濾有座標的門市並計算距離
+                    const withDist = storesData
+                        .filter(s => s.lat && s.lng)
+                        .map(s => ({ ...s, dist: haversine(latitude, longitude, s.lat, s.lng) }))
+                        .sort((a, b) => a.dist - b.dist)
+                        .slice(0, 8);
+
+                    const suggestions = document.getElementById('store-suggestions');
+                    if (withDist.length === 0) {
+                        status.textContent = '找不到附近門市，請手動搜尋';
+                        btn.textContent = '📍 附近門市';
+                        btn.disabled = false;
+                        return;
+                    }
+                    status.textContent = `📍 顯示最近 ${withDist.length} 間門市`;
+                    suggestions.innerHTML = withDist.map(s => {
+                        const distStr = s.dist < 1
+                            ? Math.round(s.dist * 1000) + 'm'
+                            : s.dist.toFixed(1) + 'km';
+                        return `<li onclick="selectStore('${s['店號']}','${s['名稱'].replace(/'/g,"\\'")}','${s['地址'].replace(/'/g,"\\'")}')">
+                            <strong>${s['名稱']}</strong>
+                            <span style="color:#b8860b; font-size:11px; margin-left:6px;">📍 ${distStr}</span>
+                            <br><small style="color:#888;">${s['地址']}</small>
+                        </li>`;
+                    }).join('');
+                    suggestions.style.display = 'block';
+                    btn.textContent = '📍 附近門市';
+                    btn.disabled = false;
+                },
+                err => {
+                    alert('無法取得位置，請允許瀏覽器存取定位權限，或手動搜尋門市。');
+                    btn.textContent = '📍 附近門市';
+                    btn.disabled = false;
+                },
+                { timeout: 10000, maximumAge: 60000 }
+            );
+        }
         async function loadStores() {
             try {
                 const cached = localStorage.getItem(STORES_KEY);
