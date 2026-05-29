@@ -322,7 +322,7 @@
         }
         .cart-flash { animation: cartFlash 0.35s ease-out; }
         .cart-badge {
-            display: none; position: fixed; bottom: 175px; right: 16px; z-index: 1100;
+            display: none; position: fixed; bottom: 180px; right: 16px; z-index: 1100;
             background: #3e2723; color: #fff; border-radius: 50px;
             padding: 8px 14px; font-size: 13px; font-weight: 700;
             box-shadow: 0 3px 12px rgba(0,0,0,0.25); cursor: pointer;
@@ -522,10 +522,12 @@
 
     <div class="bottom-bar">
         <div class="total-info">
-            <div id="cart-summary-link" style="display:none; margin-bottom:6px;">
-                <span onclick="openCartSummary()" style="font-size:12px; color:#b8860b; text-decoration:underline; cursor:pointer;">📋 查看已選購品項</span>
+            <div id="cart-summary-link" style="display:none; margin-bottom:8px;">
+                <span onclick="openCartSummary()" style="font-size:13px; font-weight:700; color:#b8860b; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                    🛒 已選 <span id="display-qty-label">0</span> 件・<span style="text-decoration:underline;">查看已選購品項</span>
+                </span>
             </div>
-            <div class="calc-row"><span class="label">商品小計</span><span style="display:flex;align-items:baseline;gap:10px;"><span id="display-qty" style="font-size:clamp(9px,2.8vw,11px);color:#888;"></span><span id="display-original">$0</span></span></div>
+            <div class="calc-row"><span class="label">商品小計</span><span id="display-original">$0</span></div>
             <div class="calc-row text-red"><span class="label">指定品項折扣 (<span id="ui-bottom-discount"></span>)</span><span id="display-discount">-$0</span></div>
             <div class="calc-row"><span class="label">運費 (滿千免運)</span><span id="display-shipping">$0</span></div>
             <div class="calc-row total-row">
@@ -537,10 +539,6 @@
             <button id="submit-btn" onclick="submitOrder()">確認送出</button>
             <button id="clear-cart-btn" onclick="clearCart()" style="background:transparent; color:#aaa; border:none; font-size:12px; cursor:pointer; padding:2px 0; text-decoration:underline; display:none;">🗑 清空購物車</button>
         </div>
-    </div>
-
-    <div id="cart-badge" class="cart-badge" onclick="document.querySelector('.bottom-bar').scrollIntoView({behavior:'smooth'})">
-        🛒 <span class="cart-badge-count" id="cart-badge-count">0</span> 件
     </div>
 
     <div id="confirm-order-modal" class="custom-modal">
@@ -1445,23 +1443,8 @@
             }
             currentFinalTotal = discountedTotal + shipping;
             document.getElementById('display-original').textContent = `$${originalTotal}`;
-            const qtyEl = document.getElementById('display-qty');
-            if (qtyEl) qtyEl.textContent = totalItems > 0 ? `(共 ${totalItems} 包)` : '';
-            document.getElementById('display-discount').textContent = `-$${discountAmt}`;
-            document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
-            document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
-            // 購物車角標
-            const badgeEl = document.getElementById('cart-badge');
-            const badgeCount = document.getElementById('cart-badge-count');
-            if (badgeEl && badgeCount) {
-                badgeCount.textContent = totalItems;
-                badgeEl.style.display = totalItems > 0 ? 'flex' : 'none';
-                // 動態定位：bottom-bar 高度 + 16px 間距
-                const bottomBar = document.querySelector('.bottom-bar');
-                if (bottomBar) {
-                    badgeEl.style.bottom = (bottomBar.offsetHeight + 16) + 'px';
-                }
-            }
+            const qtyEl = document.getElementById('display-qty-label');
+            if (qtyEl) qtyEl.textContent = totalItems;
             const clearBtn = document.getElementById('clear-cart-btn');
             if (clearBtn) clearBtn.style.display = totalItems > 0 ? 'block' : 'none';
             const summaryLink = document.getElementById('cart-summary-link');
