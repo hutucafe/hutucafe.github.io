@@ -1490,7 +1490,7 @@
                 }
                 btn.textContent = '📍 附近門市'; btn.disabled = false;
                 status.textContent = '⚠️ 定位較慢，請再按一次「附近門市」';
-            }, 25000);
+            }, 10000);
 
             watchId = navigator.geolocation.watchPosition(
                 pos => {
