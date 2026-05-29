@@ -1479,68 +1479,69 @@
             }
             btn.textContent = '定位中...';
             btn.disabled = true;
-            status.textContent = '📍 正在取得位置，請稍候...';
+            status.textContent = '📍 正在取得位置...';
 
-            function doLocate(isRetry) {
-                navigator.geolocation.getCurrentPosition(
-                    pos => {
-                        const { latitude, longitude } = pos.coords;
-                        const withDist = storesData
-                            .filter(s => s.lat && s.lng)
-                            .map(s => ({ ...s, dist: haversine(latitude, longitude, s.lat, s.lng) }))
-                            .sort((a, b) => a.dist - b.dist)
-                            .slice(0, 8);
+            let watchId = null;
+            // 15 秒後強制停止
+            const giveUpTimer = setTimeout(() => {
+                if (watchId !== null) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                }
+                btn.textContent = '📍 附近門市'; btn.disabled = false;
+                status.textContent = '定位失敗，請手動搜尋門市';
+            }, 15000);
 
-                        const suggestions = document.getElementById('store-suggestions');
-                        if (withDist.length === 0) {
-                            status.textContent = '找不到附近門市，請手動搜尋';
-                            btn.textContent = '📍 附近門市';
-                            btn.disabled = false;
-                            return;
-                        }
-                        status.textContent = `📍 附近 ${withDist.length} 間門市（可下滑查看更多）`;
-                        suggestions.innerHTML = '';
-                        suggestions.style.maxHeight = '200px';
-                        suggestions.style.overflowY = 'auto';
-                        withDist.forEach(s => {
-                            const distStr = s.dist < 1
-                                ? Math.round(s.dist * 1000) + 'm'
-                                : s.dist.toFixed(1) + 'km';
-                            const li = document.createElement('li');
-                            li.innerHTML = `<strong>${s['名稱']}</strong><span style="color:#b8860b; font-size:11px; margin-left:6px;">📍 ${distStr}</span><br><small style="color:#888;">${s['地址']}</small>`;
-                            li.onclick = () => {
-                                document.getElementById('store-search').value = s['名稱'];
-                                document.getElementById('store-info').value = `店號：${s['店號']} | ${s['名稱']} | ${s['地址']}`;
-                                document.getElementById('selected-store-id').value = s['店號'];
-                                suggestions.style.display = 'none';
-                                status.textContent = `✅ 已選擇：${s['名稱']}`;
-                            };
-                            suggestions.appendChild(li);
-                        });
-                        suggestions.style.display = 'block';
-                        btn.textContent = '📍 附近門市';
-                        btn.disabled = false;
-                    },
-                    err => {
-                        if (err.code === 3 && !isRetry) {
-                            // 逾時且是第一次 → 靜默自動重試（授權完成後瀏覽器會快取位置）
-                            doLocate(true);
-                            return;
-                        }
-                        // 第二次失敗或權限被拒 → 只更新狀態文字，不跳 alert
-                        if (err.code === 1) {
-                            status.textContent = '定位權限未開啟，請手動搜尋門市';
-                        } else {
-                            status.textContent = '定位失敗，請手動搜尋門市';
-                        }
-                        btn.textContent = '📍 附近門市';
-                        btn.disabled = false;
-                    },
-                    // 第一次給長 timeout 等授權，重試時用短 timeout
-                    { timeout: isRetry ? 15000 : 30000, maximumAge: 300000, enableHighAccuracy: false }
-                );
-            }
-            doLocate(false);
+            watchId = navigator.geolocation.watchPosition(
+                pos => {
+                    // 有位置就立刻用，停止繼續監聽
+                    clearTimeout(giveUpTimer);
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+
+                    const { latitude, longitude } = pos.coords;
+                    const withDist = storesData
+                        .filter(s => s.lat && s.lng)
+                        .map(s => ({ ...s, dist: haversine(latitude, longitude, s.lat, s.lng) }))
+                        .sort((a, b) => a.dist - b.dist)
+                        .slice(0, 8);
+
+                    const suggestions = document.getElementById('store-suggestions');
+                    if (withDist.length === 0) {
+                        status.textContent = '找不到附近門市，請手動搜尋';
+                        btn.textContent = '📍 附近門市'; btn.disabled = false;
+                        return;
+                    }
+                    status.textContent = `📍 附近 ${withDist.length} 間門市（可下滑查看更多）`;
+                    suggestions.innerHTML = '';
+                    suggestions.style.maxHeight = '200px';
+                    suggestions.style.overflowY = 'auto';
+                    withDist.forEach(s => {
+                        const distStr = s.dist < 1 ? Math.round(s.dist * 1000) + 'm' : s.dist.toFixed(1) + 'km';
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>${s['名稱']}</strong><span style="color:#b8860b; font-size:11px; margin-left:6px;">📍 ${distStr}</span><br><small style="color:#888;">${s['地址']}</small>`;
+                        li.onclick = () => {
+                            document.getElementById('store-search').value = s['名稱'];
+                            document.getElementById('store-info').value = `店號：${s['店號']} | ${s['名稱']} | ${s['地址']}`;
+                            document.getElementById('selected-store-id').value = s['店號'];
+                            suggestions.style.display = 'none';
+                            status.textContent = `✅ 已選擇：${s['名稱']}`;
+                        };
+                        suggestions.appendChild(li);
+                    });
+                    suggestions.style.display = 'block';
+                    btn.textContent = '📍 附近門市'; btn.disabled = false;
+                },
+                err => {
+                    clearTimeout(giveUpTimer);
+                    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+                    if (err.code === 1) status.textContent = '定位權限未開啟，請手動搜尋門市';
+                    else if (err.code === 2) status.textContent = '此裝置無法定位，請手動搜尋門市';
+                    else status.textContent = '定位失敗，請手動搜尋門市';
+                    btn.textContent = '📍 附近門市'; btn.disabled = false;
+                },
+                { maximumAge: 300000, enableHighAccuracy: false }
+            );
         }
         async function loadStores() {
             try {
