@@ -309,7 +309,30 @@
         }
         .ranking-empty { font-size: 13px; color: #bbb; padding: 6px 0; }
 
-        /* 售完卡片樣式 */
+        /* 送出確認 modal */
+        .confirm-modal-content {
+            background: #fff; border-radius: 16px; padding: 20px 18px;
+            max-height: 80vh; overflow-y: auto; width: 100%; max-width: 420px;
+        }
+        .confirm-item-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0ece6; font-size: 13px; }
+        .confirm-total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; color: #3e2723; padding-top: 10px; margin-top: 4px; border-top: 2px solid #d7ccc8; }
+            0%   { background: #fff8e1; transform: scale(1.04); }
+            100% { background: transparent; transform: scale(1); }
+        }
+        .cart-flash { animation: cartFlash 0.35s ease-out; }
+        .cart-badge {
+            display: none; position: fixed; bottom: 80px; right: 16px; z-index: 900;
+            background: #3e2723; color: #fff; border-radius: 50px;
+            padding: 8px 14px; font-size: 13px; font-weight: 700;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.25); cursor: pointer;
+            transition: transform 0.2s; align-items: center; gap: 6px;
+        }
+        .cart-badge:active { transform: scale(0.95); }
+        .cart-badge-count {
+            background: #b8860b; color: #fff; border-radius: 50%;
+            width: 20px; height: 20px; font-size: 11px; font-weight: 900;
+            display: flex; align-items: center; justify-content: center;
+        }
         .modern-card.is-sold-out { opacity: 0.90; }
         .modern-card.is-sold-out .card-thumb img { filter: grayscale(45%); }
         .modern-card.is-sold-out .card-name { color: #aaa; }
@@ -512,6 +535,21 @@
         <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
             <button id="submit-btn" onclick="submitOrder()">確認送出</button>
             <button id="clear-cart-btn" onclick="clearCart()" style="background:transparent; color:#aaa; border:none; font-size:12px; cursor:pointer; padding:2px 0; text-decoration:underline; display:none;">🗑 清空購物車</button>
+        </div>
+    </div>
+
+    <div id="cart-badge" class="cart-badge" onclick="document.querySelector('.bottom-bar').scrollIntoView({behavior:'smooth'})">
+        🛒 <span class="cart-badge-count" id="cart-badge-count">0</span> 件
+    </div>
+
+    <div id="confirm-order-modal" class="custom-modal">
+        <div class="confirm-modal-content">
+            <h3 style="margin:0 0 14px; font-size:16px; color:#3e2723;">📋 確認訂單</h3>
+            <div id="confirm-order-body"></div>
+            <div style="display:flex; gap:10px; margin-top:16px;">
+                <button onclick="closeConfirmModal()" style="flex:1; padding:11px; background:#f5f0eb; color:#5d4037; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">返回修改</button>
+                <button onclick="doSubmitOrder()" id="confirm-submit-btn" style="flex:2; padding:11px; background:#3e2723; color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">✅ 確認送出</button>
+            </div>
         </div>
     </div>
 
@@ -1327,6 +1365,16 @@
                 newVal = maxQty;
             }
             cart[uid].qty = newVal;
+            // 加購閃光效果
+            if (change > 0 && newVal > 0) {
+                const cardEl = document.querySelector(`[data-uid="${uid}"]`)?.closest('.modern-card');
+                if (cardEl) {
+                    cardEl.classList.remove('cart-flash');
+                    void cardEl.offsetWidth;
+                    cardEl.classList.add('cart-flash');
+                    setTimeout(() => cardEl.classList.remove('cart-flash'), 400);
+                }
+            }
             calculateTotal();
             renderProducts(currentTab);
         }
@@ -1372,8 +1420,13 @@
             document.getElementById('display-discount').textContent = `-$${discountAmt}`;
             document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
             document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
-            const clearBtn = document.getElementById('clear-cart-btn');
-            if (clearBtn) clearBtn.style.display = totalItems > 0 ? 'block' : 'none';
+            // 購物車角標
+            const badgeEl = document.getElementById('cart-badge');
+            const badgeCount = document.getElementById('cart-badge-count');
+            if (badgeEl && badgeCount) {
+                badgeCount.textContent = totalItems;
+                badgeEl.style.display = totalItems > 0 ? 'flex' : 'none';
+            }
             const summaryLink = document.getElementById('cart-summary-link');
             if (summaryLink) summaryLink.style.display = totalItems > 0 ? 'block' : 'none';
         }
@@ -1474,6 +1527,8 @@
         let _submitToken = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         let _isSubmitting = false;
 
+        let _pendingPayload = null;
+
         async function submitOrder() {
             if (_isSubmitting) return;
             if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
@@ -1483,11 +1538,10 @@
             const phone = document.getElementById('buyer-phone').value.trim();
             const email = document.getElementById('buyer-email').value.trim();
             let notes = document.getElementById('buyer-notes').value.trim();
-            if (!storeId) { alert("請搜尋並選擇您要取貨的 7-11 門市！"); sInput.focus(); return; }
+            if (!storeId) { alert("請搜尋並選擇您要取貨的 7-11 門市！"); return; }
             if (!name || !phone) return alert("請填寫完整的姓名與手機號碼！");
             if (!email) { alert("請填寫 Email，以便接收完整的訂單明細與出貨通知！"); document.getElementById('buyer-email').focus(); return; }
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true; btn.textContent = "訂單處理中..."; _isSubmitting = true;
+
             let storeName = "未知"; let storeAddr = "未知";
             if (storeInfo.includes('|')) {
                 const parts = storeInfo.split('|').map(s => s.trim());
@@ -1514,10 +1568,49 @@
             const activeRate = _getActiveRate();
             const activeDiscountName = _getActiveDiscountName();
             const totalDiscountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
+
+            // 組合 payload 存起來
+            _pendingPayload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: activeDiscountName, globalDiscountRate: SHOP_CONFIG.discountRate };
+
+            // 顯示確認摘要
+            const allItems = [...discountedOrderItems, ...nonDiscountedOrderItems];
+            let confirmHtml = `<div style="font-size:13px; color:#555; margin-bottom:12px;">
+                <span style="font-weight:600; color:#3e2723;">📍 取貨門市：</span>${storeName}<br>
+                <span style="font-weight:600; color:#3e2723;">👤 取件人：</span>${name} ${phone}
+            </div>`;
+            confirmHtml += allItems.map(item =>
+                `<div class="confirm-item-row">
+                    <span style="flex:1; color:#333;">${item.rawName}<span style="color:#aaa; font-size:11px; margin-left:4px;">${item.pkg || ''}</span></span>
+                    <span style="color:#888; margin:0 8px;">x${item.qty}</span>
+                    <span style="font-weight:600; color:#b77b3b;">$${item.subtotal}</span>
+                </div>`
+            ).join('');
+            if (totalDiscountAmt > 0) {
+                confirmHtml += `<div class="confirm-item-row" style="color:#c62828;">
+                    <span>折扣（${activeDiscountName}）</span><span>-$${totalDiscountAmt}</span>
+                </div>`;
+            }
+            confirmHtml += `<div class="confirm-item-row"><span>運費</span><span>${shippingAmt === 0 ? '免運費 🎉' : '$' + shippingAmt}</span></div>`;
+            confirmHtml += `<div class="confirm-total-row"><span>結帳總額</span><span style="color:#b8860b;">$${currentFinalTotal}</span></div>`;
+            document.getElementById('confirm-order-body').innerHTML = confirmHtml;
+            document.getElementById('confirm-order-modal').classList.add('open');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-order-modal').classList.remove('open');
+        }
+
+        async function doSubmitOrder() {
+            if (_isSubmitting || !_pendingPayload) return;
+            closeConfirmModal();
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true; btn.textContent = "訂單處理中..."; _isSubmitting = true;
+            const payload = _pendingPayload;
             let alertItemsText = '';
-            if (discountedText) { alertItemsText += `【指定品項 (${activeDiscountName})】\n${discountedText}  👉 折扣金額：-$${totalDiscountAmt}\n\n`; }
+            const discountedText = payload.discountedItems.map(i => `  • ${i.name} (${i.pkg}) x ${i.qty}\n`).join('');
+            const nonDiscountedText = payload.nonDiscountedItems.map(i => `  • ${i.name} (${i.pkg}) x ${i.qty}\n`).join('');
+            if (discountedText) { alertItemsText += `【指定品項 (${payload.discountName})】\n${discountedText}  👉 折扣金額：-$${payload.totalDiscountAmt}\n\n`; }
             if (nonDiscountedText) { alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`; }
-            const payload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: activeDiscountName, globalDiscountRate: SHOP_CONFIG.discountRate };
             try {
                 // ✅ 設定 timeout：若 GAS 超過 12 秒未回應則視為成功（避免前端無限等待）
                 const controller = new AbortController();
@@ -1545,8 +1638,8 @@
 
                 if (result.result === 'success') {
                     localStorage.removeItem(CACHE_KEY); _submitToken = null;
-                    const isVipApplied = vipEnabled && SHOP_CONFIG._vipRate !== null && SHOP_CONFIG._vipRate !== undefined && SHOP_CONFIG._vipRate < SHOP_CONFIG.discountRate;
-                    let successMsg = `------------------------------\n【訂購人姓名】${name}\n【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr}\n【結帳總額】$${currentFinalTotal}\n\n※ 訂單明細將寄送至您的 Email（約 1 分鐘內）。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
+                    const shippingStr2 = payload.shipping === 0 ? '免運費' : `$${payload.shipping}`;
+                    let successMsg = `------------------------------\n【訂購人姓名】${payload.name}\n【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr2}\n【結帳總額】$${payload.totalPrice}\n\n※ 訂單明細將寄送至您的 Email（約 1 分鐘內）。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
                     document.getElementById('modal-msg').textContent = successMsg;
                     document.getElementById('success-modal').style.display = 'flex';
                 } else {
