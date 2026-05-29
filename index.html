@@ -1477,71 +1477,94 @@
                 alert('您的瀏覽器不支援定位功能');
                 return;
             }
+
+            // 已有預先快取的位置 → 瞬間顯示
+            if (window._cachedPosition) {
+                showNearbyFromPos(window._cachedPosition, btn, status);
+                return;
+            }
+
             btn.textContent = '定位中...';
             btn.disabled = true;
             status.textContent = '📍 正在取得位置...';
 
-            let watchId = null;
-            // 15 秒後強制停止
-            const giveUpTimer = setTimeout(() => {
-                if (watchId !== null) {
-                    navigator.geolocation.clearWatch(watchId);
-                    watchId = null;
-                }
-                btn.textContent = '📍 附近門市'; btn.disabled = false;
-                status.textContent = '⚠️ 定位較慢，請再按一次「附近門市」';
-            }, 10000);
-
-            watchId = navigator.geolocation.watchPosition(
-                pos => {
-                    // 有位置就立刻用，停止繼續監聽
-                    clearTimeout(giveUpTimer);
-                    navigator.geolocation.clearWatch(watchId);
-                    watchId = null;
-
-                    const { latitude, longitude } = pos.coords;
-                    const withDist = storesData
-                        .filter(s => s.lat && s.lng)
-                        .map(s => ({ ...s, dist: haversine(latitude, longitude, s.lat, s.lng) }))
-                        .sort((a, b) => a.dist - b.dist)
-                        .slice(0, 8);
-
-                    const suggestions = document.getElementById('store-suggestions');
-                    if (withDist.length === 0) {
-                        status.textContent = '找不到附近門市，請手動搜尋';
-                        btn.textContent = '📍 附近門市'; btn.disabled = false;
-                        return;
-                    }
-                    status.textContent = `📍 附近 ${withDist.length} 間門市（可下滑查看更多）`;
-                    suggestions.innerHTML = '';
-                    suggestions.style.maxHeight = '200px';
-                    suggestions.style.overflowY = 'auto';
-                    withDist.forEach(s => {
-                        const distStr = s.dist < 1 ? Math.round(s.dist * 1000) + 'm' : s.dist.toFixed(1) + 'km';
-                        const li = document.createElement('li');
-                        li.innerHTML = `<strong>${s['名稱']}</strong><span style="color:#b8860b; font-size:11px; margin-left:6px;">📍 ${distStr}</span><br><small style="color:#888;">${s['地址']}</small>`;
-                        li.onclick = () => {
-                            document.getElementById('store-search').value = s['名稱'];
-                            document.getElementById('store-info').value = `店號：${s['店號']} | ${s['名稱']} | ${s['地址']}`;
-                            document.getElementById('selected-store-id').value = s['店號'];
-                            suggestions.style.display = 'none';
-                            status.textContent = `✅ 已選擇：${s['名稱']}`;
-                        };
-                        suggestions.appendChild(li);
-                    });
-                    suggestions.style.display = 'block';
-                    btn.textContent = '📍 附近門市'; btn.disabled = false;
-                },
-                err => {
-                    clearTimeout(giveUpTimer);
+            function startWatch(isRetry) {
+                let watchId = null;
+                const giveUpTimer = setTimeout(() => {
                     if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-                    if (err.code === 1) status.textContent = '定位權限未開啟，請手動搜尋門市';
-                    else if (err.code === 2) status.textContent = '此裝置無法定位，請手動搜尋門市';
-                    else status.textContent = '定位失敗，請手動搜尋門市';
-                    btn.textContent = '📍 附近門市'; btn.disabled = false;
-                },
-                { maximumAge: 300000, enableHighAccuracy: false }
-            );
+                    if (!isRetry) {
+                        // 第一次失敗 → 靜默自動重試
+                        status.textContent = '📍 重新嘗試定位中...';
+                        startWatch(true);
+                    } else {
+                        // 第二次也失敗 → 顯示提示
+                        btn.textContent = '📍 附近門市'; btn.disabled = false;
+                        status.textContent = '⚠️ 定位失敗，請手動搜尋門市';
+                    }
+                }, 15000);
+
+                watchId = navigator.geolocation.watchPosition(
+                    pos => {
+                        clearTimeout(giveUpTimer);
+                        navigator.geolocation.clearWatch(watchId); watchId = null;
+                        window._cachedPosition = pos;
+                        showNearbyFromPos(pos, btn, status);
+                    },
+                    err => {
+                        clearTimeout(giveUpTimer);
+                        if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+                        if (err.code === 1) {
+                            status.textContent = '定位權限未開啟，請手動搜尋門市';
+                            btn.textContent = '📍 附近門市'; btn.disabled = false;
+                        } else if (err.code === 2) {
+                            status.textContent = '此裝置無法定位，請手動搜尋門市';
+                            btn.textContent = '📍 附近門市'; btn.disabled = false;
+                        } else if (!isRetry) {
+                            status.textContent = '📍 重新嘗試定位中...';
+                            startWatch(true);
+                        } else {
+                            status.textContent = '⚠️ 定位失敗，請手動搜尋門市';
+                            btn.textContent = '📍 附近門市'; btn.disabled = false;
+                        }
+                    },
+                    { maximumAge: 300000, enableHighAccuracy: false }
+                );
+            }
+            startWatch(false);
+        }
+
+        function showNearbyFromPos(pos, btn, status) {
+            const { latitude, longitude } = pos.coords;
+            const withDist = storesData
+                .filter(s => s.lat && s.lng)
+                .map(s => ({ ...s, dist: haversine(latitude, longitude, s.lat, s.lng) }))
+                .sort((a, b) => a.dist - b.dist)
+                .slice(0, 8);
+            const suggestions = document.getElementById('store-suggestions');
+            if (withDist.length === 0) {
+                status.textContent = '找不到附近門市，請手動搜尋';
+                btn.textContent = '📍 附近門市'; btn.disabled = false;
+                return;
+            }
+            status.textContent = `📍 附近 ${withDist.length} 間門市（可下滑查看更多）`;
+            suggestions.innerHTML = '';
+            suggestions.style.maxHeight = '200px';
+            suggestions.style.overflowY = 'auto';
+            withDist.forEach(s => {
+                const distStr = s.dist < 1 ? Math.round(s.dist * 1000) + 'm' : s.dist.toFixed(1) + 'km';
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${s['名稱']}</strong><span style="color:#b8860b; font-size:11px; margin-left:6px;">📍 ${distStr}</span><br><small style="color:#888;">${s['地址']}</small>`;
+                li.onclick = () => {
+                    document.getElementById('store-search').value = s['名稱'];
+                    document.getElementById('store-info').value = `店號：${s['店號']} | ${s['名稱']} | ${s['地址']}`;
+                    document.getElementById('selected-store-id').value = s['店號'];
+                    suggestions.style.display = 'none';
+                    status.textContent = `✅ 已選擇：${s['名稱']}`;
+                };
+                suggestions.appendChild(li);
+            });
+            suggestions.style.display = 'block';
+            btn.textContent = '📍 附近門市'; btn.disabled = false;
         }
         async function loadStores() {
             try {
@@ -1763,7 +1786,7 @@
         function closeModal() { document.getElementById('success-modal').style.display = 'none'; window.location.reload(); }
         document.addEventListener('DOMContentLoaded', () => {
             loadProducts();
-            loadRanking(30); // 預設顯示近 30 天
+            loadRanking(30);
         });
 
         let currentRankingDays = 30;
