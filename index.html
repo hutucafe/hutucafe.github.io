@@ -1357,6 +1357,7 @@
             calculateTotal();
             renderProducts(currentTab);
         }
+        function clearCart() {
             const hasItems = Object.values(cart).some(c => c.qty > 0);
             if (!hasItems) return;
             if (!confirm('確定要清空購物車嗎？')) return;
