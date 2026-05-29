@@ -1478,11 +1478,29 @@
                 return;
             }
 
-            // 已有預先快取的位置 → 瞬間顯示
-            if (window._cachedPosition) {
-                showNearbyFromPos(window._cachedPosition, btn, status);
-                return;
-            }
+            // 先用 localStorage 快取位置瞬間顯示，同時背景重新定位更新
+            try {
+                const cached = localStorage.getItem('_userPos');
+                if (cached) {
+                    const { lat, lng, ts } = JSON.parse(cached);
+                    if (Date.now() - ts < 3600000) {
+                        showNearbyFromCoords(lat, lng, btn, status);
+                        // 背景靜默重新定位，完成後更新清單
+                        navigator.geolocation.getCurrentPosition(
+                            pos => {
+                                const newLat = pos.coords.latitude, newLng = pos.coords.longitude;
+                                localStorage.setItem('_userPos', JSON.stringify({ lat: newLat, lng: newLng, ts: Date.now() }));
+                                // 位置有明顯變化（超過 500 公尺）才重新顯示
+                                const dist = haversine(lat, lng, newLat, newLng);
+                                if (dist > 0.5) {
+                                    showNearbyFromCoords(newLat, newLng, btn, status);
+                                }
+                            }, () => {}, { maximumAge: 0, enableHighAccuracy: false }
+                        );
+                        return;
+                    }
+                }
+            } catch(e) {}
 
             btn.textContent = '定位中...';
             btn.disabled = true;
@@ -1493,11 +1511,9 @@
                 const giveUpTimer = setTimeout(() => {
                     if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
                     if (!isRetry) {
-                        // 第一次失敗 → 靜默自動重試
                         status.textContent = '📍 重新嘗試定位中...';
                         startWatch(true);
                     } else {
-                        // 第二次也失敗 → 顯示提示
                         btn.textContent = '📍 附近門市'; btn.disabled = false;
                         status.textContent = '⚠️ 定位失敗，請手動搜尋門市';
                     }
@@ -1507,8 +1523,10 @@
                     pos => {
                         clearTimeout(giveUpTimer);
                         navigator.geolocation.clearWatch(watchId); watchId = null;
+                        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+                        try { localStorage.setItem('_userPos', JSON.stringify({ lat, lng, ts: Date.now() })); } catch(e) {}
                         window._cachedPosition = pos;
-                        showNearbyFromPos(pos, btn, status);
+                        showNearbyFromCoords(lat, lng, btn, status);
                     },
                     err => {
                         clearTimeout(giveUpTimer);
@@ -1534,7 +1552,10 @@
         }
 
         function showNearbyFromPos(pos, btn, status) {
-            const { latitude, longitude } = pos.coords;
+            showNearbyFromCoords(pos.coords.latitude, pos.coords.longitude, btn, status);
+        }
+
+        function showNearbyFromCoords(latitude, longitude, btn, status) {
             const withDist = storesData
                 .filter(s => s.lat && s.lng)
                 .map(s => ({ ...s, dist: haversine(latitude, longitude, s.lat, s.lng) }))
