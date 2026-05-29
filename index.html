@@ -1478,27 +1478,26 @@
                 return;
             }
 
-            // 先用 localStorage 快取位置瞬間顯示，同時背景重新定位更新
+            // 有快取就瞬間顯示，背景靜默更新位置，完成後自動刷新清單
             try {
                 const cached = localStorage.getItem('_userPos');
                 if (cached) {
-                    const { lat, lng, ts } = JSON.parse(cached);
-                    if (Date.now() - ts < 3600000) {
-                        showNearbyFromCoords(lat, lng, btn, status);
-                        // 背景靜默重新定位，完成後更新清單
-                        navigator.geolocation.getCurrentPosition(
-                            pos => {
-                                const newLat = pos.coords.latitude, newLng = pos.coords.longitude;
-                                localStorage.setItem('_userPos', JSON.stringify({ lat: newLat, lng: newLng, ts: Date.now() }));
-                                // 位置有明顯變化（超過 500 公尺）才重新顯示
-                                const dist = haversine(lat, lng, newLat, newLng);
-                                if (dist > 0.5) {
-                                    showNearbyFromCoords(newLat, newLng, btn, status);
-                                }
-                            }, () => {}, { maximumAge: 0, enableHighAccuracy: false }
-                        );
-                        return;
-                    }
+                    const { lat, lng } = JSON.parse(cached);
+                    showNearbyFromCoords(lat, lng, btn, status);
+                    // 背景靜默重新定位
+                    navigator.geolocation.getCurrentPosition(
+                        pos => {
+                            const newLat = pos.coords.latitude, newLng = pos.coords.longitude;
+                            localStorage.setItem('_userPos', JSON.stringify({ lat: newLat, lng: newLng, ts: Date.now() }));
+                            // 清單還開著且位置有變化（>500m）才靜默刷新
+                            const suggestions = document.getElementById('store-suggestions');
+                            const dist = haversine(lat, lng, newLat, newLng);
+                            if (suggestions.style.display !== 'none' && dist > 0.5) {
+                                showNearbyFromCoords(newLat, newLng, btn, status);
+                            }
+                        }, () => {}, { maximumAge: 0, enableHighAccuracy: false }
+                    );
+                    return;
                 }
             } catch(e) {}
 
