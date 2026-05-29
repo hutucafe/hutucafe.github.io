@@ -321,7 +321,7 @@
         }
         .cart-flash { animation: cartFlash 0.35s ease-out; }
         .cart-badge {
-            display: none; position: fixed; bottom: 80px; right: 16px; z-index: 900;
+            display: none; position: fixed; bottom: 140px; right: 16px; z-index: 900;
             background: #3e2723; color: #fff; border-radius: 50px;
             padding: 8px 14px; font-size: 13px; font-weight: 700;
             box-shadow: 0 3px 12px rgba(0,0,0,0.25); cursor: pointer;
@@ -1029,7 +1029,7 @@
                         <button onclick="updateQty('${p.uid}', -1)" ${cart[p.uid].qty === 0 ? 'disabled' : ''}>−</button>
                         <input type="number" id="qty-${p.uid}" value="${cart[p.uid].qty}" min="0" inputmode="numeric"
                             onchange="setQtyDirect('${p.uid}', this.value)"
-                            onfocus="this.select()"
+                            
                             style="width:clamp(32px,8vw,40px);">
                         <button onclick="updateQty('${p.uid}', 1)" ${disableAddBtn}>+</button>
                     </div>`;
@@ -1836,7 +1836,7 @@
                             <button id="lb-qty-minus">−</button>
                             <input type="number" id="lb-qty-input" value="0" min="0" inputmode="numeric"
                                 onchange="setQtyDirect(lbCurrentUid, this.value)"
-                                onfocus="this.select()"
+                                
                                 style="width:40px;">
                             <button id="lb-qty-plus">+</button>
                         </div>
