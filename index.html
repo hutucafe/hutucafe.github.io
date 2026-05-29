@@ -353,21 +353,12 @@
         .card-thumb { position: relative; }
 
         /* 頁籤說明區塊 */
-        @keyframes noteSlideIn {
-            from { opacity: 0; transform: translateY(-8px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes noteGlow {
-            0%   { box-shadow: 0 2px 8px rgba(184,134,11,0.12); }
-            50%  { box-shadow: 0 4px 20px rgba(184,134,11,0.45); }
-            100% { box-shadow: 0 2px 8px rgba(184,134,11,0.12); }
-        }
         .tab-note {
             background: linear-gradient(135deg, #fdf3e3 0%, #fde9c4 100%);
             border: 1px solid #d4a843;
             border-left: 4px solid #b8860b;
             border-radius: 10px;
-            padding: 13px 16px 13px 14px;
+            padding: 13px 16px;
             margin-bottom: 16px;
             font-size: 13.5px;
             font-weight: 500;
@@ -375,22 +366,9 @@
             line-height: 1.7;
             white-space: pre-wrap;
             display: none;
-            position: relative;
+            box-shadow: 0 2px 8px rgba(184, 134, 11, 0.12);
         }
-        .tab-note.visible {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            animation: noteSlideIn 0.3s ease-out, noteGlow 1.2s ease-in-out 0.3s;
-        }
-        .tab-note-icon {
-            font-size: 22px;
-            flex-shrink: 0;
-            margin-top: 1px;
-        }
-        .tab-note-text {
-            flex: 1;
-        }
+        .tab-note.visible { display: block; }
 
         /* 載入動畫 */
         .loader-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; color: #8d6e63; }
@@ -540,10 +518,12 @@
             <div class="form-group">
                 <label>手機 <span style="color:red">*</span></label>
                 <input type="tel" id="buyer-phone" placeholder="例如: 0912345678" maxlength="10" oninput="onPhoneInput()">
+                <span id="phone-hint" style="font-size:11px; margin-top:3px; display:none;"></span>
             </div>
             <div class="form-group">
                 <label>Email (接收訂單通知) <span style="color:red">*</span></label>
-                <input type="email" id="buyer-email" placeholder="example@email.com" required>
+                <input type="email" id="buyer-email" placeholder="example@email.com" required oninput="onEmailInput()">
+                <span id="email-hint" style="font-size:11px; margin-top:3px; display:none;"></span>
             </div>
             <div class="form-group">
                 <label>訂單備註 ( 請加入糊塗官方 Line：@hutucafe )</label>
@@ -600,6 +580,9 @@
         <div class="modal-content">
             <h3>🎉 訂單已成功送出！</h3>
             <pre id="modal-msg"></pre>
+            <a href="faq.html" style="display:block; text-align:center; margin-bottom:12px; font-size:13px; color:#b8860b; text-decoration:none;">
+                📦 想查詢訂單狀態？點此查詢訂單 →
+            </a>
             <button onclick="closeModal()">確定並返回</button>
         </div>
     </div>
@@ -672,7 +655,26 @@
 
         // 姓名或電話輸入時即時比對 VIP
         function onNameInput() { _checkVip(); }
-        function onPhoneInput() { _checkVip(); }
+        function onPhoneInput() {
+            _checkVip();
+            const phone = document.getElementById('buyer-phone').value.trim();
+            const hint = document.getElementById('phone-hint');
+            if (!phone) { hint.style.display = 'none'; return; }
+            const valid = /^09\d{8}$/.test(phone);
+            hint.style.display = 'inline';
+            hint.textContent = valid ? '✅ 格式正確' : '⚠️ 請輸入 09 開頭的 10 位數字';
+            hint.style.color = valid ? '#2e7d32' : '#c62828';
+        }
+
+        function onEmailInput() {
+            const email = document.getElementById('buyer-email').value.trim();
+            const hint = document.getElementById('email-hint');
+            if (!email) { hint.style.display = 'none'; return; }
+            const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            hint.style.display = 'inline';
+            hint.textContent = valid ? '✅ 格式正確' : '⚠️ 請確認 Email 格式（需包含 @ 與網域）';
+            hint.style.color = valid ? '#2e7d32' : '#c62828';
+        }
 
         function _checkVip() {
             const name  = document.getElementById('buyer-name').value.trim();
@@ -954,13 +956,10 @@
             const noteEl = document.getElementById('tab-note');
             const noteText = allTabNotes[tabName] || '';
             if (noteText) {
-                // 重設動畫（每次切換頁籤都重新播放）
-                noteEl.classList.remove('visible');
-                void noteEl.offsetWidth;
-                noteEl.innerHTML = `<span class="tab-note-icon">📌</span><span class="tab-note-text">${noteText}</span>`;
+                noteEl.textContent = noteText;
                 noteEl.classList.add('visible');
             } else {
-                noteEl.innerHTML = '';
+                noteEl.textContent = '';
                 noteEl.classList.remove('visible');
             }
 
@@ -1861,7 +1860,9 @@
             let notes = document.getElementById('buyer-notes').value.trim();
             if (!storeId) { alert("請搜尋並選擇您要取貨的 7-11 門市！"); return; }
             if (!name || !phone) return alert("請填寫完整的姓名與手機號碼！");
+            if (!/^09\d{8}$/.test(phone)) return alert("手機號碼格式不正確，請輸入 09 開頭的 10 位數字！");
             if (!email) { alert("請填寫 Email，以便接收完整的訂單明細與出貨通知！"); document.getElementById('buyer-email').focus(); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert("Email 格式不正確，請確認後再試！"); document.getElementById('buyer-email').focus(); return; }
 
             let storeName = "未知"; let storeAddr = "未知";
             if (storeInfo.includes('|')) {
@@ -1994,8 +1995,8 @@
             try {
                 const saved = JSON.parse(localStorage.getItem('_userInfo') || '{}');
                 if (saved.name)  document.getElementById('buyer-name').value  = saved.name;
-                if (saved.phone) document.getElementById('buyer-phone').value = saved.phone;
-                if (saved.email) document.getElementById('buyer-email').value = saved.email;
+                if (saved.phone) { document.getElementById('buyer-phone').value = saved.phone; onPhoneInput(); }
+                if (saved.email) { document.getElementById('buyer-email').value = saved.email; onEmailInput(); }
                 if (saved.name || saved.phone) _checkVip();
             } catch(e) {}
         });
