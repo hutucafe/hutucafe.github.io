@@ -1497,16 +1497,22 @@
                         return;
                     }
                     status.textContent = `📍 顯示最近 ${withDist.length} 間門市`;
-                    suggestions.innerHTML = withDist.map(s => {
+                    suggestions.innerHTML = '';
+                    withDist.forEach(s => {
                         const distStr = s.dist < 1
                             ? Math.round(s.dist * 1000) + 'm'
                             : s.dist.toFixed(1) + 'km';
-                        return `<li onclick="selectStore('${s['店號']}','${s['名稱'].replace(/'/g,"\\'")}','${s['地址'].replace(/'/g,"\\'")}')">
-                            <strong>${s['名稱']}</strong>
-                            <span style="color:#b8860b; font-size:11px; margin-left:6px;">📍 ${distStr}</span>
-                            <br><small style="color:#888;">${s['地址']}</small>
-                        </li>`;
-                    }).join('');
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>${s['名稱']}</strong><span style="color:#b8860b; font-size:11px; margin-left:6px;">📍 ${distStr}</span><br><small style="color:#888;">${s['地址']}</small>`;
+                        li.onclick = () => {
+                            document.getElementById('store-search').value = s['名稱'];
+                            document.getElementById('store-info').value = `店號：${s['店號']} | ${s['名稱']} | ${s['地址']}`;
+                            document.getElementById('selected-store-id').value = s['店號'];
+                            suggestions.style.display = 'none';
+                            status.textContent = `✅ 已選擇：${s['名稱']}`;
+                        };
+                        suggestions.appendChild(li);
+                    });
                     suggestions.style.display = 'block';
                     btn.textContent = '📍 附近門市';
                     btn.disabled = false;
