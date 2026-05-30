@@ -970,17 +970,21 @@
         }
 
         function renderProducts(tabName) {
-            // ✅ 顯示頁籤說明
+            // ✅ 顯示頁籤說明：只有切換頁籤時才重新播放動畫
             const noteEl = document.getElementById('tab-note');
             const noteText = allTabNotes[tabName] || '';
-            if (noteText) {
-                noteEl.classList.remove('visible');
-                void noteEl.offsetWidth; // 強制重繪，讓動畫每次都重新播放
-                noteEl.innerHTML = `<span class="tab-note-icon">📌</span><span class="tab-note-text">${noteText}</span>`;
-                noteEl.classList.add('visible');
-            } else {
-                noteEl.innerHTML = '';
-                noteEl.classList.remove('visible');
+            if (tabName !== renderProducts._lastTab) {
+                // 頁籤改變才重新觸發動畫
+                if (noteText) {
+                    noteEl.classList.remove('visible');
+                    void noteEl.offsetWidth;
+                    noteEl.innerHTML = `<span class="tab-note-icon">📌</span><span class="tab-note-text">${noteText}</span>`;
+                    noteEl.classList.add('visible');
+                } else {
+                    noteEl.innerHTML = '';
+                    noteEl.classList.remove('visible');
+                }
+                renderProducts._lastTab = tabName;
             }
 
             const listEl = document.getElementById('product-list');
