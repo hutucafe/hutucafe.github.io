@@ -1451,7 +1451,9 @@
                 newVal = maxQty;
             }
             cart[uid].qty = newVal;
-            // 加購閃光效果
+            calculateTotal();
+            renderProducts(currentTab);
+            // ✅ 閃爍移到 renderProducts 之後，DOM 重建完才找元素
             if (change > 0 && newVal > 0) {
                 const cardEl = document.querySelector(`[data-uid="${uid}"]`)?.closest('.modern-card');
                 if (cardEl) {
@@ -1461,8 +1463,6 @@
                     setTimeout(() => cardEl.classList.remove('cart-flash'), 400);
                 }
             }
-            calculateTotal();
-            renderProducts(currentTab);
         }
 
         function calculateTotal() {
