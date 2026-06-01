@@ -205,6 +205,9 @@
                 <div class="skeleton desc"></div>
             </div>
             <div id="event-form-body">
+                <div style="text-align:center; padding:16px 0; color:#b8860b; font-size:14px; font-weight:600;">
+                    ☕ 活動資訊載入中，請稍候...
+                </div>
                 <div class="skeleton field"></div>
                 <div class="skeleton field"></div>
                 <div class="skeleton field"></div>
@@ -333,33 +336,33 @@
 
         async function loadEventConfig() {
             const section = document.getElementById('event-section');
-            section.style.display = 'block'; // 顯示骨架
 
-            // 有快取 → 瞬間渲染，背景驗證版本
+            // 有快取 → 先顯示骨架，瞬間渲染，背景驗證版本
             try {
                 const saved = localStorage.getItem(EVENT_LS_KEY);
                 if (saved) {
                     const localCfg = JSON.parse(saved);
-                    renderEventSection(localCfg); // 瞬間顯示
-                    // 背景驗證版本號
+                    section.style.display = 'block';
+                    renderEventSection(localCfg);
                     fetch(GAS_URL + '?action=eventConfig&v=' + (localCfg.version || ''), { cache: 'no-store' })
                         .then(r => r.json()).then(data => {
-                            if (data.cached) return; // 版本相同，不更新
+                            if (data.cached) return;
                             try { localStorage.setItem(EVENT_LS_KEY, JSON.stringify(data)); } catch(e) {}
-                            renderEventSection(data); // 重新渲染新版本
+                            renderEventSection(data);
                         }).catch(() => {});
                     return;
                 }
             } catch(e) {}
 
-            // 無快取 → 打 GAS
+            // 無快取 → 先顯示骨架，等 GAS 回應
+            section.style.display = 'block';
             try {
                 const res = await fetch(GAS_URL + '?action=eventConfig', { cache: 'no-store' });
                 const cfg = await res.json();
                 try { localStorage.setItem(EVENT_LS_KEY, JSON.stringify(cfg)); } catch(e) {}
-                renderEventSection(cfg);
+                renderEventSection(cfg); // 有活動顯示，沒活動 renderEventSection 會隱藏
             } catch(e) {
-                section.style.display = 'none';
+                section.style.display = 'none'; // 失敗就隱藏
             }
         }
 
