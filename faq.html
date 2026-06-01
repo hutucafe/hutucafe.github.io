@@ -276,11 +276,11 @@
                     { key: 'address',  idx: 3, type: 'text',     required: true },
                     { key: 'email',    idx: 4, type: 'email',    required: true },
                     { key: 'choice',   idx: 5, type: 'select',   required: true },
-                    { key: 'notes',    idx: 6, type: 'textarea', required: false },
+                    { key: 'message',  idx: 6, type: 'textarea', required: false, label: '給老闆的一句話', hint: '選填，說什麼都可以！' },
                 ];
                 body.innerHTML = fields.map(f => {
-                    const label = cfg.headers[f.idx] || '';
-                    const hint  = cfg.hints[f.idx]   || '';
+                    const label = f.label || cfg.headers[f.idx] || '';
+                    const hint  = f.hint  || cfg.hints[f.idx]   || '';
                     const req   = f.required ? '<span class="event-required">*</span>' : '';
                     let input = '';
                     if (f.type === 'select') {
@@ -314,7 +314,7 @@
 
         async function submitEvent() {
             const btn = document.querySelector('.event-submit-btn');
-            const fields = { fbName:'fbName', name:'name', address:'address', email:'email', choice:'choice', notes:'notes' };
+            const fields = { fbName:'fbName', name:'name', address:'address', email:'email', choice:'choice', message:'message' };
             const payload = { action: 'submitEvent' };
             let valid = true;
 
