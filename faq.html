@@ -142,7 +142,22 @@
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
         .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; transition: 0.3s; display: inline-block; width: 100%; max-width: 400px; text-align: center; letter-spacing: 2px; }
         .bottom-bar a:hover { background: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3); }
-        /* 活動區塊 */
+        /* 活動骨架載入動畫 */
+        @keyframes shimmer {
+            0%   { background-position: -400px 0; }
+            100% { background-position: 400px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #f0e6d8 25%, #fdf3e3 50%, #f0e6d8 75%);
+            background-size: 800px 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 8px;
+            height: 16px;
+            margin-bottom: 10px;
+        }
+        .skeleton.title { height: 22px; width: 60%; }
+        .skeleton.desc  { height: 14px; width: 80%; }
+        .skeleton.field { height: 40px; width: 100%; margin-bottom: 14px; border-radius: 10px; }
         @keyframes eventSlideIn { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
         #event-section { display:none; animation: eventSlideIn 0.4s ease-out; background: linear-gradient(135deg,#fff8f0 0%,#ffecd2 100%); border:2px solid #e8a838; border-radius:16px; padding:22px 20px; margin-bottom:20px; box-shadow:0 4px 20px rgba(232,168,56,0.2); }
         #event-section .event-title { font-size:20px; font-weight:bold; color:#3e2723; border-left:5px solid #e8a838; padding-left:12px; margin-bottom:6px; }
@@ -183,9 +198,17 @@
 
         <!-- 活動區塊（活動期間自動顯示） -->
         <div id="event-section">
-            <div class="event-title" id="event-title">🎉 活動</div>
-            <div class="event-desc" id="event-desc"></div>
-            <div id="event-form-body"></div>
+            <div class="event-title" id="event-title">
+                <div class="skeleton title"></div>
+            </div>
+            <div class="event-desc" id="event-desc">
+                <div class="skeleton desc"></div>
+            </div>
+            <div id="event-form-body">
+                <div class="skeleton field"></div>
+                <div class="skeleton field"></div>
+                <div class="skeleton field"></div>
+            </div>
         </div>
 
         <div class="section">
@@ -256,119 +279,87 @@
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
 
         // ── 活動區塊 ──────────────────────────────────────────────
-        let _eventCfg = null;
+        const EVENT_LS_KEY = '_hutucafe_event';
+
+        function renderEventSection(cfg) {
+            const section = document.getElementById('event-section');
+            const now = new Date();
+            const start = cfg.start ? new Date(cfg.start) : null;
+            const end   = cfg.end   ? new Date(cfg.end)   : null;
+            const active = !!(start && end && now >= start && now <= end);
+            if (!active) { section.style.display = 'none'; return; }
+
+            document.getElementById('event-title').textContent = '🎉 ' + (cfg.name || '限時活動');
+            document.getElementById('event-desc').textContent = cfg.desc || '';
+            const body = document.getElementById('event-form-body');
+            const fields = [
+                { key: 'fbName',  idx: 1, type: 'text',     required: true },
+                { key: 'name',    idx: 2, type: 'text',     required: true },
+                { key: 'address', idx: 3, type: 'text',     required: true },
+                { key: 'email',   idx: 4, type: 'email',    required: true },
+                { key: 'message', idx: 5, type: 'textarea', required: false, label: '給老闆的一句話', hint: '選填，說什麼都可以！' },
+                { key: 'choice',  idx: 6, type: 'select',   required: true },
+            ];
+            body.innerHTML = fields.map(f => {
+                const label = f.label || (cfg.headers && cfg.headers[f.idx]) || '';
+                const hint  = f.hint  || (cfg.hints  && cfg.hints[f.idx])   || '';
+                const req   = f.required ? '<span class="event-required">*</span>' : '';
+                let input = '';
+                if (f.type === 'select') {
+                    const options = (cfg.options || []).map(o => `<option value="${o}">${o}</option>`).join('');
+                    input = `<select id="ef-${f.key}"><option value="">── 請選擇 ──</option>${options}</select>`;
+                } else if (f.type === 'textarea') {
+                    input = `<textarea id="ef-${f.key}" rows="2" placeholder="${hint}"></textarea>`;
+                } else {
+                    input = `<input type="${f.type}" id="ef-${f.key}" placeholder="${hint}">`;
+                }
+                return `<div class="event-form-group"><label>${label}${req}</label>${input}</div>`;
+            }).join('');
+
+            const questionLabel = cfg.question || (cfg.headers && cfg.headers[6]) || '互動內容';
+            body.querySelectorAll('.event-form-group')[5].querySelector('label').innerHTML =
+                questionLabel + '<span class="event-required">*</span>';
+            body.innerHTML += `<button class="event-submit-btn" id="event-submit-btn" onclick="submitEvent()">🎯 送出參加！</button>`;
+            section.style.display = 'block';
+
+            setTimeout(() => {
+                const choiceEl = document.getElementById('ef-choice');
+                if (choiceEl) choiceEl.addEventListener('change', () => {
+                    const btn = document.getElementById('event-submit-btn');
+                    if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            }, 100);
+        }
 
         async function loadEventConfig() {
+            const section = document.getElementById('event-section');
+            section.style.display = 'block'; // 顯示骨架
+
+            // 有快取 → 瞬間渲染，背景驗證版本
+            try {
+                const saved = localStorage.getItem(EVENT_LS_KEY);
+                if (saved) {
+                    const localCfg = JSON.parse(saved);
+                    renderEventSection(localCfg); // 瞬間顯示
+                    // 背景驗證版本號
+                    fetch(GAS_URL + '?action=eventConfig&v=' + (localCfg.version || ''), { cache: 'no-store' })
+                        .then(r => r.json()).then(data => {
+                            if (data.cached) return; // 版本相同，不更新
+                            try { localStorage.setItem(EVENT_LS_KEY, JSON.stringify(data)); } catch(e) {}
+                            renderEventSection(data); // 重新渲染新版本
+                        }).catch(() => {});
+                    return;
+                }
+            } catch(e) {}
+
+            // 無快取 → 打 GAS
             try {
                 const res = await fetch(GAS_URL + '?action=eventConfig', { cache: 'no-store' });
                 const cfg = await res.json();
-                if (!cfg.active) return;
-                _eventCfg = cfg;
-                const section = document.getElementById('event-section');
-                document.getElementById('event-title').textContent = '🎉 ' + (cfg.name || '限時活動');
-                document.getElementById('event-desc').textContent = cfg.desc || '';
-
-                // 動態產生表單
-                const body = document.getElementById('event-form-body');
-                const fields = [
-                    { key: 'fbName',   idx: 1, type: 'text',     required: true },
-                    { key: 'name',     idx: 2, type: 'text',     required: true },
-                    { key: 'address',  idx: 3, type: 'text',     required: true },
-                    { key: 'email',    idx: 4, type: 'email',    required: true },
-                    { key: 'message',  idx: 6, type: 'textarea', required: false, label: '給老闆的一句話', hint: '選填，說什麼都可以！' },
-                    { key: 'choice',   idx: 5, type: 'select',   required: true },
-                ];
-                body.innerHTML = fields.map(f => {
-                    const label = f.label || cfg.headers[f.idx] || '';
-                    const hint  = f.hint  || cfg.hints[f.idx]   || '';
-                    const req   = f.required ? '<span class="event-required">*</span>' : '';
-                    let input = '';
-                    if (f.type === 'select') {
-                        const options = (cfg.options || []).map(o =>
-                            `<option value="${o}">${o}</option>`
-                        ).join('');
-                        input = `<select id="ef-${f.key}"><option value="">── 請選擇 ──</option>${options}</select>`;
-                    } else if (f.type === 'textarea') {
-                        input = `<textarea id="ef-${f.key}" rows="2" placeholder="${hint}"></textarea>`;
-                    } else {
-                        input = `<input type="${f.type}" id="ef-${f.key}" placeholder="${hint}">`;
-                    }
-                    const hintHtml = '';  // hint 已作為 placeholder 顯示在框內，不重複顯示
-                    return `<div class="event-form-group">
-                        <label>${label}${req}</label>
-                        ${input}${hintHtml}
-                    </div>`;
-                }).join('');
-
-                // 互動題目 label（現在是最後一個欄位，index 5）
-                const questionLabel = cfg.question || cfg.headers[5] || '互動內容';
-                body.querySelectorAll('.event-form-group')[5].querySelector('label').innerHTML =
-                    questionLabel + '<span class="event-required">*</span>';
-
-                body.innerHTML += `<button class="event-submit-btn" id="event-submit-btn" onclick="submitEvent()">🎯 送出參加！</button>`;
-                section.style.display = 'block';
-
-                // 選完「你要出什麼」後自動捲到送出按鈕
-                setTimeout(() => {
-                    const choiceEl = document.getElementById('ef-choice');
-                    function scrollToSubmit() {
-                        const btn = document.getElementById('event-submit-btn');
-                        if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                    if (choiceEl) choiceEl.addEventListener('change', scrollToSubmit);
-                }, 100);
+                try { localStorage.setItem(EVENT_LS_KEY, JSON.stringify(cfg)); } catch(e) {}
+                renderEventSection(cfg);
             } catch(e) {
-                console.log('活動載入失敗', e);
-            }
-        }
-
-        async function submitEvent() {
-            const btn = document.querySelector('.event-submit-btn');
-            const fields = { fbName:'fbName', name:'name', address:'address', email:'email', choice:'choice', message:'message' };
-            const payload = { action: 'submitEvent' };
-            let valid = true;
-
-            for (const [key, id] of Object.entries(fields)) {
-                const el = document.getElementById('ef-' + id);
-                if (!el) continue;
-                const val = el.value.trim();
-                if (['fbName','name','address','email','choice'].includes(key) && !val) {
-                    el.style.borderColor = '#e53935';
-                    valid = false;
-                } else {
-                    el.style.borderColor = '';
-                }
-                payload[key] = val;
-            }
-            if (!valid) { alert('請填寫所有必填欄位！'); return; }
-
-            btn.disabled = true; btn.textContent = '送出中...';
-            try {
-                const res = await fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.result === 'success') {
-                    const choiceLabel = data.choiceLabel || '';
-                    document.getElementById('event-form-body').innerHTML =
-                        `<div id="event-success-msg" style="text-align:center; padding:20px 0; line-height:2;">
-                            <div style="font-size:16px; font-weight:700; color:#3e2723;">🎉 活動登錄成功！</div>
-                            <div style="font-size:20px; font-weight:900; color:#e53935;">您是 ${choiceLabel}</div>
-                            <div style="font-size:15px; color:#795548;">預祝幸運中獎！☕</div>
-                            <div style="font-size:12px; color:#bbb;">登錄確認已寄至您的 Email</div>
-                        </div>`;
-                    setTimeout(() => {
-                        const msg = document.getElementById('event-success-msg');
-                        if (msg) msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 100);
-                } else {
-                    alert('送出失敗，請稍後再試');
-                    btn.disabled = false; btn.textContent = '🎯 送出參加！';
-                }
-            } catch(e) {
-                alert('網路異常，請稍後再試');
-                btn.disabled = false; btn.textContent = '🎯 送出參加！';
+                section.style.display = 'none';
             }
         }
 
