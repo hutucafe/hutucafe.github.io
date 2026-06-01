@@ -275,8 +275,8 @@
                     { key: 'name',     idx: 2, type: 'text',     required: true },
                     { key: 'address',  idx: 3, type: 'text',     required: true },
                     { key: 'email',    idx: 4, type: 'email',    required: true },
-                    { key: 'choice',   idx: 5, type: 'select',   required: true },
                     { key: 'message',  idx: 6, type: 'textarea', required: false, label: '給老闆的一句話', hint: '選填，說什麼都可以！' },
+                    { key: 'choice',   idx: 5, type: 'select',   required: true },
                 ];
                 body.innerHTML = fields.map(f => {
                     const label = f.label || cfg.headers[f.idx] || '';
@@ -300,24 +300,22 @@
                     </div>`;
                 }).join('');
 
-                // 互動題目 label
+                // 互動題目 label（現在是最後一個欄位，index 5）
                 const questionLabel = cfg.question || cfg.headers[5] || '互動內容';
-                body.querySelectorAll('.event-form-group')[4].querySelector('label').innerHTML =
+                body.querySelectorAll('.event-form-group')[5].querySelector('label').innerHTML =
                     questionLabel + '<span class="event-required">*</span>';
 
                 body.innerHTML += `<button class="event-submit-btn" id="event-submit-btn" onclick="submitEvent()">🎯 送出參加！</button>`;
                 section.style.display = 'block';
 
-                // 填完「你要出什麼」或「給老闆的一句話」後自動捲到送出按鈕
+                // 選完「你要出什麼」後自動捲到送出按鈕
                 setTimeout(() => {
-                    const choiceEl  = document.getElementById('ef-choice');
-                    const messageEl = document.getElementById('ef-message');
+                    const choiceEl = document.getElementById('ef-choice');
                     function scrollToSubmit() {
                         const btn = document.getElementById('event-submit-btn');
                         if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
-                    if (choiceEl)  choiceEl.addEventListener('change', scrollToSubmit);
-                    if (messageEl) messageEl.addEventListener('blur', scrollToSubmit);
+                    if (choiceEl) choiceEl.addEventListener('change', scrollToSubmit);
                 }, 100);
             } catch(e) {
                 console.log('活動載入失敗', e);
