@@ -142,6 +142,19 @@
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); padding: 15px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: center; z-index: 1000; }
         .bottom-bar a { text-decoration: none; background: #3e2723; color: #fff; padding: 14px 40px; border-radius: 25px; font-size: 16px; font-weight: bold; transition: 0.3s; display: inline-block; width: 100%; max-width: 400px; text-align: center; letter-spacing: 2px; }
         .bottom-bar a:hover { background: #5d4037; box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3); }
+        /* 活動區塊 */
+        @keyframes eventSlideIn { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+        #event-section { display:none; animation: eventSlideIn 0.4s ease-out; background: linear-gradient(135deg,#fff8f0 0%,#ffecd2 100%); border:2px solid #e8a838; border-radius:16px; padding:22px 20px; margin-bottom:20px; box-shadow:0 4px 20px rgba(232,168,56,0.2); }
+        #event-section .event-title { font-size:20px; font-weight:bold; color:#3e2723; border-left:5px solid #e8a838; padding-left:12px; margin-bottom:6px; }
+        #event-section .event-desc { font-size:14px; color:#795548; margin-bottom:16px; }
+        .event-form-group { margin-bottom:14px; }
+        .event-form-group label { display:block; font-size:13px; font-weight:600; color:#4e342e; margin-bottom:5px; }
+        .event-form-group input, .event-form-group select, .event-form-group textarea { width:100%; padding:10px 13px; border:1.5px solid #d4b896; border-radius:10px; font-size:14px; background:#fff; color:#333; box-sizing:border-box; }
+        .event-form-group input:focus, .event-form-group select:focus { outline:none; border-color:#e8a838; box-shadow:0 0 0 3px rgba(232,168,56,0.15); }
+        .event-form-group .hint { font-size:11px; color:#aaa; margin-top:3px; }
+        .event-submit-btn { width:100%; padding:13px; background:#e8a838; color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:0.2s; margin-top:4px; }
+        .event-submit-btn:disabled { background:#ccc; cursor:not-allowed; }
+        .event-required { color:red; margin-left:2px; }
     </style>
 </head>
 <body>
@@ -167,7 +180,14 @@
     </header>
 
     <div class="container">
-        
+
+        <!-- 活動區塊（活動期間自動顯示） -->
+        <div id="event-section">
+            <div class="event-title" id="event-title">🎉 活動</div>
+            <div class="event-desc" id="event-desc"></div>
+            <div id="event-form-body"></div>
+        </div>
+
         <div class="section">
             <div class="section-title">📦 訂單與物流狀態查詢 (最近 3 筆)</div>
             <p class="intro-text">
@@ -234,6 +254,111 @@
 
     <script>
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
+
+        // ── 活動區塊 ──────────────────────────────────────────────
+        let _eventCfg = null;
+
+        async function loadEventConfig() {
+            try {
+                const res = await fetch(GAS_URL + '?action=eventConfig', { cache: 'no-store' });
+                const cfg = await res.json();
+                if (!cfg.active) return;
+                _eventCfg = cfg;
+                const section = document.getElementById('event-section');
+                document.getElementById('event-title').textContent = '🎉 ' + (cfg.name || '限時活動');
+                document.getElementById('event-desc').textContent = cfg.desc || '';
+
+                // 動態產生表單
+                const body = document.getElementById('event-form-body');
+                const fields = [
+                    { key: 'fbName',   idx: 1, type: 'text',     required: true },
+                    { key: 'name',     idx: 2, type: 'text',     required: true },
+                    { key: 'address',  idx: 3, type: 'text',     required: true },
+                    { key: 'email',    idx: 4, type: 'email',    required: true },
+                    { key: 'choice',   idx: 5, type: 'select',   required: true },
+                    { key: 'notes',    idx: 6, type: 'textarea', required: false },
+                ];
+                body.innerHTML = fields.map(f => {
+                    const label = cfg.headers[f.idx] || '';
+                    const hint  = cfg.hints[f.idx]   || '';
+                    const req   = f.required ? '<span class="event-required">*</span>' : '';
+                    let input = '';
+                    if (f.type === 'select') {
+                        const options = (cfg.options || []).map(o =>
+                            `<option value="${o}">${o}</option>`
+                        ).join('');
+                        input = `<select id="ef-${f.key}"><option value="">── 請選擇 ──</option>${options}</select>`;
+                    } else if (f.type === 'textarea') {
+                        input = `<textarea id="ef-${f.key}" rows="2" placeholder="${hint}"></textarea>`;
+                    } else {
+                        input = `<input type="${f.type}" id="ef-${f.key}" placeholder="${hint}">`;
+                    }
+                    const hintHtml = hint && f.type !== 'textarea' ? `<div class="hint">${hint}</div>` : '';
+                    return `<div class="event-form-group">
+                        <label>${label}${req}</label>
+                        ${input}${hintHtml}
+                    </div>`;
+                }).join('');
+
+                // 互動題目 label
+                const questionLabel = cfg.question || cfg.headers[5] || '互動內容';
+                body.querySelectorAll('.event-form-group')[4].querySelector('label').innerHTML =
+                    questionLabel + '<span class="event-required">*</span>';
+
+                body.innerHTML += `<button class="event-submit-btn" onclick="submitEvent()">🎯 送出參加！</button>`;
+                section.style.display = 'block';
+            } catch(e) {
+                console.log('活動載入失敗', e);
+            }
+        }
+
+        async function submitEvent() {
+            const btn = document.querySelector('.event-submit-btn');
+            const fields = { fbName:'fbName', name:'name', address:'address', email:'email', choice:'choice', notes:'notes' };
+            const payload = { action: 'submitEvent' };
+            let valid = true;
+
+            for (const [key, id] of Object.entries(fields)) {
+                const el = document.getElementById('ef-' + id);
+                if (!el) continue;
+                const val = el.value.trim();
+                if (['fbName','name','address','email','choice'].includes(key) && !val) {
+                    el.style.borderColor = '#e53935';
+                    valid = false;
+                } else {
+                    el.style.borderColor = '';
+                }
+                payload[key] = val;
+            }
+            if (!valid) { alert('請填寫所有必填欄位！'); return; }
+
+            btn.disabled = true; btn.textContent = '送出中...';
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.result === 'success') {
+                    const choiceLabel = data.choiceLabel || '';
+                    document.getElementById('event-form-body').innerHTML =
+                        `<div style="text-align:center; padding:20px 0; line-height:2;">
+                            <div style="font-size:16px; font-weight:700; color:#3e2723;">🎉 活動登錄成功！</div>
+                            <div style="font-size:20px; font-weight:900; color:#e53935;">您是 ${choiceLabel}</div>
+                            <div style="font-size:15px; color:#795548;">預祝幸運中獎！☕</div>
+                            <div style="font-size:12px; color:#bbb;">登錄確認已寄至您的 Email</div>
+                        </div>`;
+                } else {
+                    alert('送出失敗，請稍後再試');
+                    btn.disabled = false; btn.textContent = '🎯 送出參加！';
+                }
+            } catch(e) {
+                alert('網路異常，請稍後再試');
+                btn.disabled = false; btn.textContent = '🎯 送出參加！';
+            }
+        }
+
+        loadEventConfig();
         const FAQ_CONFIG_KEY = 'hutucafe_config_v1';
 
         async function loadFaqConfig() {
