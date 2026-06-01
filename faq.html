@@ -284,11 +284,19 @@
         // ── 活動區塊 ──────────────────────────────────────────────
         const EVENT_LS_KEY = '_hutucafe_event';
 
+        function parseEventDate(str) {
+            if (!str) return null;
+            // 將 2026/06/01 10:00 轉為 2026-06-01T10:00:00 以確保跨瀏覽器相容
+            const s = String(str).trim().replace(/\//g, '-').replace(' ', 'T');
+            const d = new Date(s);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
         function renderEventSection(cfg) {
             const section = document.getElementById('event-section');
             const now = new Date();
-            const start = cfg.start ? new Date(cfg.start) : null;
-            const end   = cfg.end   ? new Date(cfg.end)   : null;
+            const start = parseEventDate(cfg.start);
+            const end   = parseEventDate(cfg.end);
             const active = !!(start && end && now >= start && now <= end);
             if (!active) { section.style.display = 'none'; return; }
 
@@ -342,27 +350,45 @@
                 const saved = localStorage.getItem(EVENT_LS_KEY);
                 if (saved) {
                     const localCfg = JSON.parse(saved);
-                    section.style.display = 'block';
-                    renderEventSection(localCfg);
-                    fetch(GAS_URL + '?action=eventConfig&v=' + (localCfg.version || ''), { cache: 'no-store' })
-                        .then(r => r.json()).then(data => {
-                            if (data.cached) return;
-                            try { localStorage.setItem(EVENT_LS_KEY, JSON.stringify(data)); } catch(e) {}
-                            renderEventSection(data);
-                        }).catch(() => {});
-                    return;
+                    // 先判斷快取的活動是否還在時間內
+                    const now = new Date();
+                    const start = parseEventDate(localCfg.start);
+                    const end   = parseEventDate(localCfg.end);
+                    const stillActive = !!(start && end && now >= start && now <= end);
+
+                    if (stillActive) {
+                        section.style.display = 'block';
+                        renderEventSection(localCfg);
+                        // 背景驗證版本號
+                        fetch(GAS_URL + '?action=eventConfig&v=' + (localCfg.version || ''), { cache: 'no-store' })
+                            .then(r => r.json()).then(data => {
+                                if (data.cached) return;
+                                try { localStorage.setItem(EVENT_LS_KEY, JSON.stringify(data)); } catch(e) {}
+                                renderEventSection(data);
+                            }).catch(() => {});
+                        return;
+                    } else {
+                        // 快取的活動已過期，清掉
+                        localStorage.removeItem(EVENT_LS_KEY);
+                    }
                 }
             } catch(e) {}
 
-            // 無快取 → 先顯示骨架，等 GAS 回應
+            // 無快取（或快取已過期）→ 顯示骨架，等 GAS 回應
             section.style.display = 'block';
             try {
                 const res = await fetch(GAS_URL + '?action=eventConfig', { cache: 'no-store' });
                 const cfg = await res.json();
-                try { localStorage.setItem(EVENT_LS_KEY, JSON.stringify(cfg)); } catch(e) {}
-                renderEventSection(cfg); // 有活動顯示，沒活動 renderEventSection 會隱藏
+                if (cfg.active) {
+                    try { localStorage.setItem(EVENT_LS_KEY, JSON.stringify(cfg)); } catch(e) {}
+                    renderEventSection(cfg);
+                } else {
+                    // 沒有活動，清掉可能的舊快取，隱藏區塊
+                    localStorage.removeItem(EVENT_LS_KEY);
+                    section.style.display = 'none';
+                }
             } catch(e) {
-                section.style.display = 'none'; // 失敗就隱藏
+                section.style.display = 'none';
             }
         }
 
