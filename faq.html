@@ -393,6 +393,57 @@
         }
 
         loadEventConfig();
+
+        async function submitEvent() {
+            const btn = document.getElementById('event-submit-btn');
+            const payload = { action: 'submitEvent' };
+            let valid = true;
+
+            const requiredFields = ['fbName', 'name', 'address', 'email', 'choice'];
+            ['fbName','name','address','email','choice','message'].forEach(id => {
+                const el = document.getElementById('ef-' + id);
+                if (!el) return;
+                const val = el.value.trim();
+                if (requiredFields.includes(id) && !val) {
+                    el.style.borderColor = '#e53935';
+                    valid = false;
+                } else {
+                    el.style.borderColor = '';
+                }
+                payload[id] = val;
+            });
+
+            if (!valid) { alert('請填寫所有必填欄位！'); return; }
+
+            btn.disabled = true; btn.textContent = '送出中...';
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.result === 'success') {
+                    const choiceLabel = data.choiceLabel || '';
+                    document.getElementById('event-form-body').innerHTML =
+                        `<div id="event-success-msg" style="text-align:center; padding:20px 0; line-height:2;">
+                            <div style="font-size:16px; font-weight:700; color:#3e2723;">🎉 活動登錄成功！</div>
+                            <div style="font-size:20px; font-weight:900; color:#e53935;">您是 ${choiceLabel}</div>
+                            <div style="font-size:15px; color:#795548;">預祝幸運中獎！☕</div>
+                            <div style="font-size:12px; color:#bbb;">登錄確認已寄至您的 Email</div>
+                        </div>`;
+                    setTimeout(() => {
+                        const msg = document.getElementById('event-success-msg');
+                        if (msg) msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                } else {
+                    alert('送出失敗，請稍後再試');
+                    btn.disabled = false; btn.textContent = '🎯 送出參加！';
+                }
+            } catch(e) {
+                alert('網路異常，請稍後再試');
+                btn.disabled = false; btn.textContent = '🎯 送出參加！';
+            }
+        }
         const FAQ_CONFIG_KEY = 'hutucafe_config_v1';
 
         async function loadFaqConfig() {
