@@ -293,7 +293,7 @@
                     } else {
                         input = `<input type="${f.type}" id="ef-${f.key}" placeholder="${hint}">`;
                     }
-                    const hintHtml = hint && f.type !== 'textarea' ? `<div class="hint">${hint}</div>` : '';
+                    const hintHtml = '';  // hint 已作為 placeholder 顯示在框內，不重複顯示
                     return `<div class="event-form-group">
                         <label>${label}${req}</label>
                         ${input}${hintHtml}
