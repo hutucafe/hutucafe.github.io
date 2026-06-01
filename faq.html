@@ -305,8 +305,20 @@
                 body.querySelectorAll('.event-form-group')[4].querySelector('label').innerHTML =
                     questionLabel + '<span class="event-required">*</span>';
 
-                body.innerHTML += `<button class="event-submit-btn" onclick="submitEvent()">🎯 送出參加！</button>`;
+                body.innerHTML += `<button class="event-submit-btn" id="event-submit-btn" onclick="submitEvent()">🎯 送出參加！</button>`;
                 section.style.display = 'block';
+
+                // 填完「你要出什麼」或「給老闆的一句話」後自動捲到送出按鈕
+                setTimeout(() => {
+                    const choiceEl  = document.getElementById('ef-choice');
+                    const messageEl = document.getElementById('ef-message');
+                    function scrollToSubmit() {
+                        const btn = document.getElementById('event-submit-btn');
+                        if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    if (choiceEl)  choiceEl.addEventListener('change', scrollToSubmit);
+                    if (messageEl) messageEl.addEventListener('blur', scrollToSubmit);
+                }, 100);
             } catch(e) {
                 console.log('活動載入失敗', e);
             }
@@ -342,12 +354,16 @@
                 if (data.result === 'success') {
                     const choiceLabel = data.choiceLabel || '';
                     document.getElementById('event-form-body').innerHTML =
-                        `<div style="text-align:center; padding:20px 0; line-height:2;">
+                        `<div id="event-success-msg" style="text-align:center; padding:20px 0; line-height:2;">
                             <div style="font-size:16px; font-weight:700; color:#3e2723;">🎉 活動登錄成功！</div>
                             <div style="font-size:20px; font-weight:900; color:#e53935;">您是 ${choiceLabel}</div>
                             <div style="font-size:15px; color:#795548;">預祝幸運中獎！☕</div>
                             <div style="font-size:12px; color:#bbb;">登錄確認已寄至您的 Email</div>
                         </div>`;
+                    setTimeout(() => {
+                        const msg = document.getElementById('event-success-msg');
+                        if (msg) msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
                 } else {
                     alert('送出失敗，請稍後再試');
                     btn.disabled = false; btn.textContent = '🎯 送出參加！';
