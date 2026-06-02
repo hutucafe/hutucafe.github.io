@@ -374,8 +374,7 @@
                 }
             } catch(e) {}
 
-            // 無快取（或快取已過期）→ 顯示骨架，等 GAS 回應
-            section.style.display = 'block';
+            // 無快取（或快取已過期）→ 等 GAS 回應後再決定是否顯示
             try {
                 const res = await fetch(GAS_URL + '?action=eventConfig', { cache: 'no-store' });
                 const cfg = await res.json();
