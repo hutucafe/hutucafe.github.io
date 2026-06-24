@@ -700,7 +700,7 @@
         }
 
         function _applyValidCoupon(code, data, statusEl) {
-            _activeCoupon = { code, discountType: data.discountType, discountValue: data.discountValue, minOrder: data.minOrder || 0, displayName: data.displayName || code };
+            _activeCoupon = { code, discountType: data.discountType, discountValue: data.discountValue, minOrder: data.minOrder || 0, expiry: data.expiry || '', displayName: data.displayName || code };
             const desc = data.discountType === '金額'
                 ? '折抵 $' + data.discountValue + ' 元'
                 : Math.round(data.discountValue * 10) + ' 折優惠';
@@ -712,12 +712,14 @@
             }
             if (minOrder > 0 && curSubtotal < minOrder) {
                 // 未達低消：顯示警示，但先儲存折扣碼（等商品夠了自動套用）
-                statusEl.innerHTML = '⚠️ 折扣碼 <strong>' + code + '</strong> 已登記：' + _activeCoupon.displayName + '（' + desc + '）<br>低消 $' + minOrder + '，目前消費 $' + curSubtotal + ' 尚未達標，請繼續加購';
+                const expHint2 = _activeCoupon.expiry ? '・期限 ' + _activeCoupon.expiry : '';
+                statusEl.innerHTML = '⚠️ 折扣碼 <strong>' + code + '</strong> 已登記：' + _activeCoupon.displayName + '（' + desc + expHint2 + '）<br>低消 $' + minOrder + '，目前消費 $' + curSubtotal + ' 尚未達標，請繼續加購';
                 statusEl.style.color = '#b45309';
             } else {
                 // 達標：顯示套用成功
-                const minHint = minOrder > 0 ? '・低消 $' + minOrder : '';
-                statusEl.innerHTML = '✅ 折扣碼 <strong>' + code + '</strong> 已套用：' + _activeCoupon.displayName + '（' + desc + minHint + '）';
+                const minHint    = minOrder > 0 ? '・低消 $' + minOrder : '';
+                const expiryHint = _activeCoupon.expiry ? '・期限 ' + _activeCoupon.expiry : '';
+                statusEl.innerHTML = '✅ 折扣碼 <strong>' + code + '</strong> 已套用：' + _activeCoupon.displayName + '（' + desc + minHint + expiryHint + '）';
                 statusEl.style.color = '#15803d';
             }
             statusEl.style.display = 'block';
@@ -750,6 +752,12 @@
                 } else if (data.result === 'used') {
                     _activeCoupon = null;
                     statusEl.textContent = '⚠️ 此折扣碼已使用過，無法重複使用';
+                    statusEl.style.color = '#b45309';
+                    statusEl.style.display = 'block';
+                    calculateTotal();
+                } else if (data.result === 'expired') {
+                    _activeCoupon = null;
+                    statusEl.textContent = '⏰ 此折扣碼已超過使用期限';
                     statusEl.style.color = '#b45309';
                     statusEl.style.display = 'block';
                     calculateTotal();
