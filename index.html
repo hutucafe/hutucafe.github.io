@@ -645,13 +645,15 @@
             calculateTotal(); 
         }
 
-        // VIP 清單
+        // VIP / 企業折扣清單
         let vipList = [];
         let vipEnabled = true;
+        let corpList = [];
 
-        function applyVipList(list, enabled) {
-            vipList = list || [];
+        function applyVipList(list, enabled, corps) {
+            vipList   = list  || [];
             vipEnabled = (enabled !== false);
+            corpList  = corps || [];
         }
 
         // 取得實際折扣率（擇優：VIP啟用 且 VIP比活動更優惠 才用 VIP）
@@ -694,6 +696,18 @@
             return Math.ceil(Math.round(total * (1 - (parseFloat(_activeCoupon.discountValue)||1)) * 1e10) / 1e10);
         }
 
+        function _applyValidCoupon(code, data, statusEl) {
+            _activeCoupon = { code, discountType: data.discountType, discountValue: data.discountValue, minOrder: data.minOrder || 0, displayName: data.displayName || code };
+            const desc = data.discountType === '金額'
+                ? '折抵 $' + data.discountValue + ' 元'
+                : Math.round(data.discountValue * 10) + ' 折優惠';
+            const minHint = (data.minOrder > 0) ? '・低消 $' + data.minOrder : '';
+            statusEl.innerHTML = '✅ 折扣碼 <strong>' + code + '</strong> 已套用：' + _activeCoupon.displayName + '（' + desc + minHint + '）';
+            statusEl.style.color = '#15803d';
+            statusEl.style.display = 'block';
+            calculateTotal();
+        }
+
         async function validateCouponInput() {
             const code = document.getElementById('coupon-input').value.trim().toUpperCase();
             const btn  = document.getElementById('coupon-validate-btn');
@@ -701,18 +715,18 @@
             if (!code) { alert('請輸入折扣碼'); return; }
             btn.disabled = true; btn.textContent = '驗證中...';
             try {
+                // 先查本地 corpList 快取，有就不用打 GAS
+                const corpMatch = corpList.find(c => c.code === code);
+                if (corpMatch) {
+                    const data = { result: 'valid', source: 'corp', discountType: corpMatch.discountType, discountValue: corpMatch.discountValue, minOrder: corpMatch.minOrder || 0, displayName: corpMatch.displayName || code };
+                    _applyValidCoupon(code, data, statusEl);
+                    btn.disabled = false; btn.textContent = '套用';
+                    return;
+                }
                 const res  = await fetch(GAS_URL + '?action=validateCoupon&code=' + encodeURIComponent(code), { cache: 'no-store' });
                 const data = await res.json();
                 if (data.result === 'valid') {
-                    _activeCoupon = { code, discountType: data.discountType, discountValue: data.discountValue, minOrder: data.minOrder || 0, displayName: data.displayName || code };
-                    const desc = data.discountType === '金額'
-                        ? '折抵 $' + data.discountValue + ' 元'
-                        : Math.round(data.discountValue * 10) + ' 折優惠';
-                    const minHint = (data.minOrder > 0) ? '・低消 $' + data.minOrder : '';
-                    statusEl.innerHTML = '✅ 折扣碼 <strong>' + code + '</strong> 已套用：' + _activeCoupon.displayName + '（' + desc + minHint + '）';
-                    statusEl.style.color = '#15803d';
-                    statusEl.style.display = 'block';
-                    calculateTotal();
+                    _applyValidCoupon(code, data, statusEl);
                 } else {
                     _activeCoupon = null;
                     statusEl.textContent = '❌ ' + (data.message || '折扣碼無效');
@@ -814,7 +828,7 @@
                 const cached = localStorage.getItem(CONFIG_KEY);
                 if (cached) {
                     const { data, timestamp } = JSON.parse(cached);
-                    applyRemoteConfig(data.shopConfig); applyVipList(data.vipList, data.vipEnabled); // 立即套用，不等版本檢查
+                    applyRemoteConfig(data.shopConfig); applyVipList(data.vipList, data.vipEnabled, data.corpList); // 立即套用，不等版本檢查
                     checkConfigVersion(Date.now() - timestamp); // 背景靜默比對
                     return;
                 }
@@ -852,7 +866,7 @@
                 }
                 localStorage.setItem(CONFIG_KEY, JSON.stringify({ data, timestamp: Date.now() }));
                 applyRemoteConfig(data.shopConfig);
-                applyVipList(data.vipList, data.vipEnabled);
+                applyVipList(data.vipList, data.vipEnabled, data.corpList);
             } catch(e) {
                 console.error('折扣設定載入失敗:', e);
             }
