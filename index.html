@@ -547,6 +547,17 @@
                 <label>訂單備註 ( 請加入糊塗官方 Line：@hutucafe )</label>
                 <textarea id="buyer-notes" rows="2" placeholder="☕ 加入後請「哈囉老闆」以方便聯繫訂單需求！ 另如有其他需求也可填寫於此喔 ~ "></textarea>
             </div>
+            <div class="form-group" id="coupon-area">
+                <label>折扣碼 <span style="font-size:11px;font-weight:400;color:#aaa;">（選填，如有活動或企業折扣碼請輸入）</span></label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="coupon-input" placeholder="輸入折扣碼" style="flex:1;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+                    <button type="button" onclick="validateCouponInput()" id="coupon-validate-btn"
+                        style="flex-shrink:0;padding:10px 16px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                        套用
+                    </button>
+                </div>
+                <div id="coupon-status" style="font-size:12px;margin-top:5px;display:none;"></div>
+            </div>
         </div>
         
         <div class="footer-logo-section">
@@ -673,6 +684,50 @@
 
         // 姓名或電話輸入時即時比對 VIP
         function onNameInput() { _checkVip(); }
+
+        // ── 🎟 折扣碼邏輯 ─────────────────────────────────────────
+        let _activeCoupon = null; // { code, discountType, discountValue, displayName }
+
+        function _couponDiscountAmt(total) {
+            if (!_activeCoupon) return 0;
+            if (_activeCoupon.discountType === '金額') return Math.min(parseFloat(_activeCoupon.discountValue)||0, total);
+            return Math.ceil(Math.round(total * (1 - (parseFloat(_activeCoupon.discountValue)||1)) * 1e10) / 1e10);
+        }
+
+        async function validateCouponInput() {
+            const code = document.getElementById('coupon-input').value.trim().toUpperCase();
+            const btn  = document.getElementById('coupon-validate-btn');
+            const statusEl = document.getElementById('coupon-status');
+            if (!code) { alert('請輸入折扣碼'); return; }
+            btn.disabled = true; btn.textContent = '驗證中...';
+            try {
+                const res  = await fetch(GAS_URL + '?action=validateCoupon&code=' + encodeURIComponent(code), { cache: 'no-store' });
+                const data = await res.json();
+                if (data.result === 'valid') {
+                    _activeCoupon = { code, discountType: data.discountType, discountValue: data.discountValue, displayName: data.displayName || code };
+                    const desc = data.discountType === '金額'
+                        ? '折抵 $' + data.discountValue + ' 元'
+                        : Math.round(data.discountValue * 10) + ' 折優惠';
+                    statusEl.innerHTML = '✅ 折扣碼 <strong>' + code + '</strong> 已套用：' + _activeCoupon.displayName + '（' + desc + '）';
+                    statusEl.style.color = '#15803d';
+                    statusEl.style.display = 'block';
+                    calculateTotal();
+                } else {
+                    _activeCoupon = null;
+                    statusEl.textContent = '❌ ' + (data.message || '折扣碼無效');
+                    statusEl.style.color = '#dc2626';
+                    statusEl.style.display = 'block';
+                    calculateTotal();
+                }
+            } catch(err) {
+                statusEl.textContent = '⚠️ 驗證失敗，請稍後再試';
+                statusEl.style.color = '#c62828';
+                statusEl.style.display = 'block';
+            } finally {
+                btn.disabled = false; btn.textContent = '套用';
+            }
+        }
+
         function onPhoneInput() {
             _checkVip();
             const phone = document.getElementById('buyer-phone').value.trim();
@@ -1497,15 +1552,20 @@
             }
             const activeRate = _getActiveRate();
             const activeDiscountName = _getActiveDiscountName();
-            const discountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
-            let discountedTotal = originalTotal - discountAmt;
+            const discountAmt  = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
+            const couponAmt    = _activeCoupon ? _couponDiscountAmt(originalTotal) : 0;
+            const bestDiscount = Math.max(discountAmt, couponAmt);
+            const useCoupon    = couponAmt > discountAmt && _activeCoupon;
+            let discountedTotal = originalTotal - bestDiscount;
             let shipping = 0;
             if (totalItems > 0) {
                 shipping = (discountedTotal >= SHOP_CONFIG.freeShippingThreshold) ? 0 : SHOP_CONFIG.shippingFee;
             }
             currentFinalTotal = discountedTotal + shipping;
             document.getElementById('display-original').textContent = `$${originalTotal}`;
-            document.getElementById('display-discount').textContent = `-$${discountAmt}`;
+            document.getElementById('display-discount').textContent = `-$${bestDiscount}`;
+            const discountLabelEl = document.getElementById('ui-bottom-discount');
+            if (discountLabelEl) discountLabelEl.textContent = useCoupon ? (_activeCoupon.displayName||'折扣碼') : activeDiscountName;
             document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
             document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
             const qtyEl = document.getElementById('display-qty-label');
@@ -1916,7 +1976,7 @@
             const totalDiscountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
 
             // 組合 payload 存起來
-            _pendingPayload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: activeDiscountName, globalDiscountRate: SHOP_CONFIG.discountRate };
+            _pendingPayload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: activeDiscountName, globalDiscountRate: SHOP_CONFIG.discountRate, couponCode: _activeCoupon ? _activeCoupon.code : '' };
 
             // 顯示確認摘要
             const allItems = [...discountedOrderItems, ...nonDiscountedOrderItems];
