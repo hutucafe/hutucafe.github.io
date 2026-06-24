@@ -690,10 +690,13 @@
         // ── 🎟 折扣碼邏輯 ─────────────────────────────────────────
         let _activeCoupon = null; // { code, discountType, discountValue, displayName }
 
-        function _couponDiscountAmt(total) {
+        function _couponDiscountAmt(discountSubtotal, allTotal) {
+            // 折數：只對指定品項；現金：對全部品項
             if (!_activeCoupon) return 0;
-            if (_activeCoupon.discountType === '金額') return Math.min(parseFloat(_activeCoupon.discountValue)||0, total);
-            return Math.ceil(Math.round(total * (1 - (parseFloat(_activeCoupon.discountValue)||1)) * 1e10) / 1e10);
+            if (_activeCoupon.discountType === '金額') {
+                return Math.min(parseFloat(_activeCoupon.discountValue)||0, allTotal || discountSubtotal);
+            }
+            return Math.ceil(Math.round(discountSubtotal * (1 - (parseFloat(_activeCoupon.discountValue)||1)) * 1e10) / 1e10);
         }
 
         function _applyValidCoupon(code, data, statusEl) {
@@ -1444,7 +1447,7 @@
                         bestModalDiscount = discountAmt + cashAmt2;
                     }
                 } else {
-                    const cpAmt = _couponDiscountAmt(originalTotal);
+                    const cpAmt = _couponDiscountAmt(discountSubtotal, originalTotal);
                     if (cpAmt > discountAmt) bestModalDiscount = cpAmt;
                 }
             }
@@ -1457,8 +1460,16 @@
                     <div style="display:flex; justify-content:space-between; color:#888; margin-bottom:6px;">
                         <span>商品小計</span><span>$${originalTotal}</span>
                     </div>
-                    ${discountAmt > 0 ? `<div style="display:flex; justify-content:space-between; color:#c62828; margin-bottom:6px;">
-                        <span>指定品項折扣（${activeDiscountName}）</span><span>-$${discountAmt}</span>
+                    ${bestModalDiscount > 0 ? `<div style="display:flex; justify-content:space-between; color:#c62828; margin-bottom:6px;">
+                        <span>折扣（${(() => {
+                            if (_activeCoupon) {
+                                if (_activeCoupon.discountType === '折數') {
+                                    return _couponDiscountAmt(discountSubtotal, originalTotal) > discountAmt ? _activeCoupon.displayName : activeDiscountName;
+                                }
+                                return activeDiscountName + ' + ' + _activeCoupon.displayName;
+                            }
+                            return activeDiscountName;
+                        })()}）</span><span>-$${bestModalDiscount}</span>
                     </div>` : ''}
                     <div style="display:flex; justify-content:space-between; color:#888; margin-bottom:10px;">
                         <span>運費</span><span>${shipping === 0 ? '免運費 🎉' : `$${shipping}`}</span>
@@ -1592,7 +1603,7 @@
                     useCoupon = true;
                 } else {
                     // 折數擇優
-                    const couponAmt = _couponDiscountAmt(originalTotal);
+                    const couponAmt = _couponDiscountAmt(discountSubtotal, originalTotal);
                     if (couponAmt > discountAmt) { bestDiscount = couponAmt; useCoupon = true; }
                 }
             }
@@ -2040,13 +2051,24 @@
                     }
                 } else {
                     // 折數擇優：對全部品項取最大折扣
-                    const cpAmt = _couponDiscountAmt(originalTotal);
+                    const cpAmt = _couponDiscountAmt(discountSubtotal, originalTotal);
                     if (cpAmt > rateDiscountAmt) totalDiscountAmt = cpAmt;
                 }
             }
 
             // 組合 payload 存起來
-            _pendingPayload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: activeDiscountName, globalDiscountRate: SHOP_CONFIG.discountRate, couponCode: _activeCoupon ? _activeCoupon.code : '' };
+            _pendingPayload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: (() => {
+                    if (_activeCoupon) {
+                        if (_activeCoupon.discountType === '折數') {
+                            const cpAmt = _couponDiscountAmt(discountSubtotal, originalTotal);
+                            return cpAmt > rateDiscountAmt ? _activeCoupon.displayName : activeDiscountName;
+                        } else {
+                            // 現金折抵：顯示折數名稱 + 折扣碼名稱
+                            return activeDiscountName + (_activeCoupon ? ' + ' + _activeCoupon.displayName : '');
+                        }
+                    }
+                    return activeDiscountName;
+                })(), globalDiscountRate: SHOP_CONFIG.discountRate, couponCode: _activeCoupon ? _activeCoupon.code : '' };
 
             // 顯示確認摘要
             const allItems = [...discountedOrderItems, ...nonDiscountedOrderItems];
@@ -2062,8 +2084,17 @@
                 </div>`
             ).join('');
             if (totalDiscountAmt > 0) {
+                const confirmDiscName = (() => {
+                    if (_activeCoupon) {
+                        if (_activeCoupon.discountType === '折數') {
+                            return _couponDiscountAmt(discountSubtotal, originalTotal) > rateDiscountAmt ? _activeCoupon.displayName : activeDiscountName;
+                        }
+                        return activeDiscountName + ' + ' + _activeCoupon.displayName;
+                    }
+                    return activeDiscountName;
+                })();
                 confirmHtml += `<div class="confirm-item-row" style="color:#c62828;">
-                    <span>折扣（${activeDiscountName}）</span><span>-$${totalDiscountAmt}</span>
+                    <span>折扣（${confirmDiscName}）</span><span>-$${totalDiscountAmt}</span>
                 </div>`;
             }
             confirmHtml += `<div class="confirm-item-row"><span>運費</span><span>${shippingAmt === 0 ? '免運費 🎉' : '$' + shippingAmt}</span></div>`;
