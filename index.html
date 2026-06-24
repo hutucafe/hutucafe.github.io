@@ -704,11 +704,12 @@
                 const res  = await fetch(GAS_URL + '?action=validateCoupon&code=' + encodeURIComponent(code), { cache: 'no-store' });
                 const data = await res.json();
                 if (data.result === 'valid') {
-                    _activeCoupon = { code, discountType: data.discountType, discountValue: data.discountValue, displayName: data.displayName || code };
+                    _activeCoupon = { code, discountType: data.discountType, discountValue: data.discountValue, minOrder: data.minOrder || 0, displayName: data.displayName || code };
                     const desc = data.discountType === '金額'
                         ? '折抵 $' + data.discountValue + ' 元'
                         : Math.round(data.discountValue * 10) + ' 折優惠';
-                    statusEl.innerHTML = '✅ 折扣碼 <strong>' + code + '</strong> 已套用：' + _activeCoupon.displayName + '（' + desc + '）';
+                    const minHint = (data.minOrder > 0) ? '・低消 $' + data.minOrder : '';
+                    statusEl.innerHTML = '✅ 折扣碼 <strong>' + code + '</strong> 已套用：' + _activeCoupon.displayName + '（' + desc + minHint + '）';
                     statusEl.style.color = '#15803d';
                     statusEl.style.display = 'block';
                     calculateTotal();
@@ -1420,7 +1421,20 @@
             const activeRate = _getActiveRate();
             const activeDiscountName = _getActiveDiscountName();
             const discountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
-            const discountedTotal = originalTotal - discountAmt;
+            let bestModalDiscount = discountAmt;
+            if (_activeCoupon) {
+                if (_activeCoupon.discountType === '金額') {
+                    const minOrd2 = _activeCoupon.minOrder || 0;
+                    if (minOrd2 <= 0 || originalTotal >= minOrd2) {
+                        const cashAmt2 = Math.min(parseFloat(_activeCoupon.discountValue)||0, Math.max(0, originalTotal - discountAmt));
+                        bestModalDiscount = discountAmt + cashAmt2;
+                    }
+                } else {
+                    const cpAmt = _couponDiscountAmt(originalTotal);
+                    if (cpAmt > discountAmt) bestModalDiscount = cpAmt;
+                }
+            }
+            const discountedTotal = originalTotal - bestModalDiscount;
             const shipping = discountedTotal >= SHOP_CONFIG.freeShippingThreshold ? 0 : SHOP_CONFIG.shippingFee;
             const finalTotal = discountedTotal + shipping;
 
@@ -1552,11 +1566,23 @@
             }
             const activeRate = _getActiveRate();
             const activeDiscountName = _getActiveDiscountName();
-            const discountAmt  = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
-            const couponAmt    = _activeCoupon ? _couponDiscountAmt(originalTotal) : 0;
-            const bestDiscount = Math.max(discountAmt, couponAmt);
-            const useCoupon    = couponAmt > discountAmt && _activeCoupon;
-            let discountedTotal = originalTotal - bestDiscount;
+            const discountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
+            // 現金折抵：疊加；折數折扣：擇優
+            let bestDiscount = discountAmt;
+            let useCoupon = false;
+            if (_activeCoupon) {
+                if (_activeCoupon.discountType === '金額') {
+                    // 現金疊加：折數折完再扣現金
+                    const cashAmt = Math.min(parseFloat(_activeCoupon.discountValue)||0, originalTotal);
+                    bestDiscount = discountAmt + cashAmt;
+                    useCoupon = true;
+                } else {
+                    // 折數擇優
+                    const couponAmt = _couponDiscountAmt(originalTotal);
+                    if (couponAmt > discountAmt) { bestDiscount = couponAmt; useCoupon = true; }
+                }
+            }
+            let discountedTotal = Math.max(0, originalTotal - bestDiscount);
             let shipping = 0;
             if (totalItems > 0) {
                 shipping = (discountedTotal >= SHOP_CONFIG.freeShippingThreshold) ? 0 : SHOP_CONFIG.shippingFee;
@@ -1566,6 +1592,21 @@
             document.getElementById('display-discount').textContent = `-$${bestDiscount}`;
             const discountLabelEl = document.getElementById('ui-bottom-discount');
             if (discountLabelEl) discountLabelEl.textContent = useCoupon ? (_activeCoupon.displayName||'折扣碼') : activeDiscountName;
+            // 低消未達時在折扣碼狀態顯示提示
+            const couponStatusEl = document.getElementById('coupon-status');
+            if (_activeCoupon && couponStatusEl && couponStatusEl.style.display !== 'none') {
+                const minOrdShow = _activeCoupon.minOrder || 0;
+                if (minOrdShow > 0 && originalTotal < minOrdShow) {
+                    couponStatusEl.innerHTML = '⚠️ 折扣碼 <strong>' + _activeCoupon.code + '</strong> 低消 $' + minOrdShow + '，目前消費 $' + originalTotal + ' 尚未達標，折扣暫不套用';
+                    couponStatusEl.style.color = '#b45309';
+                } else if (minOrdShow > 0) {
+                    const descShow = _activeCoupon.discountType === '金額'
+                        ? '折抵 $' + _activeCoupon.discountValue + ' 元'
+                        : Math.round(_activeCoupon.discountValue * 10) + ' 折優惠';
+                    couponStatusEl.innerHTML = '✅ 折扣碼 <strong>' + _activeCoupon.code + '</strong> 已套用：' + _activeCoupon.displayName + '（' + descShow + '・低消 $' + minOrdShow + '）';
+                    couponStatusEl.style.color = '#15803d';
+                }
+            }
             document.getElementById('display-shipping').textContent = (shipping === 0 && totalItems > 0) ? '免運費' : `$${shipping}`;
             document.querySelector('.total-amt').textContent = `$${currentFinalTotal}`;
             const qtyEl = document.getElementById('display-qty-label');
@@ -1973,7 +2014,22 @@
             }
             const activeRate = _getActiveRate();
             const activeDiscountName = _getActiveDiscountName();
-            const totalDiscountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
+            const rateDiscountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
+            let totalDiscountAmt = rateDiscountAmt;
+            if (_activeCoupon) {
+                if (_activeCoupon.discountType === '金額') {
+                    // 現金折抵疊加：折數折完再扣現金（低消檢查）
+                    const minOrd = _activeCoupon.minOrder || 0;
+                    if (minOrd <= 0 || originalTotal >= minOrd) {
+                        const cashAmt = Math.min(parseFloat(_activeCoupon.discountValue)||0, Math.max(0, originalTotal - rateDiscountAmt));
+                        totalDiscountAmt = rateDiscountAmt + cashAmt;
+                    }
+                } else {
+                    // 折數擇優：對全部品項取最大折扣
+                    const cpAmt = _couponDiscountAmt(originalTotal);
+                    if (cpAmt > rateDiscountAmt) totalDiscountAmt = cpAmt;
+                }
+            }
 
             // 組合 payload 存起來
             _pendingPayload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: activeDiscountName, globalDiscountRate: SHOP_CONFIG.discountRate, couponCode: _activeCoupon ? _activeCoupon.code : '' };
