@@ -717,6 +717,10 @@
             const statusEl = document.getElementById('coupon-status');
             if (!code) { alert('請輸入折扣碼'); return; }
             btn.disabled = true; btn.textContent = '驗證中...';
+            // 先顯示查詢中狀態
+            statusEl.innerHTML = '🔍 折扣碼查詢中，請稍候...';
+            statusEl.style.color = '#b45309';
+            statusEl.style.display = 'block';
             try {
                 // 先查本地 corpList 快取，有就不用打 GAS
                 const corpMatch = corpList.find(c => c.code === code);
@@ -730,6 +734,12 @@
                 const data = await res.json();
                 if (data.result === 'valid') {
                     _applyValidCoupon(code, data, statusEl);
+                } else if (data.result === 'used') {
+                    _activeCoupon = null;
+                    statusEl.textContent = '⚠️ 此折扣碼已使用過，無法重複使用';
+                    statusEl.style.color = '#b45309';
+                    statusEl.style.display = 'block';
+                    calculateTotal();
                 } else {
                     _activeCoupon = null;
                     statusEl.textContent = '❌ ' + (data.message || '折扣碼無效');
