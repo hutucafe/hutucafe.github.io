@@ -521,6 +521,7 @@
                     const desc = data.discountType === '金額'
                         ? '折抵 $' + data.discountValue + ' 元'
                         : '享 ' + Math.round(data.discountValue * 10) + ' 折優惠';
+                    const expiryLine = data.expiry ? `<div style="font-size:12px;color:#9ca3af;margin-top:6px;">使用期限：${data.expiry}</div>` : '';
                     document.getElementById('coupon-form-body').innerHTML =
                         `<div style="text-align:center;padding:24px 16px 16px;">
                             <div style="font-size:42px;margin-bottom:12px;">🎉</div>
@@ -530,6 +531,7 @@
                                 <div style="font-size:13px;color:#6b7280;margin-bottom:10px;">${desc}</div>
                                 <div style="font-size:11px;color:#9ca3af;margin-bottom:6px;">您的專屬折扣碼</div>
                                 <div style="font-size:26px;font-weight:900;color:#e53935;letter-spacing:3px;">${data.code}</div>
+                                ${expiryLine}
                             </div>
                             <div style="font-size:13px;color:#166534;font-weight:600;margin-bottom:4px;">折扣碼已寄至您的 Email！</div>
                             <div style="font-size:12px;color:#9ca3af;">下單時輸入此碼即可套用，折扣碼可轉讓給朋友使用</div>
