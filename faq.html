@@ -170,6 +170,24 @@
         .event-submit-btn { width:100%; padding:13px; background:#e8a838; color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:0.2s; margin-top:4px; }
         .event-submit-btn:disabled { background:#ccc; cursor:not-allowed; }
         .event-required { color:red; margin-left:2px; }
+        /* 搶碼區塊 */
+        @keyframes couponSlideIn { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+        #coupon-section { display:none; animation: couponSlideIn 0.4s ease-out; background: linear-gradient(135deg,#f0fff4 0%,#dcfce7 100%); border:2px solid #4ade80; border-radius:16px; padding:22px 20px; margin-bottom:20px; box-shadow:0 4px 20px rgba(74,222,128,0.15); }
+        #coupon-section .coupon-title { font-size:20px; font-weight:bold; color:#14532d; border-left:5px solid #4ade80; padding-left:12px; margin-bottom:6px; }
+        #coupon-section .coupon-desc  { font-size:13px; color:#166534; margin-bottom:14px; }
+        .coupon-pool-list { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+        .coupon-pool-item { display:flex; justify-content:space-between; align-items:center; background:#fff; border-radius:10px; padding:10px 14px; border:1px solid #bbf7d0; font-size:13px; }
+        .coupon-pool-item.empty { opacity:0.5; }
+        .coupon-pool-name  { font-weight:600; color:#14532d; }
+        .coupon-pool-stock { font-size:12px; color:#166534; white-space:nowrap; margin-left:8px; }
+        .coupon-pool-stock.sold-out { color:#dc2626; font-weight:700; }
+        .coupon-form-group { margin-bottom:12px; }
+        .coupon-form-group label { display:block; font-size:13px; font-weight:600; color:#14532d; margin-bottom:5px; }
+        .coupon-form-group input { width:100%; padding:10px 13px; border:1.5px solid #86efac; border-radius:10px; font-size:14px; background:#fff; color:#333; box-sizing:border-box; }
+        .coupon-form-group input:focus { outline:none; border-color:#4ade80; box-shadow:0 0 0 3px rgba(74,222,128,0.15); }
+        .coupon-submit-btn { width:100%; padding:13px; background:#16a34a; color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:0.2s; margin-top:4px; }
+        .coupon-submit-btn:hover:not(:disabled) { background:#15803d; }
+        .coupon-submit-btn:disabled { background:#ccc; cursor:not-allowed; }
     </style>
 </head>
 <body>
@@ -211,6 +229,29 @@
                 <div class="skeleton field"></div>
                 <div class="skeleton field"></div>
                 <div class="skeleton field"></div>
+            </div>
+        </div>
+
+        <!-- 搶碼區塊（搶碼活動期間自動顯示） -->
+        <div id="coupon-section">
+            <div class="coupon-title" id="coupon-title">🎟 限量折扣碼搶先領</div>
+            <div class="coupon-desc" id="coupon-desc">數量有限，搶完為止！每人限領一次，折扣碼不一定搶得到喔！</div>
+            <div class="coupon-pool-list" id="coupon-pool-list"></div>
+            <div id="coupon-form-body">
+                <div class="coupon-form-group">
+                    <label>姓名 <span style="color:red">*</span></label>
+                    <input type="text" id="cf-name" placeholder="請輸入真實姓名">
+                </div>
+                <div class="coupon-form-group">
+                    <label>手機號碼 <span style="color:red">*</span></label>
+                    <input type="tel" id="cf-phone" placeholder="例如: 0912345678" maxlength="10">
+                </div>
+                <div class="coupon-form-group">
+                    <label>Email（折扣碼將寄至此信箱）<span style="color:red">*</span></label>
+                    <input type="email" id="cf-email" placeholder="example@email.com">
+                    <div style="font-size:11px;color:#aaa;margin-top:3px;">請確認 Email 正確，折扣碼將寄送至此</div>
+                </div>
+                <button class="coupon-submit-btn" id="coupon-submit-btn" onclick="submitGrabCoupon()">🎟 立即搶碼！</button>
             </div>
         </div>
 
@@ -392,6 +433,106 @@
         }
 
         loadEventConfig();
+
+        // ── 🎟 搶碼區塊 ───────────────────────────────────────────
+        async function loadCouponConfig() {
+            const section = document.getElementById('coupon-section');
+            try {
+                const res  = await fetch(GAS_URL + '?action=couponConfig', { cache: 'no-store' });
+                const data = await res.json();
+                renderCouponSection(data);
+            } catch(e) { section.style.display = 'none'; }
+        }
+
+        function renderCouponSection(data) {
+            const section = document.getElementById('coupon-section');
+            if (!data.active) { section.style.display = 'none'; return; }
+            if (data.eventName) document.getElementById('coupon-title').textContent = '🎟 ' + data.eventName;
+            const poolList = document.getElementById('coupon-pool-list');
+            if (data.pool && data.pool.length > 0) {
+                poolList.innerHTML = data.pool.map(opt => {
+                    const isEmpty = opt.left === 0;
+                    const desc = opt.discountType === '金額'
+                        ? '折抵 $' + opt.discountValue
+                        : Math.round(opt.discountValue * 10) + ' 折';
+                    return `<div class="coupon-pool-item${isEmpty ? ' empty' : ''}">
+                        <span class="coupon-pool-name">${opt.name}<span style="font-size:11px;font-weight:400;color:#6b7280;margin-left:6px;">${desc}</span></span>
+                        <span class="coupon-pool-stock${isEmpty ? ' sold-out' : ''}">
+                            ${isEmpty ? '已搶完 🔴' : '剩 ' + opt.left + ' 張 / 共 ' + opt.total + ' 張'}
+                        </span>
+                    </div>`;
+                }).join('');
+            }
+            if (data.allEmpty) {
+                document.getElementById('coupon-form-body').innerHTML =
+                    `<div style="text-align:center;padding:20px 0;color:#166534;font-size:14px;font-weight:600;">
+                        本次折扣碼已全數發放完畢，感謝參與！<br>
+                        <span style="font-size:12px;color:#6b7280;font-weight:400;margin-top:4px;display:block;">活動期間結束前持續關注，下次搶先一步！</span>
+                    </div>`;
+            }
+            section.style.display = 'block';
+        }
+
+        async function submitGrabCoupon() {
+            const btn   = document.getElementById('coupon-submit-btn');
+            const name  = document.getElementById('cf-name').value.trim();
+            const phone = document.getElementById('cf-phone').value.trim();
+            const email = document.getElementById('cf-email').value.trim();
+            let valid = true;
+            [['cf-name',name],['cf-phone',phone],['cf-email',email]].forEach(([id,val]) => {
+                const el = document.getElementById(id);
+                if (!val) { el.style.borderColor='#dc2626'; valid=false; } else el.style.borderColor='';
+            });
+            if (!valid) { alert('請填寫所有必填欄位！'); return; }
+            if (!/^09\d{8}$/.test(phone)) { alert('手機號碼格式不正確！'); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Email 格式不正確！'); return; }
+            btn.disabled = true; btn.textContent = '搶碼中...';
+            try {
+                const res  = await fetch(GAS_URL + '?action=grabCoupon'
+                    + '&name='  + encodeURIComponent(name)
+                    + '&phone=' + encodeURIComponent(phone)
+                    + '&email=' + encodeURIComponent(email), { cache: 'no-store' });
+                const data = await res.json();
+                if (data.result === 'success') {
+                    const desc = data.discountType === '金額'
+                        ? '折抵 $' + data.discountValue + ' 元'
+                        : '享 ' + Math.round(data.discountValue * 10) + ' 折優惠';
+                    document.getElementById('coupon-form-body').innerHTML =
+                        `<div style="text-align:center;padding:24px 16px 16px;">
+                            <div style="font-size:42px;margin-bottom:12px;">🎉</div>
+                            <div style="font-size:17px;font-weight:700;color:#14532d;margin-bottom:16px;">恭喜！您抽到</div>
+                            <div style="background:#fff;border:2px solid #4ade80;border-radius:14px;padding:18px 16px;margin-bottom:14px;">
+                                <div style="font-size:14px;color:#166534;font-weight:600;margin-bottom:6px;">${data.optionName||''}</div>
+                                <div style="font-size:13px;color:#6b7280;margin-bottom:10px;">${desc}</div>
+                                <div style="font-size:11px;color:#9ca3af;margin-bottom:6px;">您的專屬折扣碼</div>
+                                <div style="font-size:26px;font-weight:900;color:#e53935;letter-spacing:3px;">${data.code}</div>
+                            </div>
+                            <div style="font-size:13px;color:#166534;font-weight:600;margin-bottom:4px;">折扣碼已寄至您的 Email！</div>
+                            <div style="font-size:12px;color:#9ca3af;">下單時輸入此碼即可套用，折扣碼可轉讓給朋友使用</div>
+                        </div>`;
+                    loadCouponConfig();
+                } else if (data.result === 'already') {
+                    document.getElementById('coupon-form-body').innerHTML =
+                        `<div style="text-align:center;padding:20px 16px;">
+                            <div style="font-size:36px;margin-bottom:10px;">📬</div>
+                            <div style="font-size:15px;font-weight:700;color:#14532d;margin-bottom:8px;">您已領取過折扣碼</div>
+                            <div style="font-size:26px;font-weight:900;color:#e53935;letter-spacing:3px;margin-bottom:8px;">${data.code}</div>
+                            <div style="font-size:12px;color:#9ca3af;">請至 Email 查收，或直接在下單頁輸入使用</div>
+                        </div>`;
+                } else if (data.result === 'empty') {
+                    loadCouponConfig();
+                    btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
+                } else {
+                    alert(data.message || '搶碼失敗，請稍後再試');
+                    btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
+                }
+            } catch(e) {
+                alert('網路異常，請稍後再試');
+                btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
+            }
+        }
+
+        loadCouponConfig();
 
         async function submitEvent() {
             const btn = document.getElementById('event-submit-btn');
