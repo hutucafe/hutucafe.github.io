@@ -15,7 +15,7 @@
     <style>
         /* 基礎樣式重置 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Heiti TC', 'Noto Sans TC', sans-serif; }
-        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 140px; }
+        body { background-color: #f7f3f0; color: #333; line-height: 1.5; padding-bottom: 160px; }
         
         /* 頁首設計 */
         header { 
@@ -185,7 +185,7 @@
         .coupon-form-group label { display:block; font-size:13px; font-weight:600; color:#14532d; margin-bottom:5px; }
         .coupon-form-group input { width:100%; padding:10px 13px; border:1.5px solid #86efac; border-radius:10px; font-size:14px; background:#fff; color:#333; box-sizing:border-box; }
         .coupon-form-group input:focus { outline:none; border-color:#4ade80; box-shadow:0 0 0 3px rgba(74,222,128,0.15); }
-        .coupon-submit-btn { display:block; width:fit-content; min-width:180px; padding:13px 32px; background:#16a34a; color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:0.2s; margin:16px auto 0; }
+        .coupon-submit-btn { display:block; width:fit-content; min-width:180px; padding:13px 32px; background:#16a34a; color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:0.2s; margin:16px auto 24px; }
         .coupon-submit-btn:hover:not(:disabled) { background:#15803d; }
         .coupon-submit-btn:disabled { background:#ccc; cursor:not-allowed; }
     </style>
@@ -437,8 +437,6 @@
         // ── 🎟 搶碼區塊 ───────────────────────────────────────────
         const COUPON_LS_KEY = '_hutucafe_coupon_cfg';
 
-        let _grabbing = false; // 防止重複送出
-
         async function loadCouponConfig() {
             const section = document.getElementById('coupon-section');
             // 先用 localStorage 快取瞬間顯示
@@ -500,7 +498,6 @@
         }
 
         async function submitGrabCoupon() {
-            if (_grabbing) return; // 防止重複送出
             const btn   = document.getElementById('coupon-submit-btn');
             const name  = document.getElementById('cf-name').value.trim();
             const phone = document.getElementById('cf-phone').value.trim();
@@ -513,7 +510,6 @@
             if (!valid) { alert('請填寫所有必填欄位！'); return; }
             if (!/^09\d{8}$/.test(phone)) { alert('手機號碼格式不正確！'); return; }
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Email 格式不正確！'); return; }
-            _grabbing = true;
             btn.disabled = true; btn.textContent = '搶碼中...';
             try {
                 const res  = await fetch(GAS_URL + '?action=grabCoupon'
@@ -544,10 +540,14 @@
                     function onCouponEmailInput() {
             const email = document.getElementById('cf-email').value.trim();
             if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                // 等鍵盤收起後再 scroll（300ms delay）
+                // 等鍵盤收起後再 scroll，並確保按鈕在底欄上方
                 setTimeout(() => {
                     const btn = document.getElementById('coupon-submit-btn');
-                    if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (btn) {
+                        btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // 再往上偏移避免被底欄遮住
+                        setTimeout(() => { window.scrollBy(0, 60); }, 400);
+                    }
                 }, 300);
             }
         }
@@ -574,7 +574,6 @@
 
         loadCouponConfig();
                 } else if (data.result === 'already') {
-                    _grabbing = false; // 已搶過可以看到結果，不需要再鎖
                     document.getElementById('coupon-form-body').innerHTML =
                         `<div style="text-align:center;padding:20px 16px;">
                             <div style="font-size:36px;margin-bottom:10px;">📬</div>
@@ -583,20 +582,13 @@
                             <div style="font-size:12px;color:#9ca3af;">請至 Email 查收，或直接在下單頁輸入使用</div>
                         </div>`;
                 } else if (data.result === 'empty') {
-                    _grabbing = false;
                     loadCouponConfig();
                     btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
-                } else if (data.result === 'busy') {
-                    _grabbing = false;
-                    btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
-                    alert('目前搶碼人數較多，請稍後再試！');
                 } else {
-                    _grabbing = false;
                     alert(data.message || '搶碼失敗，請稍後再試');
                     btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
                 }
             } catch(e) {
-                _grabbing = false;
                 alert('網路異常，請稍後再試');
                 btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
             }
