@@ -243,15 +243,15 @@
             <div id="coupon-form-body">
                 <div class="coupon-form-group">
                     <label>姓名 <span style="color:red">*</span></label>
-                    <input type="text" id="cf-name" placeholder="請輸入真實姓名" oninput="if(this.value.trim()) scrollToCouponBtn()">
+                    <input type="text" id="cf-name" placeholder="請輸入真實姓名" oninput="if(this.value.trim()) scrollToCouponBtn()" onfocus="startCouponTyping()" onblur="endCouponTyping()">
                 </div>
                 <div class="coupon-form-group">
                     <label>手機號碼 <span style="color:red">*</span></label>
-                    <input type="tel" id="cf-phone" placeholder="例如: 0912345678" maxlength="10" oninput="if(/^09\d{8}$/.test(this.value)) scrollToCouponBtn()">
+                    <input type="tel" id="cf-phone" placeholder="例如: 0912345678" maxlength="10" oninput="if(/^09\d{8}$/.test(this.value)) scrollToCouponBtn()" onfocus="startCouponTyping()" onblur="endCouponTyping()">
                 </div>
                 <div class="coupon-form-group">
                     <label>Email（折扣碼將寄至此信箱）<span style="color:red">*</span></label>
-                    <input type="email" id="cf-email" placeholder="example@email.com" oninput="onCouponEmailInput()">
+                    <input type="email" id="cf-email" placeholder="example@email.com" oninput="onCouponEmailInput()" onfocus="startCouponTyping()" onblur="endCouponTyping()">
                     <div style="font-size:11px;color:#aaa;margin-top:3px;">請確認 Email 正確，折扣碼將寄送至此</div>
                 </div>
                 <button class="coupon-submit-btn" id="coupon-submit-btn" onclick="submitGrabCoupon()">🎟 立即搶碼！</button>
@@ -439,6 +439,24 @@
 
         // ── 🎟 搶碼區塊 ───────────────────────────────────────────
         const COUPON_LS_KEY = '_hutucafe_coupon_cfg';
+
+        let _grabbing = false; // 防止重複送出
+
+        function startCouponTyping() {
+            document.body.classList.add('coupon-typing');
+            setTimeout(() => {
+                const section = document.getElementById('coupon-section');
+                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+        }
+
+        function endCouponTyping() {
+            setTimeout(() => {
+                const inputs = ['cf-name','cf-phone','cf-email'];
+                const anyFocused = inputs.some(id => document.getElementById(id) === document.activeElement);
+                if (!anyFocused) document.body.classList.remove('coupon-typing');
+            }, 200);
+        }
 
         async function loadCouponConfig() {
             const section = document.getElementById('coupon-section');
