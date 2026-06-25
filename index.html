@@ -1443,27 +1443,40 @@
             let originalTotal = 0;
             let discountSubtotal = 0;
 
-            const itemsHtml = items.map(c => {
-                const name = c.product['熟豆品項'] || '未知品項';
-                const pkg  = c.product['包裝'] || '';
-                const price = parseInt(c.product['售價'] || 0);
-                const subtotal = c.qty * price;
-                originalTotal += subtotal;
-
+            const discountItems = [], nonDiscountItems = [];
+            items.forEach(c => {
                 const rawName = (c.product['熟豆品項'] || '').toLowerCase();
                 const category = (c.product.category || '').toLowerCase();
                 let isDiscount = category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
                                  rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛');
                 if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') ||
                     rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) isDiscount = false;
+                const price = parseInt(c.product['售價'] || 0);
+                const subtotal = c.qty * price;
+                originalTotal += subtotal;
                 if (isDiscount) discountSubtotal += subtotal;
+                (isDiscount ? discountItems : nonDiscountItems).push({ ...c, price, subtotal });
+            });
 
+            const renderItem = (c, showTag) => {
+                const name = c.product['熟豆品項'] || '未知品項';
+                const pkg  = c.product['包裝'] || '';
                 return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f0ece6; font-size:13px; color:#333;">
-                    <span style="flex:1; line-height:1.5;">${name}${pkg ? `<span style="color:#999; font-size:11px; margin-left:4px;">${pkg}</span>` : ''}</span>
-                    <span style="margin-left:12px; white-space:nowrap; color:#888;">${c.qty} 份 × $${price}</span>
-                    <span style="margin-left:10px; font-weight:700; color:#b77b3b; white-space:nowrap;">$${subtotal}</span>
+                    <span style="flex:1; line-height:1.5;">${name}${pkg ? `<span style="color:#999; font-size:11px; margin-left:4px;">${pkg}</span>` : ''}${showTag ? '<span style="color:#e53935; font-size:10px; margin-left:4px; border:1px solid #e53935; border-radius:3px; padding:0 3px;">折扣</span>' : ''}</span>
+                    <span style="margin-left:12px; white-space:nowrap; color:#888;">${c.qty} 份 × $${c.price}</span>
+                    <span style="margin-left:10px; font-weight:700; color:#b77b3b; white-space:nowrap;">$${c.subtotal}</span>
                 </div>`;
-            }).join('');
+            };
+
+            let itemsHtml = '';
+            if (discountItems.length > 0) {
+                itemsHtml += `<div style="font-size:11px; font-weight:600; color:#e53935; margin:8px 0 2px; letter-spacing:0.5px;">✦ 指定折扣品項</div>`;
+                itemsHtml += discountItems.map(c => renderItem(c, false)).join('');
+            }
+            if (nonDiscountItems.length > 0) {
+                itemsHtml += `<div style="font-size:11px; font-weight:600; color:#888; margin:${discountItems.length > 0 ? '12px' : '8px'} 0 2px; letter-spacing:0.5px;">◇ 非指定品項（無折扣）</div>`;
+                itemsHtml += nonDiscountItems.map(c => renderItem(c, false)).join('');
+            }
 
             // 擇優：VIP 啟用且 VIP 折扣更好才用 VIP
             const activeRate = _getActiveRate();
@@ -1474,7 +1487,8 @@
                 if (_activeCoupon.discountType === '金額') {
                     const minOrd2 = _activeCoupon.minOrder || 0;
                     if (minOrd2 <= 0 || originalTotal >= minOrd2) {
-                        const cashAmt2 = Math.min(parseFloat(_activeCoupon.discountValue)||0, Math.max(0, originalTotal - discountAmt));
+                        const afterRateModal = Math.max(0, originalTotal - discountAmt);
+                        const cashAmt2 = Math.min(parseFloat(_activeCoupon.discountValue)||0, afterRateModal);
                         bestModalDiscount = discountAmt + cashAmt2;
                     }
                 } else {
@@ -1628,10 +1642,14 @@
             let useCoupon = false;
             if (_activeCoupon) {
                 if (_activeCoupon.discountType === '金額') {
-                    // 現金疊加：折數折完再扣現金
-                    const cashAmt = Math.min(parseFloat(_activeCoupon.discountValue)||0, originalTotal);
-                    bestDiscount = discountAmt + cashAmt;
-                    useCoupon = true;
+                    // 現金疊加：指定品項折數後 + 非指定品項，再扣現金
+                    const minOrd = _activeCoupon.minOrder || 0;
+                    if (minOrd <= 0 || originalTotal >= minOrd) {
+                        const afterRate = Math.max(0, originalTotal - discountAmt);
+                        const cashAmt = Math.min(parseFloat(_activeCoupon.discountValue)||0, afterRate);
+                        bestDiscount = discountAmt + cashAmt;
+                        useCoupon = true;
+                    }
                 } else {
                     // 折數擇優
                     const couponAmt = _couponDiscountAmt(discountSubtotal, originalTotal);
@@ -2074,10 +2092,11 @@
             let totalDiscountAmt = rateDiscountAmt;
             if (_activeCoupon) {
                 if (_activeCoupon.discountType === '金額') {
-                    // 現金折抵疊加：折數折完再扣現金（低消檢查）
+                    // 現金折抵：指定品項折數後 + 非指定品項，再扣現金（低消檢查）
                     const minOrd = _activeCoupon.minOrder || 0;
                     if (minOrd <= 0 || originalTotal >= minOrd) {
-                        const cashAmt = Math.min(parseFloat(_activeCoupon.discountValue)||0, Math.max(0, originalTotal - rateDiscountAmt));
+                        const afterRate = Math.max(0, originalTotal - rateDiscountAmt);
+                        const cashAmt = Math.min(parseFloat(_activeCoupon.discountValue)||0, afterRate);
                         totalDiscountAmt = rateDiscountAmt + cashAmt;
                     }
                 } else {
@@ -2107,13 +2126,21 @@
                 <span style="font-weight:600; color:#3e2723;">📍 取貨門市：</span>${storeName}<br>
                 <span style="font-weight:600; color:#3e2723;">👤 取件人：</span>${name} ${phone}
             </div>`;
-            confirmHtml += allItems.map(item =>
+            // 分組：指定折扣品項 vs 一般品項
+            const renderConfirmItem = item =>
                 `<div class="confirm-item-row">
                     <span style="flex:1; color:#333;">${item.rawName}<span style="color:#aaa; font-size:11px; margin-left:4px;">${item.pkg || ''}</span></span>
                     <span style="color:#888; margin:0 8px;">x${item.qty}</span>
                     <span style="font-weight:600; color:#b77b3b;">$${item.subtotal}</span>
-                </div>`
-            ).join('');
+                </div>`;
+            if (discountedOrderItems.length > 0) {
+                confirmHtml += `<div style="font-size:11px; font-weight:600; color:#e53935; margin:6px 0 2px;">✦ 指定折扣品項</div>`;
+                confirmHtml += discountedOrderItems.map(renderConfirmItem).join('');
+            }
+            if (nonDiscountedOrderItems.length > 0) {
+                confirmHtml += `<div style="font-size:11px; font-weight:600; color:#888; margin:${discountedOrderItems.length > 0 ? '10px' : '6px'} 0 2px;">◇ 非指定品項（無折扣）</div>`;
+                confirmHtml += nonDiscountedOrderItems.map(renderConfirmItem).join('');
+            }
             if (totalDiscountAmt > 0) {
                 const confirmDiscName = (() => {
                     if (_activeCoupon) {
