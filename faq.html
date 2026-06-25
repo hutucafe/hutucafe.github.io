@@ -188,7 +188,7 @@
         .coupon-form-group input { width:100%; padding:10px 13px; border:1.5px solid #86efac; border-radius:10px; font-size:14px; background:#fff; color:#333; box-sizing:border-box; }
         .coupon-form-group input:focus { outline:none; border-color:#4ade80; box-shadow:0 0 0 3px rgba(74,222,128,0.15); }
         .coupon-submit-btn { display:block; width:fit-content; min-width:180px; padding:13px 32px; background:#16a34a; color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:0.2s; margin:16px auto 24px; }
-        body.coupon-typing .coupon-submit-btn { position:sticky; bottom:16px; z-index:100; box-shadow:0 4px 16px rgba(22,163,74,0.4); }
+        /* 搶碼按鈕保持原位，不做 sticky */
         .coupon-submit-btn:hover:not(:disabled) { background:#15803d; }
         .coupon-submit-btn:disabled { background:#ccc; cursor:not-allowed; }
     </style>
@@ -243,11 +243,11 @@
             <div id="coupon-form-body">
                 <div class="coupon-form-group">
                     <label>姓名 <span style="color:red">*</span></label>
-                    <input type="text" id="cf-name" placeholder="請輸入真實姓名" oninput="if(this.value.trim()) scrollToCouponBtn()" onfocus="startCouponTyping()" onblur="endCouponTyping()">
+                    <input type="text" id="cf-name" placeholder="請輸入真實姓名" onfocus="startCouponTyping()" onblur="endCouponTyping()">
                 </div>
                 <div class="coupon-form-group">
                     <label>手機號碼 <span style="color:red">*</span></label>
-                    <input type="tel" id="cf-phone" placeholder="例如: 0912345678" maxlength="10" oninput="if(/^09\d{8}$/.test(this.value)) scrollToCouponBtn()" onfocus="startCouponTyping()" onblur="endCouponTyping()">
+                    <input type="tel" id="cf-phone" placeholder="例如: 0912345678" maxlength="10" onfocus="startCouponTyping()" onblur="endCouponTyping()">
                 </div>
                 <div class="coupon-form-group">
                     <label>Email（折扣碼將寄至此信箱）<span style="color:red">*</span></label>
@@ -444,10 +444,7 @@
 
         function startCouponTyping() {
             document.body.classList.add('coupon-typing');
-            setTimeout(() => {
-                const section = document.getElementById('coupon-section');
-                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 300);
+            // 不做強制捲動，讓瀏覽器自行處理
         }
 
         function endCouponTyping() {
@@ -502,13 +499,23 @@
                     const desc = opt.discountType === '金額'
                         ? '折抵 $' + opt.discountValue
                         : optRateDisp;
+                    const minHint = opt.minOrder > 0 ? ' / 低消 $' + opt.minOrder : '';
                     return `<div class="coupon-pool-item${isEmpty ? ' empty' : ''}">
-                        <span class="coupon-pool-name">${opt.name}<span style="font-size:11px;font-weight:400;color:#6b7280;margin-left:6px;">${desc}</span></span>
+                        <span class="coupon-pool-name">${opt.name}<span style="font-size:11px;font-weight:400;color:#6b7280;margin-left:6px;">${desc}${minHint}</span></span>
                         <span class="coupon-pool-stock${isEmpty ? ' sold-out' : ''}">
                             ${isEmpty ? '已搶完 🔴' : '剩 ' + opt.left + ' 張 / 共 ' + opt.total + ' 張'}
                         </span>
                     </div>`;
                 }).join('');
+            }
+            // 在碼池列表下方顯示統一使用期限
+            if (data.pool && data.pool.length > 0) {
+                const poolExpiry = data.pool.find(p => p.expiry)?.expiry || '';
+                if (poolExpiry) {
+                    poolList.insertAdjacentHTML('afterend',
+                        `<div style="font-size:12px;color:#6b7280;text-align:right;margin:-4px 0 12px;padding-right:4px;">使用期限：${poolExpiry}</div>`
+                    );
+                }
             }
             if (data.allEmpty) {
                 document.getElementById('coupon-form-body').innerHTML =
@@ -559,7 +566,7 @@
                             <div style="background:#fff;border:2px solid #4ade80;border-radius:14px;padding:18px 16px;margin-bottom:14px;">
                                 ${eventLine}
                                 <div style="font-size:14px;color:#166534;font-weight:600;margin-bottom:4px;">${data.optionName||''}</div>
-                                <div style="font-size:13px;color:#6b7280;margin-bottom:10px;">${desc}</div>
+                                <div style="font-size:13px;color:#6b7280;margin-bottom:4px;">${desc}${data.minOrder > 0 ? ' · 低消 $' + data.minOrder : ''}</div>
                                 <div style="font-size:11px;color:#9ca3af;margin-bottom:6px;">您的專屬折扣碼</div>
                                 <div style="font-size:26px;font-weight:900;color:#e53935;letter-spacing:3px;">${data.code}</div>
                                 ${expiryLine}
@@ -626,7 +633,7 @@
                             <div style="background:#fff;border:2px solid #4ade80;border-radius:14px;padding:16px;margin-bottom:12px;">
                                 ${alreadyEvent}
                                 <div style="font-size:13px;color:#166534;font-weight:600;margin-bottom:4px;">${data.optionName||''}</div>
-                                <div style="font-size:12px;color:#6b7280;margin-bottom:10px;">${alreadyDesc}</div>
+                                <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">${alreadyDesc}${data.minOrder > 0 ? ' · 低消 $' + data.minOrder : ''}</div>
                                 <div style="font-size:11px;color:#9ca3af;margin-bottom:4px;">您的折扣碼</div>
                                 <div style="font-size:24px;font-weight:900;color:#e53935;letter-spacing:3px;">${data.code}</div>
                                 ${alreadyExpiry}
