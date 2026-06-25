@@ -474,9 +474,13 @@
             if (data.pool && data.pool.length > 0) {
                 poolList.innerHTML = data.pool.map(opt => {
                     const isEmpty = opt.left === 0;
+                    const optRate = parseFloat(opt.discountValue) || 0;
+                    const optRateDisp = (Math.round(optRate * 100) % 10 === 0)
+                        ? Math.round(optRate * 10) + '折'
+                        : Math.round(optRate * 100) + '折';
                     const desc = opt.discountType === '金額'
                         ? '折抵 $' + opt.discountValue
-                        : Math.round(opt.discountValue * 10) + ' 折';
+                        : optRateDisp;
                     return `<div class="coupon-pool-item${isEmpty ? ' empty' : ''}">
                         <span class="coupon-pool-name">${opt.name}<span style="font-size:11px;font-weight:400;color:#6b7280;margin-left:6px;">${desc}</span></span>
                         <span class="coupon-pool-stock${isEmpty ? ' sold-out' : ''}">
@@ -518,9 +522,13 @@
                     + '&email=' + encodeURIComponent(email), { cache: 'no-store' });
                 const data = await res.json();
                 if (data.result === 'success') {
+                    const sucRate = parseFloat(data.discountValue) || 0;
+                    const sucRateDisp = (Math.round(sucRate * 100) % 10 === 0)
+                        ? Math.round(sucRate * 10) + '折'
+                        : Math.round(sucRate * 100) + '折';
                     const desc = data.discountType === '金額'
                         ? '折抵 $' + data.discountValue + ' 元'
-                        : '享 ' + Math.round(data.discountValue * 10) + ' 折優惠';
+                        : '享 ' + sucRateDisp + '優惠';
                     const expiryLine = data.expiry ? `<div style="font-size:12px;color:#9ca3af;margin-top:6px;">使用期限：${data.expiry}</div>` : '';
                     document.getElementById('coupon-form-body').innerHTML =
                         `<div style="text-align:center;padding:24px 16px 16px;">
