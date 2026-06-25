@@ -240,11 +240,11 @@
             <div id="coupon-form-body">
                 <div class="coupon-form-group">
                     <label>姓名 <span style="color:red">*</span></label>
-                    <input type="text" id="cf-name" placeholder="請輸入真實姓名">
+                    <input type="text" id="cf-name" placeholder="請輸入真實姓名" oninput="if(this.value.trim()) scrollToCouponBtn()">
                 </div>
                 <div class="coupon-form-group">
                     <label>手機號碼 <span style="color:red">*</span></label>
-                    <input type="tel" id="cf-phone" placeholder="例如: 0912345678" maxlength="10">
+                    <input type="tel" id="cf-phone" placeholder="例如: 0912345678" maxlength="10" oninput="if(/^09\d{8}$/.test(this.value)) scrollToCouponBtn()">
                 </div>
                 <div class="coupon-form-group">
                     <label>Email（折扣碼將寄至此信箱）<span style="color:red">*</span></label>
@@ -529,13 +529,15 @@
                     const desc = data.discountType === '金額'
                         ? '折抵 $' + data.discountValue + ' 元'
                         : '享 ' + sucRateDisp + '優惠';
-                    const expiryLine = data.expiry ? `<div style="font-size:12px;color:#9ca3af;margin-top:6px;">使用期限：${data.expiry}</div>` : '';
+                    const expiryLine   = data.expiry    ? `<div style="font-size:12px;color:#9ca3af;margin-top:4px;">使用期限：${data.expiry}</div>` : '';
+                    const eventLine    = data.eventName ? `<div style="font-size:11px;color:#a3a3a3;margin-bottom:10px;">活動：${data.eventName}</div>` : '';
                     document.getElementById('coupon-form-body').innerHTML =
                         `<div style="text-align:center;padding:24px 16px 16px;">
                             <div style="font-size:42px;margin-bottom:12px;">🎉</div>
                             <div style="font-size:17px;font-weight:700;color:#14532d;margin-bottom:16px;">恭喜！您抽到</div>
                             <div style="background:#fff;border:2px solid #4ade80;border-radius:14px;padding:18px 16px;margin-bottom:14px;">
-                                <div style="font-size:14px;color:#166534;font-weight:600;margin-bottom:6px;">${data.optionName||''}</div>
+                                ${eventLine}
+                                <div style="font-size:14px;color:#166534;font-weight:600;margin-bottom:4px;">${data.optionName||''}</div>
                                 <div style="font-size:13px;color:#6b7280;margin-bottom:10px;">${desc}</div>
                                 <div style="font-size:11px;color:#9ca3af;margin-bottom:6px;">您的專屬折扣碼</div>
                                 <div style="font-size:26px;font-weight:900;color:#e53935;letter-spacing:3px;">${data.code}</div>
@@ -545,19 +547,19 @@
                             <div style="font-size:12px;color:#9ca3af;">下單時輸入此碼即可套用，折扣碼可轉讓給朋友使用</div>
                         </div>`;
                     try { localStorage.removeItem(COUPON_LS_KEY); } catch(e) {}
-                    function onCouponEmailInput() {
+                    function scrollToCouponBtn() {
+            // 等鍵盤收起後再 scroll
+            setTimeout(() => {
+                const btn = document.getElementById('coupon-submit-btn');
+                if (btn) {
+                    btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => { window.scrollBy(0, 60); }, 400);
+                }
+            }, 300);
+        }
+        function onCouponEmailInput() {
             const email = document.getElementById('cf-email').value.trim();
-            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                // 等鍵盤收起後再 scroll，並確保按鈕在底欄上方
-                setTimeout(() => {
-                    const btn = document.getElementById('coupon-submit-btn');
-                    if (btn) {
-                        btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        // 再往上偏移避免被底欄遮住
-                        setTimeout(() => { window.scrollBy(0, 60); }, 400);
-                    }
-                }, 300);
-            }
+            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) scrollToCouponBtn();
         }
 
         // 輸入框 focus 時隱藏底欄，blur 時恢復
@@ -582,11 +584,28 @@
 
         loadCouponConfig();
                 } else if (data.result === 'already') {
+                    _grabbing = false;
+                    const alreadyRate = parseFloat(data.discountValue) || 0;
+                    const alreadyRateDisp = (Math.round(alreadyRate * 100) % 10 === 0)
+                        ? Math.round(alreadyRate * 10) + '折'
+                        : Math.round(alreadyRate * 100) + '折';
+                    const alreadyDesc = data.discountType === '金額'
+                        ? '折抵 $' + data.discountValue + ' 元'
+                        : '享 ' + alreadyRateDisp + '優惠';
+                    const alreadyExpiry = data.expiry    ? `<div style="font-size:11px;color:#9ca3af;margin-top:6px;">使用期限：${data.expiry}</div>` : '';
+                    const alreadyEvent  = data.eventName ? `<div style="font-size:11px;color:#a3a3a3;margin-bottom:8px;">活動：${data.eventName}</div>` : '';
                     document.getElementById('coupon-form-body').innerHTML =
                         `<div style="text-align:center;padding:20px 16px;">
                             <div style="font-size:36px;margin-bottom:10px;">📬</div>
                             <div style="font-size:15px;font-weight:700;color:#14532d;margin-bottom:8px;">您已領取過折扣碼</div>
-                            <div style="font-size:26px;font-weight:900;color:#e53935;letter-spacing:3px;margin-bottom:8px;">${data.code}</div>
+                            <div style="background:#fff;border:2px solid #4ade80;border-radius:14px;padding:16px;margin-bottom:12px;">
+                                ${alreadyEvent}
+                                <div style="font-size:13px;color:#166534;font-weight:600;margin-bottom:4px;">${data.optionName||''}</div>
+                                <div style="font-size:12px;color:#6b7280;margin-bottom:10px;">${alreadyDesc}</div>
+                                <div style="font-size:11px;color:#9ca3af;margin-bottom:4px;">您的折扣碼</div>
+                                <div style="font-size:24px;font-weight:900;color:#e53935;letter-spacing:3px;">${data.code}</div>
+                                ${alreadyExpiry}
+                            </div>
                             <div style="font-size:12px;color:#9ca3af;">請至 Email 查收，或直接在下單頁輸入使用</div>
                         </div>`;
                 } else if (data.result === 'empty') {
