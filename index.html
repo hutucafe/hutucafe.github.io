@@ -701,9 +701,13 @@
 
         function _applyValidCoupon(code, data, statusEl) {
             _activeCoupon = { code, discountType: data.discountType, discountValue: data.discountValue, minOrder: data.minOrder || 0, expiry: data.expiry || '', displayName: data.displayName || code };
+            const _rate = parseFloat(data.discountValue) || 0;
+            const _rateDisp = (Math.round(_rate * 100) % 10 === 0)
+                ? Math.round(_rate * 10) + '折'
+                : Math.round(_rate * 100) + '折';
             const desc = data.discountType === '金額'
                 ? '折抵 $' + data.discountValue + ' 元'
-                : Math.round(data.discountValue * 10) + ' 折優惠';
+                : _rateDisp + '優惠';
             const minOrder = data.minOrder || 0;
             // 先計算目前購物車小計，判斷是否達低消
             let curSubtotal = 0;
@@ -1676,7 +1680,9 @@
                 } else if (minOrdShow > 0) {
                     const descShow = _activeCoupon.discountType === '金額'
                         ? '折抵 $' + _activeCoupon.discountValue + ' 元'
-                        : Math.round(_activeCoupon.discountValue * 10) + ' 折優惠';
+                        : ((Math.round(parseFloat(_activeCoupon.discountValue) * 100) % 10 === 0)
+                        ? Math.round(parseFloat(_activeCoupon.discountValue) * 10) + '折'
+                        : Math.round(parseFloat(_activeCoupon.discountValue) * 100) + '折') + '優惠';
                     couponStatusEl.innerHTML = '✅ 折扣碼 <strong>' + _activeCoupon.code + '</strong> 已套用：' + _activeCoupon.displayName + '（' + descShow + '・低消 $' + minOrdShow + '）';
                     couponStatusEl.style.color = '#15803d';
                 }
