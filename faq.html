@@ -558,26 +558,30 @@
             }, 300);
         }
         function onCouponEmailInput() {
-            const email = document.getElementById('cf-email').value.trim();
-            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) scrollToCouponBtn();
+            // scroll 由 focus 事件統一處理，此處不重複觸發
         }
 
         // 輸入框 focus 時隱藏底欄，blur 時恢復
         function initCouponInputEvents() {
             const inputs = ['cf-name','cf-phone','cf-email'];
             const bottomBar = document.querySelector('.bottom-bar');
+            const couponSection = document.getElementById('coupon-section');
             inputs.forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 el.addEventListener('focus', () => {
                     if (bottomBar) bottomBar.style.display = 'none';
+                    // scroll 按鈕到中間（延遲等鍵盤彈出）
+                    setTimeout(() => {
+                        const btn = document.getElementById('coupon-submit-btn');
+                        if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 400);
                 });
                 el.addEventListener('blur', () => {
                     setTimeout(() => {
-                        // 確認沒有其他輸入框仍在 focus 才恢復
                         const anyFocused = inputs.some(i => document.getElementById(i) === document.activeElement);
                         if (!anyFocused && bottomBar) bottomBar.style.display = 'flex';
-                    }, 150);
+                    }, 200);
                 });
             });
         }
