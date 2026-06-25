@@ -188,6 +188,7 @@
         .coupon-form-group input { width:100%; padding:10px 13px; border:1.5px solid #86efac; border-radius:10px; font-size:14px; background:#fff; color:#333; box-sizing:border-box; }
         .coupon-form-group input:focus { outline:none; border-color:#4ade80; box-shadow:0 0 0 3px rgba(74,222,128,0.15); }
         .coupon-submit-btn { display:block; width:fit-content; min-width:180px; padding:13px 32px; background:#16a34a; color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:0.2s; margin:16px auto 24px; }
+        body.coupon-typing .coupon-submit-btn { position:sticky; bottom:16px; z-index:100; box-shadow:0 4px 16px rgba(22,163,74,0.4); }
         .coupon-submit-btn:hover:not(:disabled) { background:#15803d; }
         .coupon-submit-btn:disabled { background:#ccc; cursor:not-allowed; }
     </style>
@@ -573,13 +574,10 @@
                 if (!el) return;
                 el.addEventListener('focus', () => {
                     document.body.classList.add('coupon-typing');
-                    // 延遲等鍵盤彈出後，將按鈕捲到可視區域底部上方
+                    // 鍵盤彈出後把整個搶碼區塊捲到頂部，按鈕自然在可視區內
                     setTimeout(() => {
-                        const btn = document.getElementById('coupon-submit-btn');
-                        if (btn) {
-                            btn.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                            setTimeout(() => window.scrollBy({ top: -114, behavior: 'smooth' }), 300);
-                        }
+                        const section = document.getElementById('coupon-section');
+                        if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 400);
                 });
                 el.addEventListener('blur', () => {
