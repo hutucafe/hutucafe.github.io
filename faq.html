@@ -571,10 +571,14 @@
                 if (!el) return;
                 el.addEventListener('focus', () => {
                     if (bottomBar) bottomBar.style.display = 'none';
-                    // scroll 按鈕到中間（延遲等鍵盤彈出）
+                    // 延遲等鍵盤彈出後，將按鈕捲到可視區域上方（避免被鍵盤和底欄遮住）
                     setTimeout(() => {
                         const btn = document.getElementById('coupon-submit-btn');
-                        if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        if (btn) {
+                            btn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                            // 再往上偏移，讓按鈕離鍵盤有一段距離
+                            setTimeout(() => window.scrollBy({ top: 80, behavior: 'smooth' }), 300);
+                        }
                     }, 400);
                 });
                 el.addEventListener('blur', () => {
