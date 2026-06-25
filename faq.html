@@ -437,6 +437,8 @@
         // ── 🎟 搶碼區塊 ───────────────────────────────────────────
         const COUPON_LS_KEY = '_hutucafe_coupon_cfg';
 
+        let _grabbing = false; // 防止重複送出
+
         async function loadCouponConfig() {
             const section = document.getElementById('coupon-section');
             // 先用 localStorage 快取瞬間顯示
@@ -498,6 +500,7 @@
         }
 
         async function submitGrabCoupon() {
+            if (_grabbing) return; // 防止重複送出
             const btn   = document.getElementById('coupon-submit-btn');
             const name  = document.getElementById('cf-name').value.trim();
             const phone = document.getElementById('cf-phone').value.trim();
@@ -510,6 +513,7 @@
             if (!valid) { alert('請填寫所有必填欄位！'); return; }
             if (!/^09\d{8}$/.test(phone)) { alert('手機號碼格式不正確！'); return; }
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Email 格式不正確！'); return; }
+            _grabbing = true;
             btn.disabled = true; btn.textContent = '搶碼中...';
             try {
                 const res  = await fetch(GAS_URL + '?action=grabCoupon'
@@ -570,6 +574,7 @@
 
         loadCouponConfig();
                 } else if (data.result === 'already') {
+                    _grabbing = false; // 已搶過可以看到結果，不需要再鎖
                     document.getElementById('coupon-form-body').innerHTML =
                         `<div style="text-align:center;padding:20px 16px;">
                             <div style="font-size:36px;margin-bottom:10px;">📬</div>
@@ -578,13 +583,20 @@
                             <div style="font-size:12px;color:#9ca3af;">請至 Email 查收，或直接在下單頁輸入使用</div>
                         </div>`;
                 } else if (data.result === 'empty') {
+                    _grabbing = false;
                     loadCouponConfig();
                     btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
+                } else if (data.result === 'busy') {
+                    _grabbing = false;
+                    btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
+                    alert('目前搶碼人數較多，請稍後再試！');
                 } else {
+                    _grabbing = false;
                     alert(data.message || '搶碼失敗，請稍後再試');
                     btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
                 }
             } catch(e) {
+                _grabbing = false;
                 alert('網路異常，請稍後再試');
                 btn.disabled = false; btn.textContent = '🎟 立即搶碼！';
             }
