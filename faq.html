@@ -240,6 +240,7 @@
             <div class="coupon-title" id="coupon-title">🎟 限量折扣碼搶先領</div>
             <div class="coupon-desc" id="coupon-desc">數量有限，搶完為止！每人限領一次，折扣碼不一定搶得到喔！</div>
             <div class="coupon-pool-list" id="coupon-pool-list"></div>
+                <div id="coupon-pool-expiry" style="font-size:12px;color:#6b7280;text-align:right;margin:-4px 0 12px;padding-right:4px;display:none;"></div>
             <div id="coupon-form-body">
                 <div class="coupon-form-group">
                     <label>姓名 <span style="color:red">*</span></label>
@@ -509,13 +510,11 @@
                 }).join('');
             }
             // 在碼池列表下方顯示統一使用期限
-            if (data.pool && data.pool.length > 0) {
-                const poolExpiry = data.pool.find(p => p.expiry)?.expiry || '';
-                if (poolExpiry) {
-                    poolList.insertAdjacentHTML('afterend',
-                        `<div style="font-size:12px;color:#6b7280;text-align:right;margin:-4px 0 12px;padding-right:4px;">使用期限：${poolExpiry}</div>`
-                    );
-                }
+            const poolExpiryEl = document.getElementById('coupon-pool-expiry');
+            if (poolExpiryEl) {
+                const poolExpiry = data.pool && data.pool.find(p => p.expiry) ? data.pool.find(p => p.expiry).expiry : '';
+                poolExpiryEl.textContent = poolExpiry ? '折扣碼使用期限：' + poolExpiry : '';
+                poolExpiryEl.style.display = poolExpiry ? 'block' : 'none';
             }
             if (data.allEmpty) {
                 document.getElementById('coupon-form-body').innerHTML =
