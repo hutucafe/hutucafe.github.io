@@ -2106,7 +2106,7 @@
                         totalDiscountAmt = rateDiscountAmt + cashAmt;
                     }
                 } else {
-                    // 折數擇優：對全部品項取最大折扣
+                    // 折數擇優：只對指定品項（discountSubtotal）
                     const cpAmt = _couponDiscountAmt(discountSubtotal, originalTotal);
                     if (cpAmt > rateDiscountAmt) totalDiscountAmt = cpAmt;
                 }
