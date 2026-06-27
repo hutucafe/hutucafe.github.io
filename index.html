@@ -1669,7 +1669,20 @@
             document.getElementById('display-original').textContent = `$${originalTotal}`;
             document.getElementById('display-discount').textContent = `-$${bestDiscount}`;
             const discountLabelEl = document.getElementById('ui-bottom-discount');
-            if (discountLabelEl) discountLabelEl.textContent = useCoupon ? (_activeCoupon.displayName||'折扣碼') : activeDiscountName;
+            if (discountLabelEl) {
+                let bottomLabel = activeDiscountName;
+                if (_activeCoupon && useCoupon) {
+                    if (_activeCoupon.discountType === '金額') {
+                        // 現金疊加：折率名 + 折扣碼名
+                        bottomLabel = activeDiscountName + ' + ' + (_activeCoupon.displayName || '折扣碼');
+                    } else {
+                        // 折數擇優：折扣碼勝出才用折扣碼名，否則用折率名
+                        const couponWon = _couponDiscountAmt(discountSubtotal, originalTotal) > discountAmt;
+                        bottomLabel = couponWon ? (_activeCoupon.displayName || '折扣碼') : activeDiscountName;
+                    }
+                }
+                discountLabelEl.textContent = bottomLabel;
+            }
             // 低消未達時在折扣碼狀態顯示提示
             const couponStatusEl = document.getElementById('coupon-status');
             if (_activeCoupon && couponStatusEl && couponStatusEl.style.display !== 'none') {
