@@ -2196,11 +2196,12 @@
             if (discountedText) { alertItemsText += `【指定品項 (${payload.discountName})】\n${discountedText}  👉 折扣金額：-$${payload.totalDiscountAmt}\n\n`; }
             if (nonDiscountedText) { alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`; }
             try {
-                // ✅ 設定 timeout：若 GAS 超過 12 秒未回應則視為成功（避免前端無限等待）
+                // ✅ 修正：timeout 拉長到 20 秒；逾時後「不再直接視為成功」，
+                //    改用 ?action=checkOrder 向後端主動查證訂單是否真的已寫入
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-                let result = { result: 'success' }; // 預設成功
+                let result = null;
                 try {
                     const response = await fetch(GAS_URL, {
                         method: 'POST',
@@ -2212,9 +2213,24 @@
                     result = await response.json();
                 } catch (fetchErr) {
                     clearTimeout(timeoutId);
-                    // timeout 或網路中斷：若是 abort 就當作成功（GAS 可能已收到但回傳慢）
                     if (fetchErr.name !== 'AbortError') {
                         alert("網路連線失敗，請稍後再試。");
+                        btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
+                        return;
+                    }
+                    // ⏳ 逾時：輪詢後端確認訂單是否已寫入（每 5 秒一次、最多 6 次，約 30 秒）
+                    btn.textContent = "確認訂單狀態中...";
+                    result = { result: 'unknown' };
+                    for (let i = 0; i < 6; i++) {
+                        await new Promise(r => setTimeout(r, 5000));
+                        try {
+                            const chk = await fetch(GAS_URL + '?action=checkOrder&token=' + encodeURIComponent(payload.submitToken), { cache: 'no-store' });
+                            const chkData = await chk.json();
+                            if (chkData.done) { result = { result: 'success' }; break; }
+                        } catch (e2) {}
+                    }
+                    if (result.result !== 'success') {
+                        alert("系統處理時間較長，暫時無法確認訂單是否成功送出。\n請留意 Email 確認信；若 10 分鐘內未收到，請重新下單或透過官方 Line 聯絡我們。");
                         btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
                         return;
                     }
