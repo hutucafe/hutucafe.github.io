@@ -805,8 +805,7 @@
             clearTimeout(_vipCheckTimer);
             const seq = ++_vipCheckSeq;
             _vipCheckTimer = setTimeout(() => {
-                fetch(GAS_URL + '?action=checkVip&name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(cleanPhone))
-                    .then(r => r.json())
+                fetchWithRetry(GAS_URL + '?action=checkVip&name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(cleanPhone), 2, 400, 8000)
                     .then(data => {
                         if (seq !== _vipCheckSeq) return; // 使用者已經又輸入了，這筆回應是舊的，捨棄
                         if (data.isVip && vipEnabled) {
@@ -818,7 +817,13 @@
                         }
                         _refreshVipUI();
                     })
-                    .catch(() => { /* 查詢失敗就當作非VIP，不影響正常下單流程 */ });
+                    .catch((err) => {
+                        // ⚠️ 原本這裡是靜默「當作非VIP」，導致 GAS 忙碌或回 404 時，
+                        //    VIP 客人的折扣就默默不見了。現在改成：重試都失敗才放棄，
+                        //    並且「保留原本狀態」而不是強制清成非VIP，同時留下紀錄方便追查。
+                        if (seq !== _vipCheckSeq) return;
+                        console.warn('[糊塗VIP] 查詢失敗，維持原本折扣狀態不變（' + err.message + '）');
+                    });
             }, 400);
         }
 
@@ -852,11 +857,26 @@
         // 沒有 timeout 的話會永遠等下去、重試永遠不會觸發。
         // 註：這裡的 abort 一律視為「失敗要重試」，與訂單送出的處理方式相反——
         // 因為這幾支都是唯讀查詢（GET），重試不會有副作用，不像訂單可能重複寫入。
-        async function fetchWithRetry(url, retries = 2, delayMs = 800, timeoutMs = 10000) {
+        // deadlineMs：整體時間上限。無論重試幾次，總等待都不會超過這個值。
+        // 這是避免「逾時疊加逾時」的關鍵——之前就是因為沒有總上限，
+        // 多層重試串起來變成 40 幾秒。
+        async function fetchWithRetry(url, retries = 2, delayMs = 800, timeoutMs = 10000, deadlineMs = 20000) {
             const shortName = url.replace(/^.*\/exec/, 'GAS').slice(0, 60);
+            const startedAt = Date.now();
+            let lastErr = new Error('未執行');
+
             for (let attempt = 0; attempt <= retries; attempt++) {
+                const elapsed = Date.now() - startedAt;
+                const remaining = deadlineMs - elapsed;
+                if (remaining <= 500) {          // 沒時間再試了，直接放棄
+                    console.warn(`[糊塗重試] ${shortName} 已達總時間上限 ${deadlineMs}ms，停止重試`);
+                    throw lastErr;
+                }
+                // 單次逾時不可超過剩餘預算，否則總時間會被最後一次拖爆
+                const thisTimeout = Math.min(timeoutMs, remaining);
+
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                const timeoutId = setTimeout(() => controller.abort(), thisTimeout);
                 const t0 = Date.now();
                 try {
                     const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
@@ -869,27 +889,29 @@
                     return json;
                 } catch (e) {
                     clearTimeout(timeoutId);
+                    lastErr = e;
                     const took = Date.now() - t0;
                     console.warn(`[糊塗重試] ${shortName} 第${attempt + 1}次失敗（${e.message}），耗時 ${took}ms`);
                     if (attempt === retries) throw e;
 
-                    // 自適應退避：依「這次失敗得多快」判斷是哪一種故障。
-                    //  • 失敗很快(<1.5秒) → 多半是一次性內容金鑰瞬間失效，伺服器是好的。
-                    //    給 400ms 冷靜期讓連線重新建立，比 0 秒硬打更穩，代價也幾乎感覺不到。
-                    //  • 失敗很慢(>=1.5秒) → 伺服器正在冷啟動或塞車，我們已經等很久了。
-                    //    再加延遲只是把等待搬個位置，總時間不會變短，所以立刻重試。
+                    // 自適應退避：依「這次失敗得多快」判斷故障性質。
+                    //  • 失敗很快(<1.5秒) → 多半是一次性內容金鑰失效，伺服器是好的，
+                    //    給 400ms 冷靜期讓連線重建。
+                    //  • 失敗很慢(>=1.5秒) → 伺服器正在冷啟動，我們已經等很久了，
+                    //    再加延遲只是把等待搬位置，立刻重試。
                     const isTransient = /HTTP 404|HTTP 5\d\d/.test(e.message);
                     let wait;
                     if (!isTransient) {
-                        wait = delayMs * (attempt + 1);      // 網路類錯誤：正常退避
+                        wait = delayMs * (attempt + 1);
                     } else if (took < 1500) {
-                        wait = 400;                          // 快速失敗：短冷靜期
+                        wait = 400;
                     } else {
-                        wait = 0;                            // 慢速失敗：已等夠久，立刻重試
+                        wait = 0;
                     }
                     if (wait > 0) await new Promise(r => setTimeout(r, wait));
                 }
             }
+            throw lastErr;
         }
 
         const CACHE_KEY         = 'hutucafe_products_v1';
@@ -955,53 +977,11 @@
         }
 
         // 一次取回所有缺少的資料
-        // 對沖請求（hedged request）：專治「偶爾一次特別慢」的長尾延遲。
-        // 做法：先發一個請求；若 hedgeAfterMs 內還沒回來，就「不取消它」再補發第二個，
-        // 誰先回來就用誰。因為這是唯讀查詢，重複請求沒有副作用。
-        // 適用情境：第一個請求剛好被分配到正在冷啟動的容器而卡住，
-        // 第二個請求有機會落到已經熱好的容器，就不必陪第一個慢慢等。
-        async function fetchHedged(url, hedgeAfterMs = 3500, timeoutMs = 15000) {
-            const attempt = (tag) => {
-                const ctrl = new AbortController();
-                const tid = setTimeout(() => ctrl.abort(), timeoutMs);
-                const t0 = Date.now();
-                return fetch(url, { cache: 'no-store', signal: ctrl.signal })
-                    .then(res => {
-                        clearTimeout(tid);
-                        if (!res.ok) throw new Error('HTTP ' + res.status);
-                        return res.json();
-                    })
-                    .then(json => {
-                        console.log(`[糊塗對沖] ${tag} 勝出，耗時 ${Date.now() - t0}ms`);
-                        return json;
-                    })
-                    .catch(err => { clearTimeout(tid); throw err; });
-            };
-
-            const first = attempt('第1發');
-            let settled = false;
-            first.then(() => { settled = true; }).catch(() => { settled = true; });
-
-            const hedge = new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    if (settled) return; // 第一發已經回來了，不必補發
-                    console.log(`[糊塗對沖] 第1發超過 ${hedgeAfterMs}ms 未回應，補發第2發`);
-                    attempt('第2發').then(resolve).catch(reject);
-                }, hedgeAfterMs);
-            });
-
-            // 兩發競速，取最先成功的；兩發都失敗才算失敗
-            return Promise.any([first, hedge]).catch(async () => {
-                // Promise.any 全失敗 → 退回原本的重試邏輯，確保還是拿得到資料
-                return fetchWithRetry(url, 1, 400, timeoutMs);
-            });
-        }
-
         async function bootstrapLoad(need) {
             const _wallStart = Date.now();
             try {
                 const url = `${GAS_URL}?action=bootstrap&need=${need.join(',')}&days=${currentRankingDays}`;
-                const data = await fetchHedged(url, 3500, 15000);
+                const data = await fetchWithRetry(url, 2, 400, 10000, 18000); // 總上限18秒
                 const v = data.versions || {};
 
                 // 🩺 效能量測：把「GAS 實際執行時間」與「瀏覽器實際等待時間」都記錄下來。
