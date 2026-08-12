@@ -981,7 +981,7 @@
             const _wallStart = Date.now();
             try {
                 const url = `${GAS_URL}?action=bootstrap&need=${need.join(',')}&days=${currentRankingDays}`;
-                const data = await fetchWithRetry(url, 2, 400, 10000, 18000); // 總上限18秒
+                const data = await fetchWithRetry(url, 2, 400, 15000, 20000); // 單次15秒(不砍掉冷啟動)、總上限20秒
                 const v = data.versions || {};
 
                 // 🩺 效能量測：把「GAS 實際執行時間」與「瀏覽器實際等待時間」都記錄下來。
