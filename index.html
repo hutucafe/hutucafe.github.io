@@ -846,6 +846,29 @@
 
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
 
+        // 共用的重試機制：失敗時漸進延遲重試，避免單次網路瞬斷或快取剛好過期
+        // 就直接判死刑、要求使用者手動重新整理頁面。
+        // 每次嘗試都有 timeout，因為 GAS 偶爾會「卡住不回應」而不是回傳錯誤，
+        // 沒有 timeout 的話會永遠等下去、重試永遠不會觸發。
+        // 註：這裡的 abort 一律視為「失敗要重試」，與訂單送出的處理方式相反——
+        // 因為這幾支都是唯讀查詢（GET），重試不會有副作用，不像訂單可能重複寫入。
+        async function fetchWithRetry(url, retries = 2, delayMs = 800, timeoutMs = 10000) {
+            for (let attempt = 0; attempt <= retries; attempt++) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                try {
+                    const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return await res.json();
+                } catch (e) {
+                    clearTimeout(timeoutId);
+                    if (attempt === retries) throw e;
+                    await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+                }
+            }
+        }
+
         const CACHE_KEY         = 'hutucafe_products_v1';
         const CACHE_VERSION_KEY = 'hutucafe_cache_version';
         const CACHE_TTL         = 5 * 60 * 1000;
@@ -906,8 +929,10 @@
 
         async function fetchConfig() {
             try {
-                const res = await fetch(GAS_URL + '?action=config', { cache: 'no-store' });
-                const data = await res.json();
+                // ⚠️ 這支決定折扣比率、免運門檻、運費，載入失敗會退回頁面內寫死的預設值
+                //    （9折 / 免運1000 / 運費38），若後台實際設定跟預設不同就會顯示錯誤金額，
+                //    所以這裡同樣要重試，不能靜默放棄。
+                const data = await fetchWithRetry(GAS_URL + '?action=config');
                 if (data.config_cache_version) {
                     localStorage.setItem(CONFIG_VERSION_KEY, data.config_cache_version);
                 }
@@ -964,8 +989,7 @@
                     </div>`;
             }
             try {
-                const res = await fetch(GAS_URL, { cache: 'no-store' });
-                const responseData = await res.json();
+                const responseData = await fetchWithRetry(GAS_URL);
                 if (responseData.cache_version) {
                     localStorage.setItem(CACHE_VERSION_KEY, responseData.cache_version);
                 }
@@ -975,7 +999,8 @@
                 console.error('載入豆單失敗:', e);
                 if (showLoading) {
                     document.getElementById('product-list').innerHTML =
-                        '<p style="text-align:center; color:red; padding:20px;">資料載入失敗，請檢查網路連線。</p>';
+                        '<p style="text-align:center; color:red; padding:20px;">資料載入失敗，請檢查網路連線。</p>' +
+                        '<p style="text-align:center;"><button onclick="fetchAndUpdate(true)" style="padding:8px 20px;border-radius:20px;border:none;background:#b8860b;color:#fff;">重新載入</button></p>';
                 }
             }
         }
@@ -2013,8 +2038,7 @@
         async function fetchStores() {
             const status = document.getElementById('store-status');
             try {
-                const res = await fetch(GAS_URL + '?action=stores', { cache: 'no-store' });
-                const data = await res.json();
+                const data = await fetchWithRetry(GAS_URL + '?action=stores');
                 if (data.stores_cache_version) {
                     localStorage.setItem(STORES_VERSION_KEY, data.stores_cache_version);
                 }
@@ -2023,7 +2047,7 @@
             } catch(e) {
                 console.error('711 門市載入失敗:', e);
                 if (status) {
-                    status.textContent = '門市資料載入失敗，請重新整理頁面';
+                    status.innerHTML = '門市資料載入失敗　<a href="javascript:void(0)" onclick="fetchStores()" style="color:#b8860b;text-decoration:underline;">點此重試</a>';
                     status.style.color = '#c62828';
                 }
             }
@@ -2193,6 +2217,34 @@
             document.getElementById('confirm-order-modal').classList.remove('open');
         }
 
+        // 🔍 向後端查證訂單是否真的寫入試算表。
+        // 後端 doPost 只有在訂單成功寫進「#糊塗咖啡訂單」之後才會標記 token，
+        // 因此 done=true 是確定的事實，而不是推測。
+        // 查詢間隔採「前密後疏」：GAS 通常只是慢個幾秒，前面密集查可以讓多數客人很快看到成功；
+        // 真的掛掉時才拉長間隔，避免無謂灌爆後端。
+        async function pollOrderWritten(token, onProgress) {
+            if (!token) return false;
+            const schedule = [1500, 2000, 2500, 3000, 4000, 5000, 6000, 6000]; // 累計約 30 秒
+            for (let i = 0; i < schedule.length; i++) {
+                await new Promise(r => setTimeout(r, schedule[i]));
+                if (onProgress) onProgress(i + 1, schedule.length);
+                try {
+                    const ctrl = new AbortController();
+                    const tid = setTimeout(() => ctrl.abort(), 6000);
+                    const res = await fetch(
+                        GAS_URL + '?action=checkOrder&token=' + encodeURIComponent(token),
+                        { cache: 'no-store', signal: ctrl.signal }
+                    );
+                    clearTimeout(tid);
+                    const json = await res.json();
+                    if (json && json.done) return true;
+                } catch (e) {
+                    // 這次查詢失敗不代表訂單失敗，繼續等下一輪重試
+                }
+            }
+            return false; // 等到最後仍查不到 → 才判定沒寫入
+        }
+
         async function doSubmitOrder() {
             if (_isSubmitting || !_pendingPayload) return;
             closeConfirmModal();
@@ -2205,11 +2257,14 @@
             if (discountedText) { alertItemsText += `【指定品項 (${payload.discountName})】\n${discountedText}  👉 折扣金額：-$${payload.totalDiscountAmt}\n\n`; }
             if (nonDiscountedText) { alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`; }
             try {
-                // ✅ 設定 timeout：若 GAS 超過 12 秒未回應則視為成功（避免前端無限等待）
+                // ✅ 逾時不再「假設成功」：改用 action=checkOrder 向後端確認訂單是否真的寫入試算表。
+                //    後端只有在訂單成功寫進試算表之後，才會標記 order_token，
+                //    所以 done=true 代表訂單「確實存在」，不是猜的。
+                //    這裡 POST 等 15 秒就好，因為後面還有查證機制兜底，不需要死等。
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-                let result = { result: 'success' }; // 預設成功
+                let result = null; // ⚠️ 不再預設成功
                 try {
                     const response = await fetch(GAS_URL, {
                         method: 'POST',
@@ -2221,15 +2276,30 @@
                     result = await response.json();
                 } catch (fetchErr) {
                     clearTimeout(timeoutId);
-                    // timeout 或網路中斷：若是 abort 就當作成功（GAS 可能已收到但回傳慢）
-                    if (fetchErr.name !== 'AbortError') {
-                        alert("網路連線失敗，請稍後再試。");
+                    // 逾時或網路中斷 → 不猜測，改去查證訂單到底有沒有寫進去
+                    btn.textContent = "訂單確認中，請稍候...";
+                    const confirmed = await pollOrderWritten(payload.submitToken, (step, total) => {
+                        // 讓客人知道系統還在運作，不是當掉了
+                        btn.textContent = `訂單確認中 (${step}/${total})，請勿關閉頁面...`;
+                    });
+                    if (confirmed) {
+                        result = { result: 'success' };
+                    } else {
+                        // 查證後確定沒寫入 → 誠實告知，不要讓客人以為下單成功
+                        alert(
+                            "⚠️ 訂單送出失敗\n\n" +
+                            "系統未能確認您的訂單已建立，請「不要」重複送出。\n\n" +
+                            "請稍等 1 分鐘後，到「訂單查詢」用手機號碼確認：\n" +
+                            "• 若查得到訂單 → 已成功，無需再送出\n" +
+                            "• 若查不到 → 請重新送出，或直接聯繫我們\n\n" +
+                            "造成不便非常抱歉 🙇"
+                        );
                         btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
                         return;
                     }
                 }
 
-                if (result.result === 'success') {
+                if (result && result.result === 'success') {
                     localStorage.removeItem(CACHE_KEY); _submitToken = null;
                     // 儲存收件資訊
                     try {
@@ -2252,10 +2322,18 @@
                     document.getElementById('modal-msg').textContent = successMsg;
                     document.getElementById('success-modal').style.display = 'flex';
                 } else {
-                    alert("資料庫寫入失敗！錯誤訊息：\n" + result.error);
+                    alert("資料庫寫入失敗！錯誤訊息：\n" + ((result && result.error) || '未知錯誤'));
                     btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
                 }
-            } catch (e) { alert("網路連線失敗，請稍後再試。"); btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false; }
+            } catch (e) {
+                console.error('送出訂單發生未預期錯誤:', e);
+                alert(
+                    "⚠️ 訂單狀態不明\n\n" +
+                    "請「不要」直接重複送出。\n" +
+                    "請稍等 1 分鐘後，到「訂單查詢」用手機號碼確認訂單是否已建立。"
+                );
+                btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
+            }
         }
 
         function closeModal() { document.getElementById('success-modal').style.display = 'none'; window.location.reload(); }
@@ -2323,8 +2401,9 @@
 
         async function fetchRanking(days) {
             try {
-                const res = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=${days}`, { cache: 'no-store' });
-                const data = await res.json();
+                // 排行榜是錦上添花的區塊，失敗不影響下單，所以重試次數與 timeout 都設得比較保守，
+                // 避免 GAS 真的掛掉時，這裡的重試鏈把頁面拖住很久
+                const data = await fetchWithRetry(`${GAS_URL}?action=getTopItems&top=5&days=${days}`, 1, 600, 6000);
                 console.log('fetchRanking days=' + days, JSON.stringify(data));
 
                 const hasRoasted = data.roasted && data.roasted.length;
@@ -2340,8 +2419,8 @@
                     for (const fallbackDays of fallbackChain) {
                         if (fallbackDays === days) continue; // 跳過自己
                         if (roastedResult && dripResult) break; // 兩個都有了就停
-                        const resFb = await fetch(`${GAS_URL}?action=getTopItems&top=5&days=${fallbackDays}`, { cache: 'no-store' });
-                        const dataFb = await resFb.json();
+                        // fallback 鏈不再重試（retries=0），避免多層重試累加成很長的等待
+                        const dataFb = await fetchWithRetry(`${GAS_URL}?action=getTopItems&top=5&days=${fallbackDays}`, 0, 0, 6000);
                         if (!roastedResult && dataFb.roasted && dataFb.roasted.length) roastedResult = dataFb.roasted;
                         if (!dripResult    && dataFb.drip    && dataFb.drip.length)    dripResult    = dataFb.drip;
                     }
