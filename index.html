@@ -853,18 +853,30 @@
         // 註：這裡的 abort 一律視為「失敗要重試」，與訂單送出的處理方式相反——
         // 因為這幾支都是唯讀查詢（GET），重試不會有副作用，不像訂單可能重複寫入。
         async function fetchWithRetry(url, retries = 2, delayMs = 800, timeoutMs = 10000) {
+            const shortName = url.replace(/^.*\/exec/, 'GAS').slice(0, 60);
             for (let attempt = 0; attempt <= retries; attempt++) {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                const t0 = Date.now();
                 try {
                     const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
                     clearTimeout(timeoutId);
                     if (!res.ok) throw new Error('HTTP ' + res.status);
-                    return await res.json();
+                    const json = await res.json();
+                    if (attempt > 0) {
+                        console.log(`[糊塗重試] ${shortName} 第${attempt + 1}次嘗試成功，本次耗時 ${Date.now() - t0}ms`);
+                    }
+                    return json;
                 } catch (e) {
                     clearTimeout(timeoutId);
+                    console.warn(`[糊塗重試] ${shortName} 第${attempt + 1}次失敗（${e.message}），耗時 ${Date.now() - t0}ms`);
                     if (attempt === retries) throw e;
-                    await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+                    // GAS 轉址後的 404 屬於暫時性錯誤（一次性內容金鑰失效），
+                    // 立刻重試通常就會成功。原本固定退避 800ms / 1600ms，
+                    // 等於每次遇到都白白多花 2.4 秒。
+                    const isTransient = /HTTP 404|HTTP 5\d\d/.test(e.message);
+                    const wait = isTransient ? 0 : delayMs * (attempt + 1);
+                    if (wait) await new Promise(r => setTimeout(r, wait));
                 }
             }
         }
@@ -2317,7 +2329,9 @@
         // 真的掛掉時才拉長間隔，避免無謂灌爆後端。
         async function pollOrderWritten(token, onProgress) {
             if (!token) return false;
-            const schedule = [1500, 2000, 2500, 3000, 4000, 5000, 6000, 6000]; // 累計約 30 秒
+            // 第一次查證只等 0.3 秒：GAS 轉址 404 時訂單其實早就寫進去了，
+            // 立刻查就能立刻確認成功，不必讓客人乾等。之後才逐步拉長間隔。
+            const schedule = [300, 800, 1500, 2500, 3500, 5000, 6000, 6000]; // 累計約 26 秒
             for (let i = 0; i < schedule.length; i++) {
                 await new Promise(r => setTimeout(r, schedule[i]));
                 if (onProgress) onProgress(i + 1, schedule.length);
@@ -2367,10 +2381,14 @@
                         signal: controller.signal
                     });
                     clearTimeout(timeoutId);
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
                     result = await response.json();
                 } catch (fetchErr) {
                     clearTimeout(timeoutId);
-                    // 逾時或網路中斷 → 不猜測，改去查證訂單到底有沒有寫進去
+                    console.warn('[糊塗訂單] POST 未取得正常回應（' + fetchErr.message + '），改用查證機制確認訂單');
+                    // 逾時、網路中斷、或 GAS 轉址 404 → 不猜測，改去查證訂單到底有沒有寫進去。
+                    // 註：GAS 的 404 發生在「取回執行結果」這一步，訂單本身通常已經寫入了，
+                    //     所以查證幾乎都會立刻確認成功。
                     btn.textContent = "訂單確認中，請稍候...";
                     const confirmed = await pollOrderWritten(payload.submitToken, (step, total) => {
                         // 讓客人知道系統還在運作，不是當掉了
