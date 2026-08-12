@@ -2398,51 +2398,100 @@
             if (nonDiscountedText) { alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`; }
             const _orderWallStart = Date.now();
             try {
-                // ✅ 逾時不再「假設成功」：改用 action=checkOrder 向後端確認訂單是否真的寫入試算表。
-                //    後端只有在訂單成功寫進試算表之後，才會標記 order_token，
-                //    所以 done=true 代表訂單「確實存在」，不是猜的。
-                //    這裡 POST 等 12 秒就好：後端已改成非同步派送 Email/LINE，正常會在數秒內回應；
-                //    真的逾時也還有下方的查證機制兜底。
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                // 🚀 兩條路並行，誰先確認就用誰：
+                //    (A) 等 POST 的正式回應
+                //    (B) 5 秒後開始查證 checkOrder（訂單通常 2 秒就寫進試算表了）
+                //
+                //    為什麼要這樣：GAS 的 POST 回應常因冷啟動或轉址 404 而遲遲不回來，
+                //    但訂單「早就寫好了」。舊做法要等 POST 逾時(12秒)才開始查證，
+                //    等於白等 10 秒。並行之後，訂單一寫好就能確認成功。
+                //    註：checkOrder 只在 POST 超過 5 秒沒回應時才啟動，
+                //    正常情況完全不會多發請求。
+
+                let backendError = null;   // 後端明確回報的錯誤（例如庫存不足）
+                let verifyStarted = false;
+
+                const postPromise = (async () => {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 20000);
+                    try {
+                        const response = await fetch(GAS_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify(payload),
+                            signal: controller.signal
+                        });
+                        clearTimeout(timeoutId);
+                        if (!response.ok) throw new Error('HTTP ' + response.status);
+                        const json = await response.json();
+                        if (json && json.result === 'success') return json;
+                        // 後端明確說失敗 → 記下來，這種情況不該再等查證
+                        backendError = (json && json.error) || '未知錯誤';
+                        throw new Error('BACKEND_ERROR');
+                    } catch (err) {
+                        clearTimeout(timeoutId);
+                        if (err.message !== 'BACKEND_ERROR') {
+                            console.warn('[糊塗訂單] POST 未取得正常回應（' + err.message + '），改由查證確認');
+                        }
+                        throw err;
+                    }
+                })();
+
+                const verifyPromise = (async () => {
+                    await new Promise(r => setTimeout(r, 5000)); // 先讓 POST 有機會正常回來
+                    const gaps = [0, 2500, 3000, 4000, 5000, 6000]; // 之後陸續再查
+                    for (let i = 0; i < gaps.length; i++) {
+                        if (gaps[i]) await new Promise(r => setTimeout(r, gaps[i]));
+                        if (backendError) throw new Error('BACKEND_ERROR');
+                        if (!verifyStarted) {
+                            verifyStarted = true;
+                            btn.textContent = "訂單確認中，請稍候...";
+                        }
+                        try {
+                            const j = await fetchWithRetry(
+                                GAS_URL + '?action=checkOrder&token=' + encodeURIComponent(payload.submitToken),
+                                1, 300, 8000, 9000
+                            );
+                            if (j && j.done) {
+                                console.log('[糊塗訂單] 查證確認訂單已寫入（比 POST 回應更快）');
+                                return { result: 'success' };
+                            }
+                            console.log(`[糊塗訂單] 查證第${i + 1}輪：後端回報尚未寫入`);
+                        } catch (e) {
+                            // 查詢本身失敗（例如 GAS 轉址 404）→ 這輪不算數，但要記錄下來，
+                            // 否則會誤以為「後端說沒寫入」而白白耗掉一輪
+                            console.warn(`[糊塗訂單] 查證第${i + 1}輪查詢失敗（${e.message}），非訂單失敗`);
+                        }
+                        btn.textContent = `訂單確認中 (${i + 1}/${gaps.length})，請勿關閉頁面...`;
+                    }
+                    throw new Error('VERIFY_TIMEOUT');
+                })();
 
                 let result = null; // ⚠️ 不再預設成功
                 try {
-                    const response = await fetch(GAS_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(payload),
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    if (!response.ok) throw new Error('HTTP ' + response.status);
-                    result = await response.json();
-                } catch (fetchErr) {
-                    clearTimeout(timeoutId);
-                    console.warn('[糊塗訂單] POST 未取得正常回應（' + fetchErr.message + '），改用查證機制確認訂單');
-                    // 逾時、網路中斷、或 GAS 轉址 404 → 不猜測，改去查證訂單到底有沒有寫進去。
-                    // 註：GAS 的 404 發生在「取回執行結果」這一步，訂單本身通常已經寫入了，
-                    //     所以查證幾乎都會立刻確認成功。
-                    btn.textContent = "訂單確認中，請稍候...";
-                    const confirmed = await pollOrderWritten(payload.submitToken, (step, total) => {
-                        // 讓客人知道系統還在運作，不是當掉了
-                        btn.textContent = `訂單確認中 (${step}/${total})，請勿關閉頁面...`;
-                    });
-                    if (confirmed) {
-                        result = { result: 'success' };
-                    } else {
-                        // 查證後確定沒寫入 → 誠實告知，不要讓客人以為下單成功
-                        alert(
-                            "⚠️ 訂單送出失敗\n\n" +
-                            "系統未能確認您的訂單已建立，請「不要」重複送出。\n\n" +
-                            "請稍等 1 分鐘後，到「訂單查詢」用手機號碼確認：\n" +
-                            "• 若查得到訂單 → 已成功，無需再送出\n" +
-                            "• 若查不到 → 請重新送出，或直接聯繫我們\n\n" +
-                            "造成不便非常抱歉 🙇"
-                        );
-                        btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
-                        return;
-                    }
+                    result = await Promise.any([postPromise, verifyPromise]);
+                } catch (bothFailed) {
+                    result = null;
+                }
+
+                if (backendError) {
+                    alert("資料庫寫入失敗！錯誤訊息：\n" + backendError);
+                    btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
+                    return;
+                }
+
+                if (!result) {
+                    // 兩條路都無法確認 → 誠實告知，不要讓客人以為下單成功
+                    alert(
+                        "⚠️ 訂單送出失敗\n\n" +
+                        "系統未能確認您的訂單已建立，請「不要」重複送出。\n\n" +
+                        "請稍等 1 分鐘後，到「訂單查詢」用手機號碼確認：\n" +
+                        "• 若查得到訂單 → 已成功，無需再送出\n" +
+                        "• 若查不到 → 請重新送出，或直接聯繫我們\n\n" +
+                        "造成不便非常抱歉 🙇"
+                    );
+                    btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
+                    return;
                 }
 
                 if (result && result.result === 'success') {
