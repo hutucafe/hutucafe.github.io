@@ -933,10 +933,19 @@
 
         // 一次取回所有缺少的資料
         async function bootstrapLoad(need) {
+            const _wallStart = Date.now();
             try {
                 const url = `${GAS_URL}?action=bootstrap&need=${need.join(',')}&days=${currentRankingDays}`;
                 const data = await fetchWithRetry(url, 2, 800, 20000);
                 const v = data.versions || {};
+
+                // 🩺 效能量測：把「GAS 實際執行時間」與「瀏覽器實際等待時間」都記錄下來。
+                // 兩者差距 = 網路傳輸 + GAS 平台開銷（轉址、冷啟動、排隊），
+                // 這是判斷「該優化程式碼」還是「該減少請求/搬離GAS」的關鍵依據。
+                const wallMs = Date.now() - _wallStart;
+                const serverMs = data._serverMs;
+                window.__hutuPerf = { 瀏覽器等待ms: wallMs, GAS執行ms: serverMs, 平台與傳輸開銷ms: (serverMs != null ? wallMs - serverMs : null) };
+                console.log('[糊塗效能] 瀏覽器等待 ' + wallMs + 'ms ｜ GAS 執行 ' + serverMs + 'ms ｜ 其餘(轉址+傳輸+排隊) ' + (serverMs != null ? wallMs - serverMs : '?') + 'ms');
 
                 if (data.products) {
                     if (v.cache_version) localStorage.setItem(CACHE_VERSION_KEY, v.cache_version);
