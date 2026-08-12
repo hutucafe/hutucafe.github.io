@@ -888,9 +888,96 @@
         let currentFinalTotal = 0;
 
         async function loadProducts() {
-            loadConfig();         
-            loadProducts_inner(); 
-            loadStores();         
+            // 🚀 冷啟動優化：檢查哪些資料本地沒有快取，把「缺的部分」合併成一個 bootstrap 請求。
+            // 原本首次造訪要打 4 支 API，每支都要各自付一次 GAS 啟動 + 轉址的固定成本，
+            // 累加起來就是十幾秒。合併後固定成本只付一次。
+            //
+            // ⚠️ 門市資料刻意「不」放進 bootstrap：全台 711 約 1.1MB，
+            //    塞進來會拖慢豆單顯示，而客人要到結帳選門市時才需要它。
+            //    改成豆單畫面出來後才在背景載入，客人瀏覽豆單的同時就載好了。
+            const need = [];
+            if (!_hasFreshCache(CACHE_KEY))  need.push('products');
+            if (!_hasFreshCache(CONFIG_KEY)) need.push('config');
+            if (!_hasRankingCache(currentRankingDays)) need.push('ranking');
+
+            if (need.length >= 2) {
+                const ok = await bootstrapLoad(need);
+                if (ok) {
+                    if (!need.includes('config'))   loadConfig();
+                    if (!need.includes('products')) loadProducts_inner();
+                    if (!need.includes('ranking'))  loadRanking(currentRankingDays);
+                    loadStores(); // 門市：畫面已顯示後才載入，不擋住豆單
+                    return;
+                }
+                // bootstrap 失敗 → 退回原本的個別載入方式（保底，不會整頁掛掉）
+            }
+
+            loadConfig();
+            loadProducts_inner();
+            loadRanking(currentRankingDays);
+            loadStores();
+        }
+
+        // 檢查某個 localStorage 快取是否存在且可解析
+        function _hasFreshCache(key) {
+            try {
+                const c = localStorage.getItem(key);
+                if (!c) return false;
+                JSON.parse(c);
+                return true;
+            } catch(e) { return false; }
+        }
+        function _hasRankingCache(days) {
+            try { return !!localStorage.getItem(`ranking_d${days}`); } catch(e) { return false; }
+        }
+
+        // 一次取回所有缺少的資料
+        async function bootstrapLoad(need) {
+            try {
+                const url = `${GAS_URL}?action=bootstrap&need=${need.join(',')}&days=${currentRankingDays}`;
+                const data = await fetchWithRetry(url, 2, 800, 20000);
+                const v = data.versions || {};
+
+                if (data.products) {
+                    if (v.cache_version) localStorage.setItem(CACHE_VERSION_KEY, v.cache_version);
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({ data: data.products, timestamp: Date.now() }));
+                    renderFromData(data.products);
+                }
+                if (data.config) {
+                    if (v.config_cache_version) localStorage.setItem(CONFIG_VERSION_KEY, v.config_cache_version);
+                    localStorage.setItem(CONFIG_KEY, JSON.stringify({ data: data.config, timestamp: Date.now() }));
+                    applyRemoteConfig(data.config.shopConfig);
+                    applyVipList(data.config.vipList, data.config.vipEnabled, data.config.corpList);
+                }
+                if (data.stores) {
+                    if (v.stores_cache_version) localStorage.setItem(STORES_VERSION_KEY, v.stores_cache_version);
+                    localStorage.setItem(STORES_KEY, JSON.stringify({ data: data.stores, timestamp: Date.now() }));
+                    applyStoresData(data.stores.stores || []);
+                }
+                if (data.ranking) {
+                    renderRankingData(data.ranking, false);
+                    try {
+                        localStorage.setItem(`ranking_d${currentRankingDays}`, JSON.stringify({
+                            data: data.ranking, ts: Date.now(),
+                            ver: localStorage.getItem(RANKING_VERSION_KEY) || ''
+                        }));
+                    } catch(e) {}
+                }
+                return true;
+            } catch(e) {
+                console.error('bootstrap 載入失敗，改用個別載入:', e);
+                return false;
+            }
+        }
+
+        // 版本號查詢去重：豆單/設定/門市三者都要比對版本，原本各自打一次 ?action=version，
+        // 等於同一份資料抓三次。這裡讓短時間內的呼叫共用同一個請求。
+        let _versionPromise = null;
+        function _getVersions() {
+            if (_versionPromise) return _versionPromise;
+            _versionPromise = fetchWithRetry(GAS_URL + '?action=version', 1, 600, 8000)
+                .finally(() => { setTimeout(() => { _versionPromise = null; }, 3000); });
+            return _versionPromise;
         }
 
         async function loadConfig() {
@@ -911,8 +998,7 @@
 
         async function checkConfigVersion(cacheAge) {
             try {
-                const res = await fetch(GAS_URL + '?action=version', { cache: 'no-store' });
-                const json = await res.json();
+                const json = await _getVersions();
                 const serverVer = json.config_cache_version || '';
                 const localVer  = localStorage.getItem(CONFIG_VERSION_KEY) || '';
                 if (serverVer && serverVer !== localVer) {
@@ -962,8 +1048,7 @@
 
         async function checkVersionAndUpdate(cacheAge) {
             try {
-                const res = await fetch(GAS_URL + '?action=version', { cache: 'no-store' });
-                const json = await res.json();
+                const json = await _getVersions();
                 const serverVersion = json.cache_version || '';
                 const localVersion = localStorage.getItem(CACHE_VERSION_KEY) || '';
                 if (serverVersion && serverVersion !== localVersion) {
@@ -2019,8 +2104,7 @@
 
         async function checkStoresVersion(cacheAge) {
             try {
-                const res = await fetch(GAS_URL + '?action=version', { cache: 'no-store' });
-                const json = await res.json();
+                const json = await _getVersions();
                 const serverVer = json.stores_cache_version || '';
                 const localVer  = localStorage.getItem(STORES_VERSION_KEY) || '';
                 if (serverVer && serverVer !== localVer) {
@@ -2260,9 +2344,10 @@
                 // ✅ 逾時不再「假設成功」：改用 action=checkOrder 向後端確認訂單是否真的寫入試算表。
                 //    後端只有在訂單成功寫進試算表之後，才會標記 order_token，
                 //    所以 done=true 代表訂單「確實存在」，不是猜的。
-                //    這裡 POST 等 15 秒就好，因為後面還有查證機制兜底，不需要死等。
+                //    這裡 POST 等 12 秒就好：後端已改成非同步派送 Email/LINE，正常會在數秒內回應；
+                //    真的逾時也還有下方的查證機制兜底。
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
 
                 let result = null; // ⚠️ 不再預設成功
                 try {
@@ -2338,8 +2423,7 @@
 
         function closeModal() { document.getElementById('success-modal').style.display = 'none'; window.location.reload(); }
         document.addEventListener('DOMContentLoaded', () => {
-            loadProducts();
-            loadRanking(30);
+            loadProducts(); // 內部已包含排行榜載入（冷啟動時會與其他資料合併成一個請求）
             // 自動填入上次的收件資訊
             try {
                 const saved = JSON.parse(localStorage.getItem('_userInfo') || '{}');
