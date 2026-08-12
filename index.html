@@ -844,7 +844,7 @@
 
         applyShopConfig();
 
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzXbT-x0OFIAPf0_M0S0AKYIiIhyYJIprf01NX63qyQvChrjbVm7JDxciL29LhaU9hUJw/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvQsw3AmDqvjPl4xf8L6oWF_sAuQFRMXLNeT-o-IkUEkPJY995Jv_8h5hF63wi9rLu1w/exec';
 
         // 共用的重試機制：失敗時漸進延遲重試，避免單次網路瞬斷或快取剛好過期
         // 就直接判死刑、要求使用者手動重新整理頁面。
@@ -869,14 +869,25 @@
                     return json;
                 } catch (e) {
                     clearTimeout(timeoutId);
-                    console.warn(`[糊塗重試] ${shortName} 第${attempt + 1}次失敗（${e.message}），耗時 ${Date.now() - t0}ms`);
+                    const took = Date.now() - t0;
+                    console.warn(`[糊塗重試] ${shortName} 第${attempt + 1}次失敗（${e.message}），耗時 ${took}ms`);
                     if (attempt === retries) throw e;
-                    // GAS 轉址後的 404 屬於暫時性錯誤（一次性內容金鑰失效），
-                    // 立刻重試通常就會成功。原本固定退避 800ms / 1600ms，
-                    // 等於每次遇到都白白多花 2.4 秒。
+
+                    // 自適應退避：依「這次失敗得多快」判斷是哪一種故障。
+                    //  • 失敗很快(<1.5秒) → 多半是一次性內容金鑰瞬間失效，伺服器是好的。
+                    //    給 400ms 冷靜期讓連線重新建立，比 0 秒硬打更穩，代價也幾乎感覺不到。
+                    //  • 失敗很慢(>=1.5秒) → 伺服器正在冷啟動或塞車，我們已經等很久了。
+                    //    再加延遲只是把等待搬個位置，總時間不會變短，所以立刻重試。
                     const isTransient = /HTTP 404|HTTP 5\d\d/.test(e.message);
-                    const wait = isTransient ? 0 : delayMs * (attempt + 1);
-                    if (wait) await new Promise(r => setTimeout(r, wait));
+                    let wait;
+                    if (!isTransient) {
+                        wait = delayMs * (attempt + 1);      // 網路類錯誤：正常退避
+                    } else if (took < 1500) {
+                        wait = 400;                          // 快速失敗：短冷靜期
+                    } else {
+                        wait = 0;                            // 慢速失敗：已等夠久，立刻重試
+                    }
+                    if (wait > 0) await new Promise(r => setTimeout(r, wait));
                 }
             }
         }
