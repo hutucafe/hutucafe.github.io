@@ -955,11 +955,53 @@
         }
 
         // 一次取回所有缺少的資料
+        // 對沖請求（hedged request）：專治「偶爾一次特別慢」的長尾延遲。
+        // 做法：先發一個請求；若 hedgeAfterMs 內還沒回來，就「不取消它」再補發第二個，
+        // 誰先回來就用誰。因為這是唯讀查詢，重複請求沒有副作用。
+        // 適用情境：第一個請求剛好被分配到正在冷啟動的容器而卡住，
+        // 第二個請求有機會落到已經熱好的容器，就不必陪第一個慢慢等。
+        async function fetchHedged(url, hedgeAfterMs = 3500, timeoutMs = 15000) {
+            const attempt = (tag) => {
+                const ctrl = new AbortController();
+                const tid = setTimeout(() => ctrl.abort(), timeoutMs);
+                const t0 = Date.now();
+                return fetch(url, { cache: 'no-store', signal: ctrl.signal })
+                    .then(res => {
+                        clearTimeout(tid);
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        return res.json();
+                    })
+                    .then(json => {
+                        console.log(`[糊塗對沖] ${tag} 勝出，耗時 ${Date.now() - t0}ms`);
+                        return json;
+                    })
+                    .catch(err => { clearTimeout(tid); throw err; });
+            };
+
+            const first = attempt('第1發');
+            let settled = false;
+            first.then(() => { settled = true; }).catch(() => { settled = true; });
+
+            const hedge = new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    if (settled) return; // 第一發已經回來了，不必補發
+                    console.log(`[糊塗對沖] 第1發超過 ${hedgeAfterMs}ms 未回應，補發第2發`);
+                    attempt('第2發').then(resolve).catch(reject);
+                }, hedgeAfterMs);
+            });
+
+            // 兩發競速，取最先成功的；兩發都失敗才算失敗
+            return Promise.any([first, hedge]).catch(async () => {
+                // Promise.any 全失敗 → 退回原本的重試邏輯，確保還是拿得到資料
+                return fetchWithRetry(url, 1, 400, timeoutMs);
+            });
+        }
+
         async function bootstrapLoad(need) {
             const _wallStart = Date.now();
             try {
                 const url = `${GAS_URL}?action=bootstrap&need=${need.join(',')}&days=${currentRankingDays}`;
-                const data = await fetchWithRetry(url, 2, 800, 20000);
+                const data = await fetchHedged(url, 3500, 15000);
                 const v = data.versions || {};
 
                 // 🩺 效能量測：把「GAS 實際執行時間」與「瀏覽器實際等待時間」都記錄下來。
@@ -2374,6 +2416,7 @@
             const nonDiscountedText = payload.nonDiscountedItems.map(i => `  • ${i.name} (${i.pkg}) x ${i.qty}\n`).join('');
             if (discountedText) { alertItemsText += `【指定品項 (${payload.discountName})】\n${discountedText}  👉 折扣金額：-$${payload.totalDiscountAmt}\n\n`; }
             if (nonDiscountedText) { alertItemsText += `【非指定品項 (原價)】\n${nonDiscountedText}\n`; }
+            const _orderWallStart = Date.now();
             try {
                 // ✅ 逾時不再「假設成功」：改用 action=checkOrder 向後端確認訂單是否真的寫入試算表。
                 //    後端只有在訂單成功寫進試算表之後，才會標記 order_token，
@@ -2423,6 +2466,11 @@
                 }
 
                 if (result && result.result === 'success') {
+                    // 🩺 訂單效能量測：拆解「GAS 執行」與「平台開銷(轉址/冷啟動/傳輸)」
+                    const _oWall = Date.now() - _orderWallStart;
+                    const _oServer = result._serverMs;
+                    window.__hutuOrderPerf = { 瀏覽器等待ms: _oWall, GAS執行ms: _oServer, 平台開銷ms: (_oServer != null ? _oWall - _oServer : null) };
+                    console.log('[糊塗訂單效能] 瀏覽器等待 ' + _oWall + 'ms ｜ GAS 執行 ' + (_oServer != null ? _oServer + 'ms' : '未知(走查證路徑)') + ' ｜ 其餘 ' + (_oServer != null ? (_oWall - _oServer) + 'ms' : '?'));
                     localStorage.removeItem(CACHE_KEY); _submitToken = null;
                     // 儲存收件資訊
                     try {
