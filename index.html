@@ -805,7 +805,7 @@
             clearTimeout(_vipCheckTimer);
             const seq = ++_vipCheckSeq;
             _vipCheckTimer = setTimeout(() => {
-                fetchWithRetry(GAS_URL + '?action=checkVip&name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(cleanPhone), 2, 400, 8000)
+                fetchWithRetry(GAS_URL + '?action=checkVip&name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(cleanPhone), 1, 400, 20000, 22000)
                     .then(data => {
                         if (seq !== _vipCheckSeq) return; // 使用者已經又輸入了，這筆回應是舊的，捨棄
                         if (data.isVip && vipEnabled) {
@@ -860,23 +860,32 @@
         // deadlineMs：整體時間上限。無論重試幾次，總等待都不會超過這個值。
         // 這是避免「逾時疊加逾時」的關鍵——之前就是因為沒有總上限，
         // 多層重試串起來變成 40 幾秒。
-        async function fetchWithRetry(url, retries = 2, delayMs = 800, timeoutMs = 10000, deadlineMs = 20000) {
+        // ⚠️ GAS 專用的重試策略（與一般 API 相反）
+        //
+        // 關鍵事實：中斷 fetch 只取消「瀏覽器的等待」，不會取消 Google 伺服器端
+        // 已經在跑的執行。所以在冷啟動時把請求砍掉重來，等於：
+        //   第1次仍佔著容器 → 第2次排在它後面 → 反而更慢（實測 9秒失敗 + 12秒才成功）
+        //
+        // 因此規則是：
+        //   • 逾時／中斷 → 絕不重試（重試只會製造第二個排隊請求，讓情況更糟）
+        //   • 快速失敗的 404/5xx → 才重試（那是路由抖動，伺服器是好的）
+        //   • 逾時本身設得寬鬆，讓冷啟動有機會自己跑完
+        async function fetchWithRetry(url, retries = 1, delayMs = 400, timeoutMs = 25000, deadlineMs = 28000) {
             const shortName = url.replace(/^.*\/exec/, 'GAS').slice(0, 60);
             const startedAt = Date.now();
             let lastErr = new Error('未執行');
 
             for (let attempt = 0; attempt <= retries; attempt++) {
-                const elapsed = Date.now() - startedAt;
-                const remaining = deadlineMs - elapsed;
-                if (remaining <= 500) {          // 沒時間再試了，直接放棄
-                    console.warn(`[糊塗重試] ${shortName} 已達總時間上限 ${deadlineMs}ms，停止重試`);
+                const remaining = deadlineMs - (Date.now() - startedAt);
+                if (remaining <= 500) {
+                    console.warn(`[糊塗重試] ${shortName} 已達總時間上限 ${deadlineMs}ms，停止`);
                     throw lastErr;
                 }
-                // 單次逾時不可超過剩餘預算，否則總時間會被最後一次拖爆
                 const thisTimeout = Math.min(timeoutMs, remaining);
 
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), thisTimeout);
+                let timedOut = false;
+                const timeoutId = setTimeout(() => { timedOut = true; controller.abort(); }, thisTimeout);
                 const t0 = Date.now();
                 try {
                     const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
@@ -884,7 +893,7 @@
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const json = await res.json();
                     if (attempt > 0) {
-                        console.log(`[糊塗重試] ${shortName} 第${attempt + 1}次嘗試成功，本次耗時 ${Date.now() - t0}ms`);
+                        console.log(`[糊塗重試] ${shortName} 第${attempt + 1}次成功，本次耗時 ${Date.now() - t0}ms`);
                     }
                     return json;
                 } catch (e) {
@@ -892,23 +901,22 @@
                     lastErr = e;
                     const took = Date.now() - t0;
                     console.warn(`[糊塗重試] ${shortName} 第${attempt + 1}次失敗（${e.message}），耗時 ${took}ms`);
+
                     if (attempt === retries) throw e;
 
-                    // 自適應退避：依「這次失敗得多快」判斷故障性質。
-                    //  • 失敗很快(<1.5秒) → 多半是一次性內容金鑰失效，伺服器是好的，
-                    //    給 400ms 冷靜期讓連線重建。
-                    //  • 失敗很慢(>=1.5秒) → 伺服器正在冷啟動，我們已經等很久了，
-                    //    再加延遲只是把等待搬位置，立刻重試。
-                    const isTransient = /HTTP 404|HTTP 5\d\d/.test(e.message);
-                    let wait;
-                    if (!isTransient) {
-                        wait = delayMs * (attempt + 1);
-                    } else if (took < 1500) {
-                        wait = 400;
-                    } else {
-                        wait = 0;
+                    // ① 逾時／中斷：伺服器可能還在處理，重試只會排隊排更久 → 直接放棄
+                    if (timedOut || e.name === 'AbortError') {
+                        console.warn(`[糊塗重試] ${shortName} 屬於逾時，不再重試（避免與仍在執行的請求互相排隊）`);
+                        throw e;
                     }
-                    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+                    // ② 慢速失敗（>3秒才失敗）：伺服器正在塞車，重試同樣無益
+                    const isTransient = /HTTP 404|HTTP 5\d\d/.test(e.message);
+                    if (!isTransient || took >= 3000) {
+                        console.warn(`[糊塗重試] ${shortName} 屬於伺服器忙碌，不再重試`);
+                        throw e;
+                    }
+                    // ③ 只有「快速失敗的 404/5xx」才重試：那是路由抖動，短暫冷靜後通常就好
+                    await new Promise(r => setTimeout(r, delayMs));
                 }
             }
             throw lastErr;
@@ -981,7 +989,7 @@
             const _wallStart = Date.now();
             try {
                 const url = `${GAS_URL}?action=bootstrap&need=${need.join(',')}&days=${currentRankingDays}`;
-                const data = await fetchWithRetry(url, 2, 400, 15000, 20000); // 單次15秒(不砍掉冷啟動)、總上限20秒
+                const data = await fetchWithRetry(url, 1, 400, 25000, 28000); // 逾時放寬到25秒，讓冷啟動有機會跑完
                 const v = data.versions || {};
 
                 // 🩺 效能量測：把「GAS 實際執行時間」與「瀏覽器實際等待時間」都記錄下來。
@@ -1029,7 +1037,7 @@
         let _versionPromise = null;
         function _getVersions() {
             if (_versionPromise) return _versionPromise;
-            _versionPromise = fetchWithRetry(GAS_URL + '?action=version', 1, 600, 8000)
+            _versionPromise = fetchWithRetry(GAS_URL + '?action=version', 1, 400, 20000, 22000)
                 .finally(() => { setTimeout(() => { _versionPromise = null; }, 3000); });
             return _versionPromise;
         }
@@ -1072,7 +1080,7 @@
                 // ⚠️ 這支決定折扣比率、免運門檻、運費，載入失敗會退回頁面內寫死的預設值
                 //    （9折 / 免運1000 / 運費38），若後台實際設定跟預設不同就會顯示錯誤金額，
                 //    所以這裡同樣要重試，不能靜默放棄。
-                const data = await fetchWithRetry(GAS_URL + '?action=config');
+                const data = await fetchWithRetry(GAS_URL + '?action=config', 1, 400, 20000, 22000);
                 if (data.config_cache_version) {
                     localStorage.setItem(CONFIG_VERSION_KEY, data.config_cache_version);
                 }
@@ -1128,7 +1136,7 @@
                     </div>`;
             }
             try {
-                const responseData = await fetchWithRetry(GAS_URL);
+                const responseData = await fetchWithRetry(GAS_URL, 1, 400, 25000, 28000);
                 if (responseData.cache_version) {
                     localStorage.setItem(CACHE_VERSION_KEY, responseData.cache_version);
                 }
@@ -2176,7 +2184,7 @@
         async function fetchStores() {
             const status = document.getElementById('store-status');
             try {
-                const data = await fetchWithRetry(GAS_URL + '?action=stores');
+                const data = await fetchWithRetry(GAS_URL + '?action=stores', 1, 400, 25000, 28000);
                 if (data.stores_cache_version) {
                     localStorage.setItem(STORES_VERSION_KEY, data.stores_cache_version);
                 }
@@ -2413,7 +2421,7 @@
 
                 const postPromise = (async () => {
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 20000);
+                    const timeoutId = setTimeout(() => controller.abort(), 25000); // 放寬：中斷不會取消伺服器執行，砍掉重來只會更慢
                     try {
                         const response = await fetch(GAS_URL, {
                             method: 'POST',
@@ -2438,31 +2446,41 @@
                 })();
 
                 const verifyPromise = (async () => {
-                    await new Promise(r => setTimeout(r, 5000)); // 先讓 POST 有機會正常回來
-                    const gaps = [0, 2500, 3000, 4000, 5000, 6000]; // 之後陸續再查
-                    for (let i = 0; i < gaps.length; i++) {
-                        if (gaps[i]) await new Promise(r => setTimeout(r, gaps[i]));
+                    // ⏱ 用「總時間上限」控制，而不是固定輪數。
+                    //    先前只設定「每輪之間隔多久」，卻沒算到每輪查詢本身也要花時間，
+                    //    6 輪 × 最多 9 秒疊上去就變成 80 秒。這裡改成看實際經過的時間，
+                    //    不管查了幾輪，超過上限就停。
+                    const VERIFY_DEADLINE_MS = 18000;
+                    const startedAt = Date.now();
+                    await new Promise(r => setTimeout(r, 4000)); // 先讓 POST 有機會正常回來
+
+                    let round = 0;
+                    while (Date.now() - startedAt < VERIFY_DEADLINE_MS) {
                         if (backendError) throw new Error('BACKEND_ERROR');
+                        round++;
                         if (!verifyStarted) {
                             verifyStarted = true;
                             btn.textContent = "訂單確認中，請稍候...";
                         }
                         try {
+                            // 每次查詢自己也要有短上限，否則單次就能吃掉整個預算
                             const j = await fetchWithRetry(
                                 GAS_URL + '?action=checkOrder&token=' + encodeURIComponent(payload.submitToken),
-                                1, 300, 8000, 9000
+                                0, 0, 8000, 8000
                             );
                             if (j && j.done) {
-                                console.log('[糊塗訂單] 查證確認訂單已寫入（比 POST 回應更快）');
+                                console.log('[糊塗訂單] 查證確認訂單已寫入（第' + round + '輪，共 ' +
+                                            (Date.now() - startedAt) + 'ms）');
                                 return { result: 'success' };
                             }
-                            console.log(`[糊塗訂單] 查證第${i + 1}輪：後端回報尚未寫入`);
+                            console.log(`[糊塗訂單] 查證第${round}輪：後端回報尚未寫入`);
                         } catch (e) {
-                            // 查詢本身失敗（例如 GAS 轉址 404）→ 這輪不算數，但要記錄下來，
-                            // 否則會誤以為「後端說沒寫入」而白白耗掉一輪
-                            console.warn(`[糊塗訂單] 查證第${i + 1}輪查詢失敗（${e.message}），非訂單失敗`);
+                            console.warn(`[糊塗訂單] 查證第${round}輪查詢失敗（${e.message}），非訂單失敗`);
                         }
-                        btn.textContent = `訂單確認中 (${i + 1}/${gaps.length})，請勿關閉頁面...`;
+                        btn.textContent = `訂單確認中 (${round})，請勿關閉頁面...`;
+                        // 還有預算才等下一輪，避免最後白等一段
+                        if (Date.now() - startedAt + 2500 >= VERIFY_DEADLINE_MS) break;
+                        await new Promise(r => setTimeout(r, 2500));
                     }
                     throw new Error('VERIFY_TIMEOUT');
                 })();
