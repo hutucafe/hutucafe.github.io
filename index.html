@@ -763,6 +763,14 @@
             }
         }
 
+        // 頁面載入期間先不查 VIP，避免跟豆單等請求在 GAS 排隊互卡。
+        // 還原上次收件資訊時會觸發 onPhoneInput()，這個旗標讓那次查詢被跳過，
+        // 改由載入完成後統一補查一次。
+        let _vipCheckSuppressed = true;
+        // 保險：萬一載入流程卡住，最多 12 秒後也要解除封鎖，
+        // 不能讓 VIP 功能因為載入異常而永久失效
+        setTimeout(() => { _vipCheckSuppressed = false; }, 12000);
+
         function onPhoneInput() {
             _checkVip();
             const phone = document.getElementById('buyer-phone').value.trim();
@@ -790,6 +798,8 @@
         let _vipCheckSeq = 0; // 避免使用者持續輸入時，舊的回應蓋掉新的結果
 
         function _checkVip() {
+            // 載入期間跳過（避免與豆單載入在 GAS 互相排隊），載入完成後會統一補查一次
+            if (_vipCheckSuppressed) return;
             const name  = document.getElementById('buyer-name').value.trim();
             const phone = document.getElementById('buyer-phone').value.trim();
             const cleanPhone = phone.replace(/[^0-9]/g, '');
@@ -805,7 +815,7 @@
             clearTimeout(_vipCheckTimer);
             const seq = ++_vipCheckSeq;
             _vipCheckTimer = setTimeout(() => {
-                fetchWithRetry(GAS_URL + '?action=checkVip&name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(cleanPhone), 1, 400, 20000, 22000)
+                fetchWithRetry(GAS_URL + '?action=checkVip&name=' + encodeURIComponent(name) + '&phone=' + encodeURIComponent(cleanPhone), 1, 400, 35000, 38000)
                     .then(data => {
                         if (seq !== _vipCheckSeq) return; // 使用者已經又輸入了，這筆回應是舊的，捨棄
                         if (data.isVip && vipEnabled) {
@@ -871,7 +881,7 @@
         //   • 快速失敗的 404/5xx → 才重試（那是路由抖動，伺服器是好的）
         //   • 逾時本身設得寬鬆，讓冷啟動有機會自己跑完
         async function fetchWithRetry(url, retries = 1, delayMs = 400, timeoutMs = 25000, deadlineMs = 28000) {
-            const shortName = url.replace(/^.*\/exec/, 'GAS').slice(0, 60);
+            const shortName = url.replace(/^.*\/exec/, 'GAS').slice(0, 90);
             const startedAt = Date.now();
             let lastErr = new Error('未執行');
 
@@ -990,6 +1000,19 @@
             try {
                 const url = `${GAS_URL}?action=bootstrap&need=${need.join(',')}&days=${currentRankingDays}`;
                 const data = await fetchWithRetry(url, 1, 400, 25000, 28000); // 逾時放寬到25秒，讓冷啟動有機會跑完
+
+                // 🛡 防呆：確認回應真的是 bootstrap 格式。
+                // 若 index.html 裡的 GAS 網址還指向「舊部署」，舊版程式碼不認得
+                // action=bootstrap，會掉到預設路徑回傳「豆單資料」——結構完全不同。
+                // 沒有這道檢查的話，前端會把豆單資料當成 bootstrap 結果亂套，
+                // 造成折扣設定沒套用、排行榜不見等難以追查的怪現象。
+                const looksLikeBootstrap = data && (data.versions !== undefined ||
+                                                    data.config !== undefined ||
+                                                    data.ranking !== undefined);
+                if (!looksLikeBootstrap) {
+                    console.warn('[糊塗bootstrap] 回應格式不符（可能 GAS 網址指向舊部署），改用個別載入');
+                    return false;
+                }
                 const v = data.versions || {};
 
                 // 🩺 效能量測：把「GAS 實際執行時間」與「瀏覽器實際等待時間」都記錄下來。
@@ -2450,7 +2473,7 @@
                     //    先前只設定「每輪之間隔多久」，卻沒算到每輪查詢本身也要花時間，
                     //    6 輪 × 最多 9 秒疊上去就變成 80 秒。這裡改成看實際經過的時間，
                     //    不管查了幾輪，超過上限就停。
-                    const VERIFY_DEADLINE_MS = 18000;
+                    const VERIFY_DEADLINE_MS = 30000; // 單次查證放寬到15秒，總上限需相應放大
                     const startedAt = Date.now();
                     await new Promise(r => setTimeout(r, 4000)); // 先讓 POST 有機會正常回來
 
@@ -2466,7 +2489,7 @@
                             // 每次查詢自己也要有短上限，否則單次就能吃掉整個預算
                             const j = await fetchWithRetry(
                                 GAS_URL + '?action=checkOrder&token=' + encodeURIComponent(payload.submitToken),
-                                0, 0, 8000, 8000
+                                0, 0, 15000, 15000
                             );
                             if (j && j.done) {
                                 console.log('[糊塗訂單] 查證確認訂單已寫入（第' + round + '輪，共 ' +
@@ -2556,14 +2579,31 @@
 
         function closeModal() { document.getElementById('success-modal').style.display = 'none'; window.location.reload(); }
         document.addEventListener('DOMContentLoaded', () => {
-            loadProducts(); // 內部已包含排行榜載入（冷啟動時會與其他資料合併成一個請求）
+            // 內部已包含排行榜載入（冷啟動時會與其他資料合併成一個請求）
+            const loadingDone = loadProducts();
             // 自動填入上次的收件資訊
             try {
                 const saved = JSON.parse(localStorage.getItem('_userInfo') || '{}');
                 if (saved.name)  document.getElementById('buyer-name').value  = saved.name;
                 if (saved.phone) { document.getElementById('buyer-phone').value = saved.phone; onPhoneInput(); }
                 if (saved.email) { document.getElementById('buyer-email').value = saved.email; onEmailInput(); }
-                if (saved.name || saved.phone) _checkVip();
+
+                // ⚠️ VIP 查詢刻意「等頁面資料載完再做」。
+                //    GAS 會把同一支腳本的請求排隊，如果在載入豆單的同時就查 VIP，
+                //    VIP 只能排在後面乾等——實測 bootstrap 花 11 秒，
+                //    VIP 就這樣排到 20 秒被逾時砍掉，折扣自然不會出現。
+                //    客人這時還在瀏覽豆單，晚幾秒查完全不影響體驗。
+                if (saved.name || saved.phone) {
+                    Promise.resolve(loadingDone)
+                        .catch(() => {})
+                        .then(() => setTimeout(() => {
+                            _vipCheckSuppressed = false;
+                            try { _checkVip(); } catch (e) {}
+                        }, 800));
+                } else {
+                    // 沒有要還原的資料，直接解除封鎖，讓客人一輸入就能查
+                    Promise.resolve(loadingDone).catch(() => {}).then(() => { _vipCheckSuppressed = false; });
+                }
             } catch(e) {}
         });
 
