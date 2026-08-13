@@ -956,38 +956,39 @@
         let currentFinalTotal = 0;
 
         async function loadProducts() {
-            // 🚀 冷啟動優化：把「本地沒有快取的項目」合併成一個 bootstrap 請求，
-            //    避免每支 API 各付一次 GAS 啟動 + 轉址的固定成本。
+            // 🚦 依序載入，不並行。
             //
-            // ⚠️ 門市資料不放進 bootstrap：全台 711 約 1.1MB，會拖慢豆單顯示，
-            //    而客人要到結帳選門市時才需要它。
+            // 關鍵事實：GAS 對同一支腳本的請求會「排隊」，不是真的平行處理。
+            // 同時發出 5 個請求時，第 1 個在執行、其餘 4 個在排隊乾等，
+            // 但它們的逾時計時器照常在跑 —— 結果就是「全部一起到期陣亡」
+            // （實測：bootstrap 15秒、排行榜 25秒、設定 20秒、門市 25秒、豆單 25秒，全滅）。
             //
-            // ⚠️ 排行榜也不放進 bootstrap：它的後端要掃整張訂單表算排名，是最貴的一項。
-            //    綁進來會讓這個請求執行太久，超過 Google 轉址的等待窗口而拿到 404 或逾時，
-            //    結果連豆單一起陪葬（實測 bootstrap 連續失敗 20~25 秒都是這個原因）。
-            //    排行榜只是錦上添花，讓它自己獨立載入即可。
+            // 既然後端本來就是一個一個處理，前端就照同樣順序送，
+            // 讓每個請求都能拿到完整的執行時間，而不是在佇列裡空轉到逾時。
+            // 順序依重要性：豆單+設定 → 門市 → 排行榜。
             const need = [];
             if (!_hasFreshCache(CACHE_KEY))  need.push('products');
             if (!_hasFreshCache(CONFIG_KEY)) need.push('config');
 
-            // 已經有本地快取的項目立刻處理，不必等 bootstrap 回來
-            if (!need.includes('config'))   loadConfig();
-            if (!need.includes('products')) loadProducts_inner();
-            loadRanking(currentRankingDays); // 一律獨立載入，不擋豆單
-
+            // ① 最重要：豆單與折扣設定
             if (need.length >= 2) {
                 const ok = await bootstrapLoad(need);
-                loadStores(); // 門市：畫面已顯示後才在背景載入
-                if (ok) return;
-                // bootstrap 失敗 → 補回缺的那幾項
-                loadConfig();
-                loadProducts_inner();
-                return;
+                if (!ok) {
+                    await loadProducts_inner();   // 依序，不並行
+                    await loadConfig();
+                }
+            } else {
+                if (need.includes('products')) await loadProducts_inner();
+                else loadProducts_inner();        // 有快取：瞬間渲染，背景比對版本
+                if (need.includes('config')) await loadConfig();
+                else loadConfig();
             }
 
-            if (need.includes('config'))   loadConfig();
-            if (need.includes('products')) loadProducts_inner();
-            loadStores();
+            // ② 次要：門市（結帳才需要，但要在客人捲到那裡之前備好）
+            await loadStores();
+
+            // ③ 最後：排行榜（純錦上添花，失敗也不影響下單）
+            await loadRanking(currentRankingDays);
         }
 
         // 檢查某個 localStorage 快取是否存在且可解析
@@ -1080,14 +1081,14 @@
                 if (cached) {
                     const { data, timestamp } = JSON.parse(cached);
                     applyRemoteConfig(data.shopConfig); applyVipList(data.vipList, data.vipEnabled, data.corpList); // 立即套用，不等版本檢查
-                    checkConfigVersion(Date.now() - timestamp); // 背景靜默比對
+                    await checkConfigVersion(Date.now() - timestamp); // 依序比對，避免與其他請求在GAS互相排隊
                     return;
                 }
             } catch(e) {
                 localStorage.removeItem(CONFIG_KEY);
                 localStorage.removeItem(CONFIG_VERSION_KEY);
             }
-            fetchConfig();
+            await fetchConfig();
         }
 
         async function checkConfigVersion(cacheAge) {
@@ -1130,14 +1131,14 @@
                 if (cached) {
                     const { data, timestamp } = JSON.parse(cached);
                     renderFromData(data); // 立即顯示，不等版本檢查
-                    checkVersionAndUpdate(Date.now() - timestamp); // 背景靜默比對
+                    await checkVersionAndUpdate(Date.now() - timestamp); // 依序比對，避免在GAS互相排隊
                     return;
                 }
             } catch(e) {
                 localStorage.removeItem(CACHE_KEY);
                 localStorage.removeItem(CACHE_VERSION_KEY);
             }
-            fetchAndUpdate(true);
+            await fetchAndUpdate(true);
         }
 
         async function checkVersionAndUpdate(cacheAge) {
@@ -2186,14 +2187,14 @@
                     const { data, timestamp } = JSON.parse(cached);
                     const age = Date.now() - timestamp;
                     applyStoresData(data.stores || []);
-                    checkStoresVersion(age);
+                    await checkStoresVersion(age);
                     return;
                 }
             } catch(e) {
                 localStorage.removeItem(STORES_KEY);
                 localStorage.removeItem(STORES_VERSION_KEY);
             }
-            fetchStores();
+            await fetchStores();
         }
 
         async function checkStoresVersion(cacheAge) {
@@ -2630,7 +2631,7 @@
                     const hasRoasted = data.roasted && data.roasted.length;
                     const hasDrip    = data.drip    && data.drip.length;
                     if (!hasRoasted && !hasDrip && days !== 0) {
-                        fetchRanking(days);
+                        await fetchRanking(days);
                         return;
                     }
                     renderRankingData(data, !!fallback);
@@ -2639,7 +2640,7 @@
             } catch(e) {}
 
             // 沒有快取才主動 fetch
-            fetchRanking(days);
+            await fetchRanking(days);
         }
 
         async function checkRankingVersion(serverVer) {
