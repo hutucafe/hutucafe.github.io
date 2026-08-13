@@ -767,9 +767,14 @@
         // 還原上次收件資訊時會觸發 onPhoneInput()，這個旗標讓那次查詢被跳過，
         // 改由載入完成後統一補查一次。
         let _vipCheckSuppressed = true;
-        // 保險：萬一載入流程卡住，最多 12 秒後也要解除封鎖，
-        // 不能讓 VIP 功能因為載入異常而永久失效
-        setTimeout(() => { _vipCheckSuppressed = false; }, 12000);
+        // 保險：萬一載入流程拖很久或卡住，最多 10 秒後就解除封鎖「並實際查一次」。
+        // 先前只解除封鎖卻沒觸發查詢，遇到載入 25 秒的情況，
+        // 整場就不會查 VIP，折扣自然不會出現。
+        setTimeout(() => {
+            if (!_vipCheckSuppressed) return; // 已由正常流程解除，不重複
+            _vipCheckSuppressed = false;
+            try { _checkVip(); } catch (e) {}
+        }, 10000);
 
         function onPhoneInput() {
             _checkVip();
@@ -951,33 +956,37 @@
         let currentFinalTotal = 0;
 
         async function loadProducts() {
-            // 🚀 冷啟動優化：檢查哪些資料本地沒有快取，把「缺的部分」合併成一個 bootstrap 請求。
-            // 原本首次造訪要打 4 支 API，每支都要各自付一次 GAS 啟動 + 轉址的固定成本，
-            // 累加起來就是十幾秒。合併後固定成本只付一次。
+            // 🚀 冷啟動優化：把「本地沒有快取的項目」合併成一個 bootstrap 請求，
+            //    避免每支 API 各付一次 GAS 啟動 + 轉址的固定成本。
             //
-            // ⚠️ 門市資料刻意「不」放進 bootstrap：全台 711 約 1.1MB，
-            //    塞進來會拖慢豆單顯示，而客人要到結帳選門市時才需要它。
-            //    改成豆單畫面出來後才在背景載入，客人瀏覽豆單的同時就載好了。
+            // ⚠️ 門市資料不放進 bootstrap：全台 711 約 1.1MB，會拖慢豆單顯示，
+            //    而客人要到結帳選門市時才需要它。
+            //
+            // ⚠️ 排行榜也不放進 bootstrap：它的後端要掃整張訂單表算排名，是最貴的一項。
+            //    綁進來會讓這個請求執行太久，超過 Google 轉址的等待窗口而拿到 404 或逾時，
+            //    結果連豆單一起陪葬（實測 bootstrap 連續失敗 20~25 秒都是這個原因）。
+            //    排行榜只是錦上添花，讓它自己獨立載入即可。
             const need = [];
             if (!_hasFreshCache(CACHE_KEY))  need.push('products');
             if (!_hasFreshCache(CONFIG_KEY)) need.push('config');
-            if (!_hasRankingCache(currentRankingDays)) need.push('ranking');
+
+            // 已經有本地快取的項目立刻處理，不必等 bootstrap 回來
+            if (!need.includes('config'))   loadConfig();
+            if (!need.includes('products')) loadProducts_inner();
+            loadRanking(currentRankingDays); // 一律獨立載入，不擋豆單
 
             if (need.length >= 2) {
                 const ok = await bootstrapLoad(need);
-                if (ok) {
-                    if (!need.includes('config'))   loadConfig();
-                    if (!need.includes('products')) loadProducts_inner();
-                    if (!need.includes('ranking'))  loadRanking(currentRankingDays);
-                    loadStores(); // 門市：畫面已顯示後才載入，不擋住豆單
-                    return;
-                }
-                // bootstrap 失敗 → 退回原本的個別載入方式（保底，不會整頁掛掉）
+                loadStores(); // 門市：畫面已顯示後才在背景載入
+                if (ok) return;
+                // bootstrap 失敗 → 補回缺的那幾項
+                loadConfig();
+                loadProducts_inner();
+                return;
             }
 
-            loadConfig();
-            loadProducts_inner();
-            loadRanking(currentRankingDays);
+            if (need.includes('config'))   loadConfig();
+            if (need.includes('products')) loadProducts_inner();
             loadStores();
         }
 
@@ -999,7 +1008,7 @@
             const _wallStart = Date.now();
             try {
                 const url = `${GAS_URL}?action=bootstrap&need=${need.join(',')}&days=${currentRankingDays}`;
-                const data = await fetchWithRetry(url, 1, 400, 25000, 28000); // 逾時放寬到25秒，讓冷啟動有機會跑完
+                const data = await fetchWithRetry(url, 0, 0, 15000, 15000); // 現在只含豆單+設定(皆有快取)，15秒夠用；失敗就快點退回個別載入
 
                 // 🛡 防呆：確認回應真的是 bootstrap 格式。
                 // 若 index.html 裡的 GAS 網址還指向「舊部署」，舊版程式碼不認得
@@ -2660,7 +2669,7 @@
             try {
                 // 排行榜是錦上添花的區塊，失敗不影響下單，所以重試次數與 timeout 都設得比較保守，
                 // 避免 GAS 真的掛掉時，這裡的重試鏈把頁面拖住很久
-                const data = await fetchWithRetry(`${GAS_URL}?action=getTopItems&top=5&days=${days}`, 1, 600, 6000);
+                const data = await fetchWithRetry(`${GAS_URL}?action=getTopItems&top=5&days=${days}`, 0, 0, 25000, 25000);
                 console.log('fetchRanking days=' + days, JSON.stringify(data));
 
                 const hasRoasted = data.roasted && data.roasted.length;
@@ -2677,7 +2686,7 @@
                         if (fallbackDays === days) continue; // 跳過自己
                         if (roastedResult && dripResult) break; // 兩個都有了就停
                         // fallback 鏈不再重試（retries=0），避免多層重試累加成很長的等待
-                        const dataFb = await fetchWithRetry(`${GAS_URL}?action=getTopItems&top=5&days=${fallbackDays}`, 0, 0, 6000);
+                        const dataFb = await fetchWithRetry(`${GAS_URL}?action=getTopItems&top=5&days=${fallbackDays}`, 0, 0, 20000, 20000);
                         if (!roastedResult && dataFb.roasted && dataFb.roasted.length) roastedResult = dataFb.roasted;
                         if (!dripResult    && dataFb.drip    && dataFb.drip.length)    dripResult    = dataFb.drip;
                     }
