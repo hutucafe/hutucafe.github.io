@@ -764,16 +764,26 @@
         }
 
         // 頁面載入期間先不查 VIP，避免跟豆單等請求在 GAS 排隊互卡。
-        // 還原上次收件資訊時會觸發 onPhoneInput()，這個旗標讓那次查詢被跳過，
-        // 改由載入完成後統一補查一次。
+        // ⚠️ 但「不查」不等於「丟掉」——客人很可能在載入期間就把姓名電話打完了，
+        //    若只是丟棄，等他打完不再動輸入框，就再也沒有事件會觸發查詢，
+        //    VIP 折扣就永遠不會出現。所以這裡改成「記下來，載完立刻補查」。
         let _vipCheckSuppressed = true;
-        // 保險：萬一載入流程拖很久或卡住，最多 10 秒後就解除封鎖「並實際查一次」。
-        // 先前只解除封鎖卻沒觸發查詢，遇到載入 25 秒的情況，
-        // 整場就不會查 VIP，折扣自然不會出現。
-        setTimeout(() => {
-            if (!_vipCheckSuppressed) return; // 已由正常流程解除，不重複
+        let _vipCheckPending = false;   // 載入期間曾經有人要求查詢
+
+        // 統一的解除封鎖入口：解除後若期間有人要求過，立刻補查一次
+        function _releaseVipCheck() {
+            if (!_vipCheckSuppressed) return;
             _vipCheckSuppressed = false;
-            try { _checkVip(); } catch (e) {}
+            if (_vipCheckPending) {
+                _vipCheckPending = false;
+                try { _checkVip(); } catch (e) {}
+            }
+        }
+
+        // 保險：萬一載入流程拖很久或卡住，最多 10 秒後也要解除封鎖並補查
+        setTimeout(() => {
+            _vipCheckPending = true;   // 保險觸發時一律補查一次（欄位沒填齊的話 _checkVip 自己會擋掉）
+            _releaseVipCheck();
         }, 10000);
 
         function onPhoneInput() {
@@ -803,8 +813,9 @@
         let _vipCheckSeq = 0; // 避免使用者持續輸入時，舊的回應蓋掉新的結果
 
         function _checkVip() {
-            // 載入期間跳過（避免與豆單載入在 GAS 互相排隊），載入完成後會統一補查一次
-            if (_vipCheckSuppressed) return;
+            // 載入期間先不送出（避免與豆單載入在 GAS 互相排隊），
+            // 但要「記下來」，載入完成時會自動補查——不能默默丟掉。
+            if (_vipCheckSuppressed) { _vipCheckPending = true; return; }
             const name  = document.getElementById('buyer-name').value.trim();
             const phone = document.getElementById('buyer-phone').value.trim();
             const cleanPhone = phone.replace(/[^0-9]/g, '');
@@ -2604,12 +2615,14 @@
                     Promise.resolve(loadingDone)
                         .catch(() => {})
                         .then(() => setTimeout(() => {
-                            _vipCheckSuppressed = false;
-                            try { _checkVip(); } catch (e) {}
+                            _vipCheckPending = true;   // 有還原的資料，一定要查一次
+                            _releaseVipCheck();
                         }, 800));
                 } else {
-                    // 沒有要還原的資料，直接解除封鎖，讓客人一輸入就能查
-                    Promise.resolve(loadingDone).catch(() => {}).then(() => { _vipCheckSuppressed = false; });
+                    // 沒有要還原的資料，載完就解除封鎖。
+                    // 若客人在載入期間已經打完姓名電話，_vipCheckPending 會是 true，
+                    // _releaseVipCheck() 會立刻補查——這是先前漏掉、導致折扣不出現的關鍵。
+                    Promise.resolve(loadingDone).catch(() => {}).then(() => _releaseVipCheck());
                 }
             } catch(e) {}
         });
