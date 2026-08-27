@@ -163,7 +163,7 @@
         #event-section .event-title { font-size:20px; font-weight:bold; color:#3e2723; border-left:5px solid #e8a838; padding-left:12px; margin-bottom:6px; }
         #event-section .event-desc { font-size:14px; color:#795548; margin-bottom:16px; white-space: pre-line; line-height:1.65; }
         .event-form-group { margin-bottom:14px; }
-        .event-form-group label { display:block; font-size:13px; font-weight:600; color:#4e342e; margin-bottom:5px; }
+        .event-form-group label { display:block; font-size:13px; font-weight:600; color:#4e342e; margin-bottom:5px; white-space: pre-line; line-height:1.6; }
         .event-form-group input, .event-form-group select, .event-form-group textarea { width:100%; padding:10px 13px; border:1.5px solid #d4b896; border-radius:10px; font-size:14px; background:#fff; color:#333; box-sizing:border-box; }
         .event-form-group input:focus, .event-form-group select:focus { outline:none; border-color:#e8a838; box-shadow:0 0 0 3px rgba(232,168,56,0.15); }
         .event-form-group .hint { font-size:11px; color:#aaa; margin-top:3px; }
@@ -357,7 +357,7 @@
                 { key: 'choice',  idx: 6, type: 'select',   required: true },
             ];
             body.innerHTML = fields.map(f => {
-                const label = f.label || (cfg.headers && cfg.headers[f.idx]) || '';
+                const label = String(f.label || (cfg.headers && cfg.headers[f.idx]) || '').replace(/\r\n?/g, '\n').trim();
                 const hint  = f.hint  || (cfg.hints  && cfg.hints[f.idx])   || '';
                 const req   = f.required ? '<span class="event-required">*</span>' : '';
                 let input = '';
@@ -372,7 +372,7 @@
                 return `<div class="event-form-group"><label>${label}${req}</label>${input}</div>`;
             }).join('');
 
-            const questionLabel = cfg.question || (cfg.headers && cfg.headers[6]) || '互動內容';
+            const questionLabel = String(cfg.question || (cfg.headers && cfg.headers[6]) || '互動內容').replace(/\r\n?/g, '\n').trim();
             body.querySelectorAll('.event-form-group')[5].querySelector('label').innerHTML =
                 questionLabel + '<span class="event-required">*</span>';
             body.innerHTML += `<button class="event-submit-btn" id="event-submit-btn" onclick="submitEvent()">🎯 送出參加！</button>`;
