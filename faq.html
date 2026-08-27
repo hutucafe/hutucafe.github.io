@@ -161,7 +161,7 @@
         @keyframes eventSlideIn { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
         #event-section { display:none; animation: eventSlideIn 0.4s ease-out; background: linear-gradient(135deg,#fff8f0 0%,#ffecd2 100%); border:2px solid #e8a838; border-radius:16px; padding:22px 20px; margin-bottom:20px; box-shadow:0 4px 20px rgba(232,168,56,0.2); }
         #event-section .event-title { font-size:20px; font-weight:bold; color:#3e2723; border-left:5px solid #e8a838; padding-left:12px; margin-bottom:6px; }
-        #event-section .event-desc { font-size:14px; color:#795548; margin-bottom:16px; }
+        #event-section .event-desc { font-size:14px; color:#795548; margin-bottom:16px; white-space: pre-line; line-height:1.65; }
         .event-form-group { margin-bottom:14px; }
         .event-form-group label { display:block; font-size:13px; font-weight:600; color:#4e342e; margin-bottom:5px; }
         .event-form-group input, .event-form-group select, .event-form-group textarea { width:100%; padding:10px 13px; border:1.5px solid #d4b896; border-radius:10px; font-size:14px; background:#fff; color:#333; box-sizing:border-box; }
@@ -176,7 +176,7 @@
         #coupon-section .coupon-title { font-size:20px; font-weight:bold; color:#14532d; border-left:5px solid #4ade80; padding-left:12px; margin-bottom:6px; }
         /* 搶碼區塊輸入時隱藏底欄 */
         body.coupon-typing .bottom-bar { display: none !important; }
-        #coupon-section .coupon-desc  { font-size:13px; color:#166534; margin-bottom:14px; }
+        #coupon-section .coupon-desc  { font-size:13px; color:#166534; margin-bottom:14px; white-space: pre-line; line-height:1.6; }
         .coupon-pool-list { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
         .coupon-pool-item { display:flex; justify-content:space-between; align-items:center; background:#fff; border-radius:10px; padding:10px 14px; border:1px solid #bbf7d0; font-size:13px; }
         .coupon-pool-item.empty { opacity:0.5; }
@@ -346,7 +346,7 @@
             if (!active) { section.style.display = 'none'; return; }
 
             document.getElementById('event-title').textContent = '🎉 ' + (cfg.name || '限時活動');
-            document.getElementById('event-desc').textContent = cfg.desc || '';
+            document.getElementById('event-desc').textContent = String(cfg.desc || '').replace(/\r\n?/g, '\n');
             const body = document.getElementById('event-form-body');
             const fields = [
                 { key: 'fbName',  idx: 1, type: 'text',     required: true },
