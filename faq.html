@@ -708,7 +708,7 @@
                                 <div style="font-size:15px; color:#a07840; letter-spacing:2px; margin-bottom:8px;">您的參加編號</div>
                                 <div style="font-size:32px; font-weight:900; color:#e53935; letter-spacing:2px; line-height:1.2;">${data.choiceLabel}</div>
                             </div>` : ''}
-                            <div style="font-size:16px; color:#5d4037; font-weight:600; margin-bottom:6px;">${ '每人限登錄一次喔！'}</div>
+                            <div style="font-size:16px; color:#5d4037; font-weight:600; margin-bottom:6px;">${data.message || '每個人限登錄一次喔！'}</div>
                             <div style="font-size:14px; color:#bbb; margin-top:10px;">登錄確認信已寄至您的 Email</div>
                         </div>`;
                     setTimeout(() => {
