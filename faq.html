@@ -699,6 +699,22 @@
                         const msg = document.getElementById('event-success-msg');
                         if (msg) msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 100);
+                } else if (data.result === 'already') {
+                    document.getElementById('event-form-body').innerHTML =
+                        `<div id="event-success-msg" style="text-align:center; padding:28px 16px 20px;">
+                            <div style="font-size:48px; line-height:1; margin-bottom:14px;">📮</div>
+                            <div style="font-size:18px; font-weight:700; color:#a07840; letter-spacing:3px; margin-bottom:18px;">您已經登錄過囉</div>
+                            ${data.choiceLabel ? `<div style="background:linear-gradient(135deg,#fff8f0,#fff3e0); border:2px solid #e8a838; border-radius:16px; padding:20px 16px; margin-bottom:18px; box-shadow:0 4px 16px rgba(232,168,56,0.15);">
+                                <div style="font-size:15px; color:#a07840; letter-spacing:2px; margin-bottom:8px;">您的參加編號</div>
+                                <div style="font-size:32px; font-weight:900; color:#e53935; letter-spacing:2px; line-height:1.2;">${data.choiceLabel}</div>
+                            </div>` : ''}
+                            <div style="font-size:16px; color:#5d4037; font-weight:600; margin-bottom:6px;">${data.message || '每人限登錄一次喔！'}</div>
+                            <div style="font-size:14px; color:#bbb; margin-top:10px;">登錄確認信已寄至您的 Email</div>
+                        </div>`;
+                    setTimeout(() => {
+                        const msg = document.getElementById('event-success-msg');
+                        if (msg) msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
                 } else {
                     alert('送出失敗，請稍後再試');
                     btn.disabled = false; btn.textContent = '🎯 送出參加！';
