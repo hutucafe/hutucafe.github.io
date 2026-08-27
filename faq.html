@@ -684,6 +684,22 @@
                 const data = await res.json();
                 if (data.result === 'success') {
                     const choiceLabel = data.choiceLabel || '';
+                    const cp = data.coupon;
+                    let cpDesc = '';
+                    if (cp) {
+                        cpDesc = cp.discountType === '金額'
+                            ? `折抵 $${cp.discountValue}`
+                            : `全單 ${Math.round(cp.discountValue * 1000) / 100} 折`;
+                        if (cp.minOrder > 0) cpDesc += `（消費滿 $${cp.minOrder} 可用）`;
+                        if (cp.expiry) cpDesc += `，使用期限 ${cp.expiry}`;
+                        if (!cp.reusable) cpDesc += '，限用一次';
+                    }
+                    const cpBlock = cp ? `
+                            <div style="background:#fff; border:2px dashed #e8a838; border-radius:16px; padding:18px 16px; margin-bottom:18px;">
+                                <div style="font-size:15px; color:#a07840; letter-spacing:2px; margin-bottom:8px;">🎟 ${cp.reusable ? '活動折扣碼' : '登錄專屬折扣碼'}</div>
+                                <div style="font-size:26px; font-weight:900; color:#e53935; letter-spacing:3px; line-height:1.2; word-break:break-all;">${cp.code}</div>
+                                <div style="font-size:14px; color:#795548; margin-top:8px;">${cpDesc}</div>
+                            </div>` : '';
                     document.getElementById('event-form-body').innerHTML =
                         `<div id="event-success-msg" style="text-align:center; padding:28px 16px 20px;">
                             <div style="font-size:48px; line-height:1; margin-bottom:14px;">🎉</div>
@@ -691,7 +707,7 @@
                             <div style="background:linear-gradient(135deg,#fff8f0,#fff3e0); border:2px solid #e8a838; border-radius:16px; padding:20px 16px; margin-bottom:18px; box-shadow:0 4px 16px rgba(232,168,56,0.15);">
                                 <div style="font-size:15px; color:#a07840; letter-spacing:2px; margin-bottom:8px;">您的參加編號</div>
                                 <div style="font-size:32px; font-weight:900; color:#e53935; letter-spacing:2px; line-height:1.2;">${choiceLabel}</div>
-                            </div>
+                            </div>${cpBlock}
                             <div style="font-size:17px; color:#5d4037; font-weight:600; margin-bottom:6px;">預祝您幸運中獎！☕</div>
                             <div style="font-size:14px; color:#795548; margin-top:10px;">登錄確認信已寄至您的 Email</div>
                         </div>`;
