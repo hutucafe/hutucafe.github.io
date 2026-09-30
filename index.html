@@ -628,6 +628,57 @@
             shippingFee: 38
         };
 
+        function moneyNumber(value) {
+            if (typeof value === 'number') return Number.isSafeInteger(value) && value >= 0 ? value : NaN;
+            if (typeof value !== 'string') return NaN;
+            const s = value.trim().replace(/^(?:NT\$|NTD|TWD|\$)\s*/i, '');
+            if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.0+)?$/.test(s)) return NaN;
+            const n = Number(s.replace(/,/g, ''));
+            return Number.isSafeInteger(n) && n >= 0 ? n : NaN;
+        }
+        function unitPrice(p) {
+            const n = moneyNumber(p['售價']);
+            return isNaN(n) ? 0 : n;
+        }
+        function showUpdatedQuote(payload, quote) {
+            // 只換入後端已核對的商品與金額；收件資料保留，按確認才再次送出。
+            _pendingPayload = { ...payload, ...quote };
+            const body = document.getElementById('confirm-order-body');
+            body.textContent = '';
+            function addLine(text, strong = false) {
+                const el = document.createElement(strong ? 'strong' : 'div');
+                el.textContent = text; el.style.display = 'block'; el.style.marginBottom = '8px';
+                body.appendChild(el);
+            }
+            addLine('優惠或運費已更新，請確認後再送出', true);
+            [...quote.discountedItems, ...quote.nonDiscountedItems].forEach(i => addLine(`${i.rawName}（${i.pkg}）× ${i.qty}　$${i.subtotal}`));
+            addLine(`商品小計：$${quote.originalTotal}`);
+            addLine(`折扣（${quote.discountName || '優惠'}）：-$${quote.totalDiscountAmt}`);
+            addLine(`運費：${quote.shipping === 0 ? '免運費' : '$' + quote.shipping}`);
+            addLine(`結帳總額：$${quote.totalPrice}`, true);
+            document.getElementById('confirm-order-modal').classList.add('open');
+        }
+        // 同時限制取得 response 與讀取 JSON 的時間，不因 response body 卡住而超時。
+        async function fetchJsonBefore(url, options, timeoutMs) {
+            const controller = new AbortController();
+            let timer;
+            try {
+                return await Promise.race([
+                    (async () => {
+                        const response = await fetch(url, { ...options, signal: controller.signal });
+                        if (!response.ok) throw new Error('HTTP ' + response.status);
+                        return await response.json();
+                    })(),
+                    new Promise((_, reject) => {
+                        timer = setTimeout(() => {
+                            controller.abort();
+                            const error = new Error('連線逾時'); error.name = 'AbortError'; reject(error);
+                        }, timeoutMs);
+                    })
+                ]);
+            } finally { clearTimeout(timer); }
+        }
+
         function applyShopConfig() {
             document.getElementById('ui-banner-discount').textContent = SHOP_CONFIG.discountName;
             document.getElementById('ui-banner-fee').textContent = SHOP_CONFIG.shippingFee;
@@ -680,9 +731,25 @@
         // ── 🎟 折扣碼邏輯 ─────────────────────────────────────────
         let _activeCoupon = null; // { code, discountType, discountValue, displayName }
 
+        // 指定折扣品項判斷（全頁唯一版本）
+        // ⚠️ 舊版在「購物車摘要」「底部金額」「送出訂單」各寫了一份，送出時多了「浸泡」，
+        //    造成畫面上的總額跟確認視窗／實際送出的折扣不一樣。
+        //    GAS 端的 isDiscountItem_() 必須跟這裡保持一致。
+        function _isDiscountItem(p) {
+            const c = String((p && p.category) || '');
+            const n = String((p && p['熟豆品項']) || '');
+            const has = (s, list) => list.some(k => s.includes(k));
+            const inc = has(c, ['現貨', '熟豆', '濾掛']) || has(n, ['現貨', '熟豆', '濾掛', '浸泡']);
+            const exc = has(c, ['特賣', '大包裝', '生豆']) || has(n, ['特賣', '大包裝', '生豆']);
+            return inc && !exc;
+        }
+
         function _couponDiscountAmt(discountSubtotal, allTotal) {
             // 折數：只對指定品項；現金：對全部品項
             if (!_activeCoupon) return 0;
+            // 低消對兩種折扣碼都適用（舊版折數碼沒檢查，前端套用了、後端卻不認）
+            const _minOrd = _activeCoupon.minOrder || 0;
+            if (_minOrd > 0 && (allTotal || 0) < _minOrd) return 0;
             if (_activeCoupon.discountType === '金額') {
                 return Math.min(parseFloat(_activeCoupon.discountValue)||0, allTotal || discountSubtotal);
             }
@@ -702,7 +769,7 @@
             // 先計算目前購物車小計，判斷是否達低消
             let curSubtotal = 0;
             for (let uid in cart) {
-                if (cart[uid].qty > 0) curSubtotal += cart[uid].qty * parseInt(cart[uid].product['售價'] || 0);
+                if (cart[uid].qty > 0) curSubtotal += cart[uid].qty * unitPrice(cart[uid].product);
             }
             if (minOrder > 0 && curSubtotal < minOrder) {
                 // 未達低消：顯示警示，但先儲存折扣碼（等商品夠了自動套用）
@@ -1168,7 +1235,11 @@
             }
         }
 
-        async function fetchAndUpdate(showLoading) {
+        let _productsRequestId = 0;
+        let _mustRefreshProducts = false;
+
+        async function fetchAndUpdate(showLoading, forceFresh = false) {
+            const requestId = ++_productsRequestId;
             if (showLoading) {
                 document.getElementById('product-list').innerHTML = `
                     <div class="loader-container">
@@ -1177,14 +1248,19 @@
                     </div>`;
             }
             try {
-                const responseData = await fetchWithRetry(GAS_URL, 1, 400, 25000, 28000);
+                const responseData = await fetchWithRetry(GAS_URL + (forceFresh ? '?refresh=1' : ''), 1, 400, 25000, 28000);
+                if (requestId !== _productsRequestId) return false;
+                if (!responseData || !responseData.products || typeof responseData.products !== 'object') throw new Error('豆單回應不完整');
                 if (responseData.cache_version) {
                     localStorage.setItem(CACHE_VERSION_KEY, responseData.cache_version);
                 }
                 localStorage.setItem(CACHE_KEY, JSON.stringify({ data: responseData, timestamp: Date.now() }));
                 renderFromData(responseData);
+                if (forceFresh) _mustRefreshProducts = false;
+                return true;
             } catch (e) {
                 console.error('載入豆單失敗:', e);
+                if (requestId !== _productsRequestId) return false;
                 if (showLoading) {
                     document.getElementById('product-list').innerHTML =
                         '<p style="text-align:center; color:red; padding:20px;">資料載入失敗，請檢查網路連線。</p>' +
@@ -1193,32 +1269,55 @@
             }
         }
 
+        // 使用分類＋品名＋包裝辨認同一品項，排序變動不會把數量套到別支豆。
+        const _productUidMap = new Map();
+        let _nextProductUid = 1;
+        function productKey(p) {
+            return JSON.stringify([p.category || '', String(p['熟豆品項'] || ''), String(p['包裝'] == null ? '' : p['包裝'])]);
+        }
         function renderFromData(data) {
+            const oldSelections = new Map();
+            Object.values(cart).forEach(c => {
+                if (c.qty > 0) oldSelections.set(productKey(c.product), c);
+            });
             allProductsData = data.products || data;
             allTabNotes = data.tabNotes || {};
-            let idCounter = 1;
+            const nextCart = {};
+            let selectionChanged = false;
             for (let tab in allProductsData) {
                 allProductsData[tab].forEach(p => {
-                    p.uid = 'p_' + idCounter++;
                     p.category = tab;
-                    if (!cart[p.uid]) {
-                        cart[p.uid] = { product: p, qty: 0 };
-                    } else {
-                        cart[p.uid].product = p;
-                        const refreshedStock = parseInt(p['庫存']);
-                        if (refreshedStock === 0 && cart[p.uid].qty > 0) {
-                            cart[p.uid].qty = 0;
-                        }
-                    }
+                    const key = productKey(p);
+                    if (!_productUidMap.has(key)) _productUidMap.set(key, 'p_' + _nextProductUid++);
+                    p.uid = _productUidMap.get(key);
+                    const previous = oldSelections.get(key);
+                    let qty = previous ? previous.qty : 0;
+                    if (!Number.isSafeInteger(moneyNumber(p['售價']))) qty = 0;
+                    const rawStock = String(p['庫存'] == null ? '' : p['庫存']).trim();
+                    const stock = Number(rawStock);
+                    const limit = parseInt(p['限購']);
+                    // 不足的品項歸零，讓客戶主動重新選數量，不自動代客減量下單。
+                    if (rawStock !== '' && (!Number.isSafeInteger(stock) || stock < qty || stock < 0)) qty = 0;
+                    if (!isNaN(limit) && limit > 0 && qty > limit) qty = 0;
+                    if (previous && (qty !== previous.qty || String(previous.product['售價']) !== String(p['售價']))) selectionChanged = true;
+                    oldSelections.delete(key);
+                    nextCart[p.uid] = { product: p, qty: qty };
                 });
             }
+            if (oldSelections.size) selectionChanged = true;
+            cart = nextCart; // 已下架品項不會殘留
             const tabs = Object.keys(allProductsData);
-            if (tabs.length > 0) {
-                if (!currentTab || !allProductsData[currentTab]) {
-                    currentTab = tabs[0];
-                }
-                renderTabs(tabs);
-                renderProducts(currentTab);
+            if (!currentTab || !allProductsData[currentTab]) currentTab = tabs[0] || '';
+            renderTabs(tabs);
+            renderProducts(currentTab);
+            calculateTotal();
+            if (!_isSubmitting && _pendingPayload) {
+                _pendingPayload = null;
+                closeConfirmModal();
+                selectionChanged = true;
+            }
+            if (selectionChanged && !_isSubmitting) {
+                alert('豆單已更新，商品、庫存或價格有異動。請重新確認購物車後再送出訂單。');
             }
         }
 
@@ -1361,9 +1460,9 @@
 
                 const roast = p['烘焙度'] || '';
                 const pkg = p['包裝'] || '';
-                const price = parseInt(p['售價'] || 0);
+                const price = unitPrice(p);
                 const parsedStock = parseInt(p['庫存']);
-                const isOutOfStock = parsedStock === 0;
+                const isOutOfStock = parsedStock === 0 || !Number.isSafeInteger(moneyNumber(p['售價']));
                 // 多規格：全部規格都售完才套用售完樣式；單規格直接用 isOutOfStock
                 const isAllOutOfStock = isMulti
                     ? variants.every(v => parseInt(v['庫存']) === 0)
@@ -1479,7 +1578,7 @@
             const name = p['熟豆品項'] || '';
             const roast = p['烘焙度'] || '';
             const pkg = p['包裝'] || '';
-            const price = parseInt(p['售價'] || 0);
+            const price = unitPrice(p);
             const imgUrl = p['產品圖'] || '';
 
             // 找同名的所有規格
@@ -1673,11 +1772,8 @@
             items.forEach(c => {
                 const rawName = (c.product['熟豆品項'] || '').toLowerCase();
                 const category = (c.product.category || '').toLowerCase();
-                let isDiscount = category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
-                                 rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛');
-                if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') ||
-                    rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) isDiscount = false;
-                const price = parseInt(c.product['售價'] || 0);
+                const isDiscount = _isDiscountItem(c.product);
+                const price = unitPrice(c.product);
                 const subtotal = c.qty * price;
                 originalTotal += subtotal;
                 if (isDiscount) discountSubtotal += subtotal;
@@ -1759,6 +1855,7 @@
 
         function setQtyDirect(uid, rawVal) {
             const p = cart[uid].product;
+            if (!Number.isSafeInteger(moneyNumber(p['售價']))) return alert('商品價格暫時無法確認，請更新豆單或聯繫老闆。');
             const parsedStock = parseInt(p['庫存']);
             const maxStock = isNaN(parsedStock) ? 9999 : parsedStock;
             const parsedLimit = parseInt(p['限購']);
@@ -1794,6 +1891,7 @@
 
         function updateQty(uid, change) {
             const p = cart[uid].product;
+            if (!Number.isSafeInteger(moneyNumber(p['售價']))) return alert('商品價格暫時無法確認，請更新豆單或聯繫老闆。');
             const parsedStock = parseInt(p['庫存']);
             const maxStock = isNaN(parsedStock) ? 9999 : parsedStock;
             const parsedLimit = parseInt(p['限購']);
@@ -1842,21 +1940,13 @@
                 let qty = cart[uid].qty;
                 if (qty > 0) {
                     let p = cart[uid].product;
-                    let price = parseInt(p['售價'] || 0);
+                    let price = unitPrice(p);
                     let subtotal = qty * price;
                     originalTotal += subtotal;
                     totalItems += qty;
                     let rawName = (p['熟豆品項'] || '').toLowerCase();
                     let category = (p.category || '').toLowerCase();
-                    let isDiscount = false;
-                    if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') ||
-                        rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛')) {
-                        isDiscount = true;
-                    }
-                    if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') ||
-                        rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) {
-                        isDiscount = false;
-                    }
+                    const isDiscount = _isDiscountItem(p);
                     if (isDiscount) discountSubtotal += subtotal;
                 }
             }
@@ -2289,6 +2379,14 @@
 
         async function submitOrder() {
             if (_isSubmitting) return;
+            if (_mustRefreshProducts) {
+                _isSubmitting = true;
+                let refreshed = false;
+                try { refreshed = await fetchAndUpdate(false, true); }
+                finally { _isSubmitting = false; }
+                alert(refreshed ? '豆單已更新，請重新選擇並確認商品後再送出。' : '最新豆單尚未載入，請檢查網路後再試；本次不會送出訂單。');
+                return;
+            }
             if (currentFinalTotal === 0) return alert("請至少選擇一樣商品！");
             const storeId = document.getElementById('selected-store-id').value;
             const storeInfo = document.getElementById('store-info').value;
@@ -2315,11 +2413,10 @@
             for (let uid in cart) {
                 let qty = cart[uid].qty;
                 if (qty > 0) {
-                    let p = cart[uid].product; let price = parseInt(p['售價'] || 0); let subtotal = qty * price;
+                    let p = cart[uid].product; let price = unitPrice(p); let subtotal = qty * price;
                     let rawName = (p['熟豆品項'] || ''); let category = p.category || '';
                     let displayName = `${category} - ${rawName}`; let isDiscount = false;
-                    if (category.includes('現貨') || category.includes('熟豆') || category.includes('濾掛') || rawName.includes('現貨') || rawName.includes('熟豆') || rawName.includes('濾掛') || rawName.includes('浸泡')) { isDiscount = true; }
-                    if (category.includes('特賣') || category.includes('大包裝') || category.includes('生豆') || rawName.includes('特賣') || rawName.includes('大包裝') || rawName.includes('生豆')) { isDiscount = false; }
+                    isDiscount = _isDiscountItem(p);
                     let itemObj = { name: displayName, rawName: rawName, category: category, pkg: p['包裝'], price: price, qty: qty, subtotal: subtotal };
                     let itemLine = `  • ${displayName} (${p['包裝']}) x ${qty}\n`;
                     if (isDiscount) { discountedText += itemLine; discountedOrderItems.push(itemObj); discountSubtotal += subtotal; } else { nonDiscountedText += itemLine; nonDiscountedOrderItems.push(itemObj); }
@@ -2329,6 +2426,7 @@
             const activeDiscountName = _getActiveDiscountName();
             const rateDiscountAmt = Math.ceil(Math.round(discountSubtotal * (1 - activeRate) * 1e10) / 1e10);
             let totalDiscountAmt = rateDiscountAmt;
+            let couponApplied = false; // 折扣碼是否真的有讓金額變少（沒用到就不送出，也不顯示它的名字）
             if (_activeCoupon) {
                 if (_activeCoupon.discountType === '金額') {
                     // 現金折抵：指定品項折數後 + 非指定品項，再扣現金（低消檢查）
@@ -2337,27 +2435,25 @@
                         const afterRate = Math.max(0, originalTotal - rateDiscountAmt);
                         const cashAmt = Math.min(parseFloat(_activeCoupon.discountValue)||0, afterRate);
                         totalDiscountAmt = rateDiscountAmt + cashAmt;
+                        couponApplied = cashAmt > 0;
                     }
                 } else {
                     // 折數擇優：只對指定品項（discountSubtotal）
                     const cpAmt = _couponDiscountAmt(discountSubtotal, originalTotal);
-                    if (cpAmt > rateDiscountAmt) totalDiscountAmt = cpAmt;
+                    if (cpAmt > rateDiscountAmt) { totalDiscountAmt = cpAmt; couponApplied = true; }
                 }
             }
 
             // 組合 payload 存起來
             _pendingPayload = { submitToken: _submitToken, name: name, phone: "'" + phone, email: email, storeName: storeName, storeId: storeId, storeAddress: storeAddr, notes: notes, discountedItems: discountedOrderItems, nonDiscountedItems: nonDiscountedOrderItems, totalDiscountAmt: totalDiscountAmt, originalTotal: originalTotal, shipping: shippingAmt, totalPrice: currentFinalTotal, discountName: (() => {
-                    if (_activeCoupon) {
-                        if (_activeCoupon.discountType === '折數') {
-                            const cpAmt = _couponDiscountAmt(discountSubtotal, originalTotal);
-                            return cpAmt > rateDiscountAmt ? _activeCoupon.displayName : activeDiscountName;
-                        } else {
-                            // 現金折抵：顯示折數名稱 + 折扣碼名稱
-                            return activeDiscountName + (_activeCoupon ? ' + ' + _activeCoupon.displayName : '');
-                        }
+                    if (_activeCoupon && couponApplied) {
+                        // 折數碼勝出 → 折扣碼名稱；現金折抵 → 折數名稱 + 折扣碼名稱
+                        return _activeCoupon.discountType === '折數'
+                            ? _activeCoupon.displayName
+                            : activeDiscountName + ' + ' + _activeCoupon.displayName;
                     }
                     return activeDiscountName;
-                })(), globalDiscountRate: SHOP_CONFIG.discountRate, couponCode: _activeCoupon ? _activeCoupon.code : '' };
+                })(), globalDiscountRate: SHOP_CONFIG.discountRate, couponCode: (_activeCoupon && couponApplied) ? _activeCoupon.code : '' };
 
             // 顯示確認摘要
             const allItems = [...discountedOrderItems, ...nonDiscountedOrderItems];
@@ -2381,15 +2477,7 @@
                 confirmHtml += nonDiscountedOrderItems.map(renderConfirmItem).join('');
             }
             if (totalDiscountAmt > 0) {
-                const confirmDiscName = (() => {
-                    if (_activeCoupon) {
-                        if (_activeCoupon.discountType === '折數') {
-                            return _couponDiscountAmt(discountSubtotal, originalTotal) > rateDiscountAmt ? _activeCoupon.displayName : activeDiscountName;
-                        }
-                        return activeDiscountName + ' + ' + _activeCoupon.displayName;
-                    }
-                    return activeDiscountName;
-                })();
+                const confirmDiscName = _pendingPayload.discountName;
                 confirmHtml += `<div class="confirm-item-row" style="color:#c62828;">
                     <span>折扣（${confirmDiscName}）</span><span>-$${totalDiscountAmt}</span>
                 </div>`;
@@ -2457,28 +2545,31 @@
                 //    註：checkOrder 只在 POST 超過 5 秒沒回應時才啟動，
                 //    正常情況完全不會多發請求。
 
+                let backendRejection = null;
+                let orderRequestFinished = false;
                 let backendError = null;   // 後端明確回報的錯誤（例如庫存不足）
                 let verifyStarted = false;
+                // 🩺 連線診斷：記錄 POST 與查證各自發生了什麼，失敗時顯示在提示裡（客人截圖就能判斷原因）
+                const _diag = { post: '等待中', chkTotal: 0, chkOk: 0, chkLastState: '-', chkLastErr: '-' };
+                const _sec = () => ((Date.now() - _orderWallStart) / 1000).toFixed(1) + 's';
 
                 const postPromise = (async () => {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 25000); // 放寬：中斷不會取消伺服器執行，砍掉重來只會更慢
                     try {
-                        const response = await fetch(GAS_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify(payload),
-                            signal: controller.signal
-                        });
-                        clearTimeout(timeoutId);
-                        if (!response.ok) throw new Error('HTTP ' + response.status);
-                        const json = await response.json();
+                        const json = await fetchJsonBefore(GAS_URL, {
+                            method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify(payload)
+                        }, 25000);
+                        if (orderRequestFinished) throw new Error('VERIFY_CANCELLED');
+                        if (json && json.result === 'pending') throw new Error('ORDER_PENDING');
+                        _diag.post = (json && json.result) + '@' + _sec();
                         if (json && json.result === 'success') return json;
                         // 後端明確說失敗 → 記下來，這種情況不該再等查證
+                        backendRejection = json;
                         backendError = (json && json.error) || '未知錯誤';
-                        throw new Error('BACKEND_ERROR');
+                        // 明確拒絕也是已確認的結果；直接結束 Promise.any，不等查證逾時。
+                        return { result: 'error', error: backendError };
                     } catch (err) {
-                        clearTimeout(timeoutId);
+                        _diag.post = (err.name === 'AbortError' ? '逾時中斷' : err.message) + '@' + _sec();
                         if (err.message !== 'BACKEND_ERROR') {
                             console.warn('[糊塗訂單] POST 未取得正常回應（' + err.message + '），改由查證確認');
                         }
@@ -2492,36 +2583,65 @@
                     //    6 輪 × 最多 9 秒疊上去就變成 80 秒。這裡改成看實際經過的時間，
                     //    不管查了幾輪，超過上限就停。
                     const VERIFY_DEADLINE_MS = 30000; // 單次查證放寬到15秒，總上限需相應放大
+                    // 伺服器回報「已收到、排隊或處理中」時放寬上限：
+                    // 後端等鎖最多 30 秒 + 寫入數秒，只等 30 秒會把「還在排隊」誤判成失敗。
+                    const VERIFY_DEADLINE_ACK_MS = 75000;
+                    let deadline = VERIFY_DEADLINE_MS;
+                    let serverAcked = false;
                     const startedAt = Date.now();
                     await new Promise(r => setTimeout(r, 4000)); // 先讓 POST 有機會正常回來
 
                     let round = 0;
-                    while (Date.now() - startedAt < VERIFY_DEADLINE_MS) {
+                    while (Date.now() - startedAt < deadline) {
+                        if (orderRequestFinished) throw new Error('VERIFY_CANCELLED');
                         if (backendError) throw new Error('BACKEND_ERROR');
                         round++;
+                        _diag.chkTotal = round;
                         if (!verifyStarted) {
                             verifyStarted = true;
                             btn.textContent = "訂單確認中，請稍候...";
                         }
                         try {
                             // 每次查詢自己也要有短上限，否則單次就能吃掉整個預算
-                            const j = await fetchWithRetry(
+                            const remaining = deadline - (Date.now() - startedAt);
+                            if (remaining <= 0) throw new Error('VERIFY_TIMEOUT');
+                            const j = await fetchJsonBefore(
                                 GAS_URL + '?action=checkOrder&token=' + encodeURIComponent(payload.submitToken),
-                                0, 0, 15000, 15000
+                                { cache: 'no-store' }, Math.min(15000, remaining)
                             );
+                            if (orderRequestFinished) throw new Error('VERIFY_CANCELLED');
+                            _diag.chkOk++; _diag.chkLastState = (j && (j.state || (j.done ? 'done' : 'no'))) || '?';
                             if (j && j.done) {
                                 console.log('[糊塗訂單] 查證確認訂單已寫入（第' + round + '輪，共 ' +
                                             (Date.now() - startedAt) + 'ms）');
-                                return { result: 'success' };
+                                return { ...j, result: 'success' };
                             }
-                            console.log(`[糊塗訂單] 查證第${round}輪：後端回報尚未寫入`);
+                            // 後端已明確判定不成立（POST 回應遺失時靠這裡得知結果）
+                            if (j && (j.state === 'rejected' || j.state === 'failed')) {
+                                if (!backendError) {
+                                    backendRejection = j.state === 'rejected'
+                                        ? { code: j.code || 'ORDER_ITEMS_CHANGED', issues: j.issues || [], quote: j.quote }
+                                        : null;
+                                    backendError = j.error || '訂單未能完成';
+                                }
+                                return { result: 'error', error: backendError };
+                            }
+                            if (j && j.state === 'processing') {
+                                serverAcked = true;
+                                deadline = VERIFY_DEADLINE_ACK_MS;
+                            }
+                            console.log(`[糊塗訂單] 查證第${round}輪：後端回報${serverAcked ? '已收到、處理中' : '尚未收到'}`);
                         } catch (e) {
+                            if (orderRequestFinished) throw e;
+                            _diag.chkLastErr = (e && e.name === 'AbortError') ? '逾時' : (e && e.message) || '?';
                             console.warn(`[糊塗訂單] 查證第${round}輪查詢失敗（${e.message}），非訂單失敗`);
                         }
-                        btn.textContent = `訂單確認中 (${round})，請勿關閉頁面...`;
+                        btn.textContent = serverAcked
+                            ? `訂單處理中 (${round})，下單人數較多，請勿關閉頁面...`
+                            : `訂單確認中 (${round})，請勿關閉頁面...`;
                         // 還有預算才等下一輪，避免最後白等一段
-                        if (Date.now() - startedAt + 2500 >= VERIFY_DEADLINE_MS) break;
-                        await new Promise(r => setTimeout(r, 2500));
+                        if (Date.now() - startedAt + 2500 >= deadline) break;
+                        await new Promise(r => setTimeout(r, Math.min(2500, deadline - (Date.now() - startedAt))));
                     }
                     throw new Error('VERIFY_TIMEOUT');
                 })();
@@ -2533,21 +2653,61 @@
                     result = null;
                 }
 
+                orderRequestFinished = true;
                 if (backendError) {
-                    alert("資料庫寫入失敗！錯誤訊息：\n" + backendError);
+                    if (backendRejection && backendRejection.code === 'ORDER_TOTAL_CHANGED' && backendRejection.quote) {
+                        alert(backendError);
+                        showUpdatedQuote(payload, backendRejection.quote);
+                    } else if (backendRejection && backendRejection.code === 'ORDER_ITEMS_CHANGED') {
+                        _pendingPayload = null;
+                        _mustRefreshProducts = true;
+                        // 先清掉被拒絕品項；若重新載入失敗，也不會直接重送舊品項。
+                        const issues = backendRejection.issues || [];
+                        Object.values(cart).forEach(c => {
+                            if (issues.some(i => i.category === c.product.category && i.rawName === c.product['熟豆品項'] && String(i.pkg) === String(c.product['包裝'] == null ? '' : c.product['包裝']))) c.qty = 0;
+                        });
+                        renderProducts(currentTab);
+                        calculateTotal();
+                        // 先告知訂單未成立，避免客戶為了等豆單更新而延遲收到結果。
+                        btn.textContent = '正在更新豆單...';
+                        alert(backendError + '\n\n關閉提示後將更新豆單，仍可購買的品項會保留，請重新選擇後再送出。');
+                        const refreshed = await fetchAndUpdate(false, true);
+                        if (!refreshed) alert('最新豆單載入失敗，請檢查網路後再試。本次訂單尚未成立。');
+                    } else if (backendRejection && backendRejection.code === 'COUPON_INVALID') {
+                        // 折扣碼在送出前一刻失效（例如在別的裝置剛用掉、剛好過期）→ 移除後讓客人看新金額再送
+                        _pendingPayload = null;
+                        _activeCoupon = null;
+                        const cpStatusEl = document.getElementById('coupon-status');
+                        if (cpStatusEl) {
+                            cpStatusEl.textContent = '⚠️ 折扣碼已失效，已自動移除';
+                            cpStatusEl.style.color = '#b45309';
+                            cpStatusEl.style.display = 'block';
+                        }
+                        calculateTotal();
+                        alert(backendError + '\n\n折扣碼已移除，請確認新的金額後再送出。');
+                    } else {
+                        alert("訂單未能完成，錯誤訊息：\n" + backendError);
+                    }
                     btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
                     return;
                 }
 
                 if (!result) {
                     // 兩條路都無法確認 → 誠實告知，不要讓客人以為下單成功
+                    const _ua = navigator.userAgent || '';
+                    const _app = /Line\//i.test(_ua) ? 'LINE' : /FBAN|FBAV/i.test(_ua) ? 'FB' : /Instagram/i.test(_ua) ? 'IG' : 'Browser';
+                    const _os = /iPhone|iPad/i.test(_ua) ? 'iOS' : /Android/i.test(_ua) ? 'Android' : 'PC';
+                    const _diagCode = `P=${_diag.post} C=${_diag.chkOk}/${_diag.chkTotal}(${_diag.chkLastState}|${_diag.chkLastErr}) T=${_sec()} ${_app}-${_os}`;
+                    console.warn('[糊塗訂單診斷] ' + _diagCode);
+                    try { localStorage.setItem('_lastOrderDiag', JSON.stringify({ at: new Date().toISOString(), token: payload.submitToken, code: _diagCode })); } catch (e) {}
                     alert(
-                        "⚠️ 訂單送出失敗\n\n" +
+                        "⚠️ 訂單狀態尚待確認\n\n" +
                         "系統未能確認您的訂單已建立，請「不要」重複送出。\n\n" +
                         "請稍等 1 分鐘後，到「訂單查詢」用手機號碼確認：\n" +
                         "• 若查得到訂單 → 已成功，無需再送出\n" +
                         "• 若查不到 → 請重新送出，或直接聯繫我們\n\n" +
-                        "造成不便非常抱歉 🙇"
+                        "造成不便非常抱歉 🙇\n\n" +
+                        "（若需聯繫我們，請附上此畫面截圖）\n診斷碼：" + _diagCode
                     );
                     btn.disabled = false; btn.textContent = "確認送出"; _isSubmitting = false;
                     return;
@@ -2576,8 +2736,28 @@
                         favs = favs.sort((a,b) => b.count - a.count).slice(0, 3);
                         localStorage.setItem(favKey, JSON.stringify(favs));
                     } catch(e) {}
-                    const shippingStr2 = payload.shipping === 0 ? '免運費' : `$${payload.shipping}`;
-                    let successMsg = `------------------------------\n【訂購人姓名】${payload.name}\n【購買明細】\n${alertItemsText}------------------------------\n【運費】${shippingStr2}\n【結帳總額】$${payload.totalPrice}\n\n※ 訂單明細將寄送至您的 Email（約 1 分鐘內）。\n感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕\n也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
+                    const receipt = result;
+                    const completeReceipt = Number.isFinite(receipt.totalPrice) && Number.isFinite(receipt.shipping);
+                    let successMsg;
+                    if (!completeReceipt) {
+                        successMsg = '您的訂單已成立。這筆較早的訂單未提供完整確認金額，請至「訂單查詢」查看正式明細，請勿重複下單。';
+                    } else {
+                        const lines = items => (items || []).map(i => `  • ${i.name} (${i.pkg}) x ${i.qty}
+`).join('');
+                        const actualItems = lines(receipt.discountedItems) + lines(receipt.nonDiscountedItems);
+                        const shippingStr2 = receipt.shipping === 0 ? '免運費' : `$${receipt.shipping}`;
+                        successMsg = `------------------------------
+【訂購人姓名】${receipt.name || payload.name}
+【購買明細】
+${actualItems}【折扣】${receipt.discountName || '優惠'} -$${receipt.totalDiscountAmt}
+------------------------------
+【運費】${shippingStr2}
+【結帳總額】$${receipt.totalPrice}
+
+※ 訂單明細將寄送至您的 Email。
+感謝您的支持，糊塗咖啡會盡快為您安排出貨！☕
+也請記得加入糊塗咖啡官方Line，並哈囉老闆喔！🎉`;
+                    }
                     document.getElementById('modal-msg').textContent = successMsg;
                     document.getElementById('success-modal').style.display = 'flex';
                 } else {
