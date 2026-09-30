@@ -838,8 +838,11 @@
         let _vipCheckPending = false;   // 載入期間曾經有人要求查詢
 
         // 統一的解除封鎖入口：解除後若期間有人要求過，立刻補查一次
+        // ⚠️ 舊版開頭有「已經解除過就直接 return」：
+        //    豆單載入超過 10 秒時，下面的保險計時器會先解除封鎖並查一次（剛好撞上最忙的時候，常失敗）；
+        //    等豆單載完、還原資料那段再要求補查時，就被這行擋掉——回頭客的 VIP 從此不會再查。
+        //    現在改成：只要有待查的要求就執行，不管之前是否解除過。
         function _releaseVipCheck() {
-            if (!_vipCheckSuppressed) return;
             _vipCheckSuppressed = false;
             if (_vipCheckPending) {
                 _vipCheckPending = false;
@@ -849,6 +852,7 @@
 
         // 保險：萬一載入流程拖很久或卡住，最多 10 秒後也要解除封鎖並補查
         setTimeout(() => {
+            if (!_vipCheckSuppressed) return; // 已經正常解除並查過了，不必重複查
             _vipCheckPending = true;   // 保險觸發時一律補查一次（欄位沒填齊的話 _checkVip 自己會擋掉）
             _releaseVipCheck();
         }, 10000);
@@ -879,7 +883,7 @@
         let _vipCheckTimer = null;
         let _vipCheckSeq = 0; // 避免使用者持續輸入時，舊的回應蓋掉新的結果
 
-        function _checkVip() {
+        function _checkVip(attempt = 0) {
             // 載入期間先不送出（避免與豆單載入在 GAS 互相排隊），
             // 但要「記下來」，載入完成時會自動補查——不能默默丟掉。
             if (_vipCheckSuppressed) { _vipCheckPending = true; return; }
@@ -916,6 +920,13 @@
                         //    並且「保留原本狀態」而不是強制清成非VIP，同時留下紀錄方便追查。
                         if (seq !== _vipCheckSeq) return;
                         console.warn('[糊塗VIP] 查詢失敗，維持原本折扣狀態不變（' + err.message + '）');
+                        // 回頭客的姓名電話是自動帶入的，不會再有輸入事件觸發查詢，
+                        // 所以失敗後自己再試（最多再試 2 次，間隔拉長）；期間客人若改了姓名電話，就以新的查詢為準。
+                        if (attempt < 2) {
+                            setTimeout(() => {
+                                if (seq === _vipCheckSeq) _checkVip(attempt + 1);
+                            }, attempt === 0 ? 5000 : 15000);
+                        }
                     });
             }, 400);
         }
