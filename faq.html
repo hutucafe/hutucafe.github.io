@@ -807,7 +807,14 @@
                         resBox.innerHTML = '<p style="text-align:center; color:#d84315;">查無此手機號碼的近期訂單。</p>';
                     } else {
                         let html = `<h4 style="margin-bottom:12px;">📞 ${phoneInput} 的近期訂單：</h4>`;
-                        data.orders.forEach(o => {
+                        // 新訂單在上：先反轉（同日訂單也會新的在前），再依日期由新到舊排序
+                        const toTs = d => {
+                            const m = String(d || '').match(/(\d{4})\D(\d{1,2})\D(\d{1,2})(?:\D+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+                            return m ? new Date(+m[1], m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)).getTime() : NaN;
+                        };
+                        const orders = data.orders.slice().reverse();
+                        if (orders.every(o => !isNaN(toTs(o.date)))) orders.sort((a, b) => toTs(b.date) - toTs(a.date));
+                        orders.forEach(o => {
                             let statusClass = (o.status.includes('出貨') || o.status.includes('到達')) ? 'highlight' : o.status.includes('備貨') ? 'prepare' : '';
                             let trackingUI = o.trackingNum ? `
                                 <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ccc; display: flex; justify-content: space-between; align-items: center;">
